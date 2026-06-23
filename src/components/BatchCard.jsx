@@ -31,14 +31,23 @@ export default function BatchCard({
   return (
     <article className="rounded-3xl border border-white/70 bg-white p-5 shadow-card">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
-            {product?.category || '未分类'}
-          </p>
-          <h2 className="mt-1 text-xl font-bold text-ink">{product?.name}</h2>
-          {product?.brand && (
-            <p className="mt-1 text-sm text-slate-500">{product.brand}</p>
+        <div className="flex min-w-0 gap-3">
+          {product?.image_url && (
+            <img
+              alt=""
+              className="h-16 w-16 shrink-0 rounded-2xl border border-slate-100 object-cover"
+              src={product.image_url}
+            />
           )}
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">
+              {product?.category || '未分类'}
+            </p>
+            <h2 className="mt-1 text-xl font-bold text-ink">{product?.name}</h2>
+            {product?.brand && (
+              <p className="mt-1 text-sm text-slate-500">{product.brand}</p>
+            )}
+          </div>
         </div>
         <span
           className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${statusStyles[expiryStatus.key]}`}
@@ -132,4 +141,3 @@ export default function BatchCard({
     </article>
   )
 }
-

@@ -1,4 +1,4 @@
-# 初始数据模型
+# 数据模型
 
 ## 建模原则
 
@@ -31,7 +31,7 @@ products (1) ──────< inventory_batches (N)
 | `brand` | `text` | 否 | 品牌 |
 | `image_url` | `text` | 否 | 商品图片地址 |
 | `category` | `text` | 否 | 分类，如猫罐头、猫条、食品 |
-| `source` | `text` | 是 | 信息来源，如 `manual`、`open_food_facts` |
+| `source` | `text` | 是 | 信息来源，如 `manual`、`open_food_facts_universal`、`open_pet_food_facts`、`open_food_facts` |
 | `created_at` | `timestamptz` | 是 | 创建时间 |
 | `updated_at` | `timestamptz` | 是 | 最后更新时间 |
 
@@ -40,8 +40,19 @@ products (1) ──────< inventory_batches (N)
 - `name` 去除首尾空格后不能为空。
 - `source` 默认值为 `manual`。
 - `barcode` 允许为空；非空时应规范化并避免重复商品记录。
-- v0.1 前端会在同一用户下按“完全相同的商品名 + 品牌”查找可复用商品。
+- 无条形码时，前端在同一用户下按“完全相同的商品名 + 品牌”查找可复用商品。
+- 有条形码时，前端优先按同一用户的 `barcode` 查找和复用商品，并可用用户
+  确认后的预填内容更新商品展示字段。
+- 扫码或手输 barcode 的预填查询同样遵循本地优先：先查询当前用户的
+  `products`，本地未命中才访问外部商品库。
 - 商品复用只复用 `products`，每次添加库存仍创建新的批次。
+- Open Food Facts universal lookup 预填的信息将 `source` 记录为
+  `open_food_facts_universal`；Open Pet Food Facts fallback 记录为
+  `open_pet_food_facts`；普通 Open Food Facts fallback 记录为
+  `open_food_facts`；手动录入记录为 `manual`。
+- `partial_found` 是查询流程状态，不是数据库字段值。它表示 barcode 对应商品
+  存在但名称缺失；保存前用户仍必须补充满足 `products.name` 非空约束的名称。
+- 商品数据库字段缺失时允许用户补充，不会自动推断保质期。
 
 ## inventory_batches
 
@@ -126,4 +137,14 @@ products (1) ──────< inventory_batches (N)
 - 批次的 insert/update 策略额外验证关联商品属于当前用户。
 - `inventory_batches.product_id` 使用 `on delete restrict`，避免误删库存历史。
 - `updated_at` 由轻量数据库触发器维护。
-- 商品图片尚未在 v0.1 实现；后续可接入 Supabase Storage。
+- v0.2 保存 Open Food Facts 或 Open Pet Food Facts 返回的远程图片 URL，
+  不上传图片，也不接入 Supabase Storage。
+
+## v0.2 数据模型检查
+
+- 当前 `supabase/schema.sql` 已包含 nullable 的 `barcode`、`brand`、
+  `image_url`、`category` 字段和带默认值的 `source` 字段。
+- 当前 schema 已包含用户维度的非空 barcode 唯一索引。
+- 本轮无需新增 migration，也未修改 v0.1 已验证的 RLS 策略。
+- 条形码只用于识别或复用 `products`，绝不用于合并
+  `inventory_batches`。

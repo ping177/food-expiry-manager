@@ -4,6 +4,10 @@ import BatchCard from './components/BatchCard'
 import ConfigNotice from './components/ConfigNotice'
 import { decrementQuantity, normalizeQuantity } from './lib/inventory'
 import {
+  lookupProductLocalFirst,
+  normalizeBarcode,
+} from './lib/productLookup'
+import {
   missingSupabaseVariables,
   supabase,
 } from './lib/supabase'
@@ -39,9 +43,12 @@ export default function App() {
           status,
           product:products (
             id,
+            barcode,
             name,
             brand,
-            category
+            image_url,
+            category,
+            source
           )
         `,
       )
@@ -117,34 +124,75 @@ export default function App() {
   }, [session, loadBatches])
 
   async function findOrCreateProduct(form) {
+    const barcode = normalizeBarcode(form.barcode) || null
     const name = form.productName.trim()
     const brand = form.brand.trim()
+    const productValues = {
+      name,
+      brand: brand || null,
+      image_url: form.imageUrl.trim() || null,
+      category: form.category.trim() || null,
+      source: form.source || 'manual',
+    }
 
-    let query = supabase
-      .from('products')
-      .select('id')
-      .eq('name', name)
+    if (barcode) {
+      const { data: existingProducts, error: lookupError } = await supabase
+        .from('products')
+        .select('id')
+        .eq('barcode', barcode)
+        .limit(1)
 
-    query = brand ? query.eq('brand', brand) : query.is('brand', null)
+      if (lookupError) throw lookupError
+      if (existingProducts?.[0]) {
+        const existingProduct = existingProducts[0]
+        const { error: updateError } = await supabase
+          .from('products')
+          .update(productValues)
+          .eq('id', existingProduct.id)
 
-    const { data: existingProducts, error: lookupError } = await query.limit(1)
-    if (lookupError) throw lookupError
-    if (existingProducts?.[0]) return existingProducts[0]
+        if (updateError) throw updateError
+        return existingProduct
+      }
+    } else {
+      let query = supabase
+        .from('products')
+        .select('id')
+        .eq('name', name)
+
+      query = brand ? query.eq('brand', brand) : query.is('brand', null)
+
+      const { data: existingProducts, error: lookupError } =
+        await query.limit(1)
+      if (lookupError) throw lookupError
+      if (existingProducts?.[0]) return existingProducts[0]
+    }
 
     const { data: product, error: createError } = await supabase
       .from('products')
       .insert({
         user_id: session.user.id,
-        name,
-        brand: brand || null,
-        category: form.category.trim() || null,
-        source: 'manual',
+        barcode,
+        ...productValues,
       })
       .select('id')
       .single()
 
     if (createError) throw createError
     return product
+  }
+
+  function lookupBarcodeProduct(barcode) {
+    return lookupProductLocalFirst(barcode, async (normalizedBarcode) => {
+      const { data: existingProducts, error: lookupError } = await supabase
+        .from('products')
+        .select('barcode, name, brand, image_url, category, source')
+        .eq('user_id', session.user.id)
+        .eq('barcode', normalizedBarcode)
+        .limit(1)
+
+      if (lookupError) throw lookupError
+      return existingProducts?.[0] ?? null
+    })
   }
 
   async function handleSave(form) {
@@ -271,6 +319,7 @@ export default function App() {
           <AddBatchForm
             busy={loading}
             onCancel={() => setView('home')}
+            onLookupBarcode={lookupBarcodeProduct}
             onSave={handleSave}
           />
         ) : (
