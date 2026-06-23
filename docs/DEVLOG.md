@@ -4,6 +4,17 @@
 
 ## 2026-06-23
 
+### v0.2.1 国内商品条码 API 评估准备
+
+- 新增 `docs/BARCODE_API_EVALUATION.md`，记录 v0.2 覆盖率问题、候选服务、
+  评估维度、真实 barcode 测试模板、安全要求和未来接入架构。
+- 将 v0.2.1 拆分为覆盖率评估、供应商与字段映射确定、Edge Function 代理、
+  前端接入和真实 barcode 回归测试五个阶段。
+- 明确当前只做评估准备，不正式接入 API、不申请或写入 API key。
+- 明确商业 API key 不进入 Vite 前端，未来由 Supabase Edge Function 的服务端
+  secret 管理。
+- 明确 v0.2.1 不以电商爬虫为第一方案，也不包含图片上传、拍照或 AI 图片识别。
+
 ### v0.2 扫码和商品信息自动填充
 
 - 以 `7585fb2 feat: complete v0.1 food expiry management MVP` 为开发基线。

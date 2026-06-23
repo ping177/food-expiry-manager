@@ -136,3 +136,20 @@
 - 评估方式：接入前先用 5–10 个真实猫罐头 barcode 比较候选 API 覆盖率。
 - 图片范围：v0.2 只保留可选图片链接和已有图片预览，不实现上传或拍照。
   Supabase Storage、压缩、上传权限和 Storage RLS 留待后续版本统一设计。
+
+## D-016：国内条码 API 接入前先评估，并通过 Edge Function 代理
+
+- 状态：已决定
+- 日期：2026-06-23
+- 决策：v0.2.1 不直接选择或接入供应商。先用 5–10 个用户真实持有的猫罐头
+  barcode 比较候选 API 的命中率、字段完整度、图片稳定性、价格和接口限制。
+- 安全：第三方 API key 只能保存在服务端，不得写入前端源码，不得使用
+  `VITE_` 前缀暴露给浏览器。正式接入时由 Supabase Edge Function
+  `lookup-barcode-cn` 代理调用。
+- 查询顺序：本地 `products` → 国内商品条码 API → Open Food Facts
+  universal → Open Pet Food Facts → 普通 Open Food Facts → 手动填写。
+- 适配边界：Edge Function 将供应商响应转换为现有统一商品查询格式与
+  `found`、`partial_found`、`not_found`、`network_error`、`http_error`、
+  `parse_error` 状态。
+- 非目标：不以电商爬虫作为第一方案，不在本阶段实现图片上传、拍照或 AI
+  图片识别。

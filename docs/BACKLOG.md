@@ -45,6 +45,19 @@ Open Food Facts / Open Pet Food Facts 对中文商品、进口猫罐头和宠物
 国内商品条码 API 通常需要 API key。密钥不得放入 Vite 前端代码，后续应通过
 Supabase Edge Function 代理调用商业条码 API。
 
+实施拆分：
+
+- `v0.2.1-a`：使用
+  `docs/BARCODE_API_EVALUATION.md` 完成候选国内商品条码 API 覆盖率评估。
+- `v0.2.1-b`：确定供应商、成本边界、错误语义和统一字段映射。
+- `v0.2.1-c`：实现 Supabase Edge Function `lookup-barcode-cn`，由服务端
+  secret 提供 API key。
+- `v0.2.1-d`：前端在本地 `products` 未命中后接入 Edge Function，并保留现有
+  开放商品库 fallback。
+- `v0.2.1-e`：使用真实猫罐头 barcode 做命中率、字段完整性和多批次回归测试。
+
+当前只进入 `v0.2.1-a`，供应商尚未确定，不正式接入 API。
+
 ### 商品图片上传 / 拍照
 
 手动填写图片 URL 不符合主要使用习惯。后续版本可实现：
