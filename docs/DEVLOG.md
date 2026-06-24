@@ -2,9 +2,28 @@
 
 记录已完成的项目工作，按日期倒序维护。
 
+## 2026-06-24
+
+### v0.2.1 API 覆盖率评估方向修正
+
+- 根据用户新增的 7 个德国 / 欧洲进口猫罐头样本，将 v0.2.1 方向从“国内商品
+  条码 API 增强”调整为“商品条码 API 增强：优先覆盖德国进口猫罐头”。
+- 记录探数 API 对此前 3 个猫罐头样本 0/3 命中，暂不作为优先接入供应商。
+- 记录 Go-UPC 当前精确命中 5/7、准确图片 5/7，是 v0.2.1 第一候选。
+- 记录 Barcode Lookup 当前精确命中 4/7、有图片 4/7、准确图片 3/7，适合作为
+  第二 fallback。
+- 记录 EAN-Search / EAN-Suche 当前精确命中 3/7，图片覆盖 0/7，更适合作为
+  `suggested_match` / 名称品牌兜底。
+- 记录未来推荐查询顺序：Supabase 本地 `products` → Go-UPC → Barcode Lookup
+  → EAN-Search / EAN-Suche → Open Food Facts universal → Open Pet Food Facts
+  → 普通 Open Food Facts → 手动填写。
+- 记录未来状态建议：`exact_found`、`partial_found`、`suggested_match` 和
+  `not_found`；其中 `suggested_match` 必须用户确认后才能保存为当前 barcode
+  商品。
+
 ## 2026-06-23
 
-### v0.2.1 国内商品条码 API 评估准备
+### v0.2.1 商品条码 API 评估准备
 
 - 新增 `docs/BARCODE_API_EVALUATION.md`，记录 v0.2 覆盖率问题、候选服务、
   评估维度、真实 barcode 测试模板、安全要求和未来接入架构。
@@ -63,7 +82,7 @@
   可优先命中本地 `products` 并自动预填。
 - 同 barcode 保存两个不同到期日批次后，首页显示两个独立批次，数量互不合并；
   刷新后数据仍存在。
-- 真实猫罐头测试表明 Open Food Facts / Open Pet Food Facts 覆盖率不足，国内
+- 真实猫罐头测试表明 Open Food Facts / Open Pet Food Facts 覆盖率不足，
   商品条码 API 增强移至 v0.2.1，不继续扩大 v0.2。
 - 图片 URL 字段弱化为可选图片链接，并明确通常由扫码自动填入、可以留空。
 - 图片上传、拍照、Supabase Storage、图片压缩和 Storage RLS 均留待后续版本。

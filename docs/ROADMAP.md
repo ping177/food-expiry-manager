@@ -29,15 +29,20 @@
 - 同一条形码可复用商品，但每次添加仍新建独立 `inventory_batch`
 - 保质期仍由用户填写，不从开放商品数据库推断
 
-## v0.2.1：国内商品条码 API 增强
+## v0.2.1：商品条码 API 增强：优先覆盖德国进口猫罐头
 
 - 状态：评估准备阶段，供应商待定
-- 目标：提高第一次扫码自动匹配商品名、品牌和图片的成功率
-- 使用 5–10 个真实猫罐头 barcode 评估国内商品条码 API 覆盖率
+- 目标：提高德国 / 欧洲进口猫罐头第一次扫码自动匹配商品名、品牌和图片的成功率
+- 背景：用户短期主要管理德国 / 欧洲进口猫罐头，条码多为 `4` 开头；探数 API
+  当前样本 0/3 命中，暂不优先
+- 使用 5–10 个真实猫罐头 barcode 评估全球 / 欧洲 EAN 商品条码 API 覆盖率
 - 查询顺序保持 Supabase 本地 `products` 优先
 - 通过 Supabase Edge Function 代理需要 API key 的商业条码服务
 - API key 不进入 Vite 前端代码
-- 候选服务包括聚合数据、腾讯云市场、阿里云市场、天聚数行等
+- 当前候选优先级：Go-UPC → Barcode Lookup → EAN-Search / EAN-Suche →
+  Open Food Facts / Open Pet Food Facts → 国内商品条码 API
+- 最小可用版本建议先只接 Go-UPC，Barcode Lookup 和 EAN-Search 可作为后续
+  fallback 增强
 - 图片上传/拍照另行设计，不与条码 API 接入捆绑实现
 - 评估记录：`docs/BARCODE_API_EVALUATION.md`
 

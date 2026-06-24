@@ -14,49 +14,59 @@
 
 ## 后续优先事项
 
-### v0.2.1：国内商品条码 API 增强
+### v0.2.1：商品条码 API 增强：优先覆盖德国进口猫罐头
 
 Open Food Facts / Open Pet Food Facts 对中文商品、进口猫罐头和宠物食品覆盖率
 不足。v0.2 已建立扫码、本地商品复用和外部查询底座，但第一次扫码的自动匹配率
 仍需提升。
 
+用户短期主要管理德国 / 欧洲进口猫罐头，条形码多为 `4` 开头。探数 API
+此前 3 个真实猫罐头样本 0/3 命中，暂不作为优先接入供应商；Go-UPC、Barcode
+Lookup 和 EAN-Search / EAN-Suche 对当前 7 个样本更有效。
+
 目标：
 
-- 提高第一次扫码自动匹配商品名、品牌和图片的成功率。
+- 提高德国 / 欧洲进口猫罐头第一次扫码自动匹配商品名、品牌和图片的成功率。
 - 接入前先使用用户手头 5–10 个真实猫罐头 barcode 测试候选服务覆盖率。
 
 建议查询顺序：
 
 1. Supabase 本地 `products`
-2. 国内商品条码 API
-3. Open Food Facts universal
-4. Open Pet Food Facts
-5. 普通 Open Food Facts
-6. 手动填写
+2. Go-UPC
+3. Barcode Lookup
+4. EAN-Search / EAN-Suche
+5. Open Food Facts universal
+6. Open Pet Food Facts
+7. 普通 Open Food Facts
+8. 手动填写
 
 候选方向：
 
-- 聚合数据
-- 腾讯云市场
-- 阿里云市场
-- 天聚数行
-- 其他国内商品条码 API
+- Go-UPC：第一候选，用于提高德国进口猫罐头的商品名和图片命中率。
+- Barcode Lookup：第二 fallback，用于补 Go-UPC 未命中的精确商品。
+- EAN-Search / EAN-Suche：第三 fallback，用于 `suggested_match`，不自动当成
+  精确命中。
+- Open Food Facts / Open Pet Food Facts：保留免费兜底。
+- 国内商品条码 API：当前样本表现较弱，暂不优先。
 
-国内商品条码 API 通常需要 API key。密钥不得放入 Vite 前端代码，后续应通过
-Supabase Edge Function 代理调用商业条码 API。
+商业商品条码 API 通常需要 API key。密钥不得放入 Vite 前端代码，后续应通过
+Supabase Edge Function 代理调用第三方条码 API。
+
+v0.2.1 最小可用版本建议先只接 Go-UPC，降低复杂度。Barcode Lookup 和
+EAN-Search / EAN-Suche 可作为后续 fallback 增强。
 
 实施拆分：
 
 - `v0.2.1-a`：使用
-  `docs/BARCODE_API_EVALUATION.md` 完成候选国内商品条码 API 覆盖率评估。
+  `docs/BARCODE_API_EVALUATION.md` 完成候选全球 / 欧洲 EAN 商品条码 API 覆盖率评估。
 - `v0.2.1-b`：确定供应商、成本边界、错误语义和统一字段映射。
-- `v0.2.1-c`：实现 Supabase Edge Function `lookup-barcode-cn`，由服务端
+- `v0.2.1-c`：实现 Supabase Edge Function `lookup-barcode-product`，由服务端
   secret 提供 API key。
 - `v0.2.1-d`：前端在本地 `products` 未命中后接入 Edge Function，并保留现有
   开放商品库 fallback。
 - `v0.2.1-e`：使用真实猫罐头 barcode 做命中率、字段完整性和多批次回归测试。
 
-当前只进入 `v0.2.1-a`，供应商尚未确定，不正式接入 API。
+当前只进入 `v0.2.1-a`，供应商尚未最终确定，不正式接入 API。
 
 ### 商品图片上传 / 拍照
 

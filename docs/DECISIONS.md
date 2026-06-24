@@ -130,14 +130,14 @@
 - 状态：已决定
 - 日期：2026-06-23
 - 决策：v0.2 以扫码、本地商品复用和开放商品库查询作为技术底座。真实猫罐头
-  覆盖率不足的问题在 v0.2.1 评估国内商品条码 API，不继续扩大当前版本。
+  覆盖率不足的问题在 v0.2.1 评估商品条码 API，不继续扩大当前版本。
 - 密钥约束：国内商业 API 的 key 不得进入 Vite 前端，应由 Supabase Edge
   Function 代理。
 - 评估方式：接入前先用 5–10 个真实猫罐头 barcode 比较候选 API 覆盖率。
 - 图片范围：v0.2 只保留可选图片链接和已有图片预览，不实现上传或拍照。
   Supabase Storage、压缩、上传权限和 Storage RLS 留待后续版本统一设计。
 
-## D-016：国内条码 API 接入前先评估，并通过 Edge Function 代理
+## D-016：商品条码 API 接入前先评估，并通过 Edge Function 代理
 
 - 状态：已决定
 - 日期：2026-06-23
@@ -145,11 +145,30 @@
   barcode 比较候选 API 的命中率、字段完整度、图片稳定性、价格和接口限制。
 - 安全：第三方 API key 只能保存在服务端，不得写入前端源码，不得使用
   `VITE_` 前缀暴露给浏览器。正式接入时由 Supabase Edge Function
-  `lookup-barcode-cn` 代理调用。
-- 查询顺序：本地 `products` → 国内商品条码 API → Open Food Facts
-  universal → Open Pet Food Facts → 普通 Open Food Facts → 手动填写。
+  `lookup-barcode-product` 代理调用。
+- 查询顺序：本地 `products` → Go-UPC → Barcode Lookup → EAN-Search /
+  EAN-Suche → Open Food Facts universal → Open Pet Food Facts → 普通
+  Open Food Facts → 手动填写。
 - 适配边界：Edge Function 将供应商响应转换为现有统一商品查询格式与
   `found`、`partial_found`、`not_found`、`network_error`、`http_error`、
   `parse_error` 状态。
 - 非目标：不以电商爬虫作为第一方案，不在本阶段实现图片上传、拍照或 AI
   图片识别。
+
+## D-017：v0.2.1 优先评估全球 / 欧洲 EAN 条码服务
+
+- 状态：已决定
+- 日期：2026-06-24
+- 决策：v0.2.1 的选型重点从“国内商品条码 API”调整为“全球 / 欧洲 EAN
+  商品条码 API”，优先覆盖德国 / 欧洲进口猫罐头。
+- 原因：用户短期主要管理德国 / 欧洲进口猫罐头，条形码多为 `4` 开头。探数
+  API 对 3 个真实猫罐头样本 0/3 命中；Go-UPC、Barcode Lookup 和
+  EAN-Search / EAN-Suche 对 7 个当前样本明显更有效。
+- 当前优先级：Go-UPC 第一候选，Barcode Lookup 第二 fallback，EAN-Search /
+  EAN-Suche 第三 fallback，Open Food Facts / Open Pet Food Facts 保留免费
+  兜底，国内商品条码 API 暂不优先。
+- 最小可用版本：建议先只接 Go-UPC，降低复杂度；Barcode Lookup 和
+  EAN-Search / EAN-Suche 后续再作为 fallback 增强。
+- 状态语义：未来可区分 `exact_found`、`partial_found`、`suggested_match`
+  和 `not_found`。`suggested_match` 只表示相近 pack 或同品牌疑似商品，必须
+  经用户确认后才能保存为当前 barcode 的 `product`。
