@@ -35,3 +35,12 @@
 3. 如果测试无法运行，必须记录原因、未验证风险和建议的后续验证方式。
 4. 检查文档、实现和版本范围是否一致。
 
+## Project State Maintenance
+
+1. 每次 meaningful change 后，必须检查 `docs/PROJECT_STATE.md` 是否仍准确。
+2. 如果版本、当前状态、最新完成事项、最新 commit、工作区状态、验证结果、
+   下一步、阻塞项、重要上下文或交接提示发生变化，必须同步更新
+   `docs/PROJECT_STATE.md`。
+3. 不确定的信息不要编造，写 `Needs verification`。
+4. 更新项目状态时不得读取、打印或记录 secrets、`.env`、API key、access token
+   或其他敏感信息。

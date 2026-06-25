@@ -8,47 +8,50 @@
 
 ## Current version
 
-v0.2.1 barcode API coverage evaluation completed; preparing v0.2.2 service-side barcode lookup integration.
+v0.2.1 Go-UPC Edge Function integration completed and pushed to remote `main`.
 
 ## Current status
 
-Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, and Open Food Facts / Open Pet Food Facts lookup. Barcode API coverage evaluation is complete; next work waits on Go-UPC free API key approval before v0.2.2 service-side integration.
+Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, Go-UPC service-side lookup through Supabase Edge Function, and Open Food Facts / Open Pet Food Facts fallback. Go-UPC is deployed and has passed real manual acceptance. v0.2.2 candidate work is product information editing and category correction.
 
 ## Latest completed
 
-v0.2 barcode scanning and product information autofill, local product reuse by barcode, independent inventory batches, real Supabase manual acceptance for repeated barcode batches, and v0.2.1 barcode API coverage evaluation.
+v0.2.1 Go-UPC Edge Function integration, deployment, and real manual acceptance. Real barcode `4255634604636` successfully prefilled product name, brand, and image; second lookup reused local `products`; same barcode with different expiry dates created independent `inventory_batches`.
 
 ## Latest commit
 
-`eb1aee2 chore: fix local dev port`
+`6cee6f8 feat: add Go-UPC barcode lookup edge function`
 
 ## Working tree
 
-Clean at verification time.
+Clean before this project state maintenance update. Current documentation maintenance changes are pending commit.
 
 ## Last verified
 
-2026-06-25
+2026-06-26: Go-UPC online Edge Function manual acceptance passed. Automated verification from the implementation record: `npm test`, `npm run build`, and `git diff --check` passed on 2026-06-25. Current-session automated verification: Needs verification.
 
 ## Next Action
 
-等待 Go-UPC free API key；拿到 key 后进入 v0.2.2，通过服务端代理接入真实 barcode lookup。
+Decide whether to start v0.2.2: product information editing and category correction. Before implementation, clarify how API-provided category should be treated as reference-only and how product edits should update all batches sharing the same `product`.
 
 ## Blockers
 
-Go-UPC free API key approval 未完成；商业 barcode API key 不能暴露在前端，需要服务端代理。
+No blocker for v0.2.1. v0.2.2 needs product/design decisions for category confirmation and product edit UX. Current-session automated verification is still Needs verification.
 
 ## Important Context
 
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
 - Supabase Anonymous Auth keeps the app open-and-use, but account recovery and cross-device continuity remain future work.
-- v0.2.1 API coverage evaluation is complete.
-- Go-UPC is the first candidate.
-- Barcode Lookup is the second fallback.
-- EAN-Search / EAN-Suche is the third `suggested_match` fallback.
+- v0.2.1 Go-UPC Edge Function integration is complete and deployed.
+- Go-UPC API key must stay in Supabase Edge Function server-side secret `GO_UPC_API_KEY`; never expose it through Vite frontend env vars.
+- Current external lookup order is local `products` → Go-UPC Edge Function → Open Food Facts universal → Open Pet Food Facts → normal Open Food Facts → manual entry.
+- Barcode Lookup is a possible future fallback, not implemented.
+- EAN-Search / EAN-Suche is a possible future `suggested_match` fallback, not implemented.
+- Go-UPC category can be too generic for pet food, e.g. `Snack Foods`; third-party category should be treated as reference-only until v0.2.2 resolves category correction.
+- Saved product information is reused locally by barcode; incorrect first-save product data currently persists until product editing exists.
 - Product data APIs must not infer shelf life.
 
 ## Handoff Prompt
 
-Continue 食品过期管理 by waiting for the Go-UPC free API key approval. Once available, enter v0.2.2 and implement real barcode lookup through a service-side proxy while preserving product/batch separation and keeping provider keys out of frontend code.
+Continue 食品过期管理 from remote `main` after v0.2.1 Go-UPC Edge Function integration. First check `git status --short`, read README and project docs, and confirm `docs/PROJECT_STATE.md` is current. Next likely work is v0.2.2: product information editing and category correction. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, and treat third-party category as reference-only unless the user confirms the intended behavior.
