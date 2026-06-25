@@ -1,6 +1,7 @@
 const OPEN_FOOD_FACTS_API = 'https://world.openfoodfacts.org/api/v2/product'
 const OPEN_PET_FOOD_FACTS_API =
   'https://world.openpetfoodfacts.org/api/v2/product'
+const GO_UPC_FUNCTION_NAME = 'lookup-barcode-product'
 const PRODUCT_FIELDS = [
   'code',
   'product_name',
@@ -50,6 +51,17 @@ function errorResult(status, barcode) {
   }
 }
 
+function isLookupStatus(status) {
+  return [
+    'found',
+    'partial_found',
+    'not_found',
+    'network_error',
+    'http_error',
+    'parse_error',
+  ].includes(status)
+}
+
 function productResult(barcode, product, source) {
   const normalizedProduct = {
     barcode,
@@ -85,6 +97,31 @@ export function storedProductResult(barcode, product) {
   }
 }
 
+function normalizedExternalProduct(barcode, product, fallbackSource) {
+  return {
+    barcode,
+    name: product?.name || '',
+    brand: product?.brand || '',
+    imageUrl: product?.imageUrl || '',
+    category: product?.category || '',
+    source: product?.source || fallbackSource,
+  }
+}
+
+function externalProductResult(barcode, product, fallbackSource) {
+  const normalizedProduct = normalizedExternalProduct(
+    barcode,
+    product,
+    fallbackSource,
+  )
+
+  return {
+    ok: true,
+    status: normalizedProduct.name ? 'found' : 'partial_found',
+    product: normalizedProduct,
+  }
+}
+
 async function requestProduct(url, barcode, source, fetchImpl) {
   let response
   try {
@@ -111,7 +148,7 @@ async function requestProduct(url, barcode, source, fetchImpl) {
   return productResult(barcode, data.product, source)
 }
 
-export async function lookupProductByBarcode(barcode, fetchImpl = fetch) {
+async function lookupOpenProductByBarcode(barcode, fetchImpl = fetch) {
   const normalizedBarcode = normalizeBarcode(barcode)
 
   if (!normalizedBarcode) {
@@ -170,6 +207,84 @@ export async function lookupProductByBarcode(barcode, fetchImpl = fetch) {
     return errorResult('http_error', normalizedBarcode)
   }
   return errorResult('parse_error', normalizedBarcode)
+}
+
+async function lookupGoUpcByBarcode(barcode, invokeFunction) {
+  const normalizedBarcode = normalizeBarcode(barcode)
+
+  if (!normalizedBarcode) {
+    return errorResult('not_found', normalizedBarcode)
+  }
+
+  let response
+  try {
+    response = await invokeFunction(GO_UPC_FUNCTION_NAME, {
+      body: { barcode: normalizedBarcode },
+    })
+  } catch {
+    return errorResult('network_error', normalizedBarcode)
+  }
+
+  if (response?.error) {
+    return errorResult('http_error', normalizedBarcode)
+  }
+
+  const data = response?.data
+  if (!data || !isLookupStatus(data.status)) {
+    return errorResult('parse_error', normalizedBarcode)
+  }
+
+  if (data.ok) {
+    if (!['found', 'partial_found'].includes(data.status)) {
+      return errorResult('parse_error', normalizedBarcode)
+    }
+    return externalProductResult(normalizedBarcode, data.product, 'go_upc')
+  }
+
+  return errorResult(data.status, data.barcode || normalizedBarcode)
+}
+
+function normalizeLookupOptions(optionsOrFetch) {
+  if (typeof optionsOrFetch === 'function') {
+    return { fetchImpl: optionsOrFetch }
+  }
+  return {
+    fetchImpl: optionsOrFetch?.fetchImpl ?? fetch,
+    invokeFunction: optionsOrFetch?.invokeFunction,
+  }
+}
+
+export async function lookupProductByBarcode(barcode, optionsOrFetch = fetch) {
+  const normalizedBarcode = normalizeBarcode(barcode)
+
+  if (!normalizedBarcode) {
+    return errorResult('not_found', normalizedBarcode)
+  }
+
+  const { fetchImpl, invokeFunction } = normalizeLookupOptions(optionsOrFetch)
+  let partialResult = null
+
+  if (invokeFunction) {
+    const goUpcResult = await lookupGoUpcByBarcode(
+      normalizedBarcode,
+      invokeFunction,
+    )
+    if (goUpcResult.status === 'found') {
+      return goUpcResult
+    }
+    if (goUpcResult.status === 'partial_found') {
+      partialResult = goUpcResult
+    }
+  }
+
+  const openProductResult = await lookupOpenProductByBarcode(
+    normalizedBarcode,
+    fetchImpl,
+  )
+  if (openProductResult.status === 'found') {
+    return openProductResult
+  }
+  return partialResult ?? openProductResult
 }
 
 export async function lookupProductLocalFirst(

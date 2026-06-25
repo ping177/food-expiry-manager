@@ -1,7 +1,7 @@
 # 全球 / 欧洲 EAN 商品条码 API 评估
 
-本文用于 v0.2.1 商品条码 API 增强的供应商评估。当前阶段只做调研准备和真实
-barcode 覆盖率记录，不正式接入第三方 API。
+本文用于 v0.2.1 商品条码 API 增强的供应商评估和接入记录。评估阶段已确认
+Go-UPC 是当前最适合作为最小可用版本的第一候选。
 
 ## 背景与当前问题
 
@@ -92,8 +92,8 @@ Lookup 和 Go-UPC。
 4. Open Food Facts / Open Pet Food Facts：保留免费兜底。
 5. 国内商品条码 API：当前样本表现较弱，暂不优先。
 
-v0.2.1 最小可用版本建议先只接 Go-UPC，降低复杂度。Barcode Lookup 和
-EAN-Search / EAN-Suche 可作为后续 fallback 增强。
+v0.2.1 最小可用版本先只接 Go-UPC，降低复杂度。Barcode Lookup 和
+EAN-Search / EAN-Suche 可作为后续 fallback 增强，但不在本轮实现。
 
 ## 评估维度
 
@@ -157,16 +157,17 @@ Edge Function 读取服务端环境变量中的 API key
 前端预填或允许手动填写
 ```
 
-未来查询顺序：
+v0.2.1 当前接入顺序：
 
 1. Supabase 本地 `products`
 2. Go-UPC
-3. Barcode Lookup
-4. EAN-Search / EAN-Suche
-5. Open Food Facts universal
-6. Open Pet Food Facts
-7. 普通 Open Food Facts
-8. 手动填写
+3. Open Food Facts universal
+4. Open Pet Food Facts
+5. 普通 Open Food Facts
+6. 手动填写
+
+Barcode Lookup 和 EAN-Search / EAN-Suche 保留为后续候选；本轮不接入，也不实现
+`suggested_match`。
 
 ## API key 安全要求
 
@@ -221,16 +222,26 @@ Edge Function 读取服务端环境变量中的 API key
 `suggested_match` 不能自动保存为当前 barcode 的 `product`，必须用户确认后才能
 使用，避免把相近 pack 或同品牌其他款错误绑定到当前条形码。
 
-## 选型结论
+## Go-UPC 接入结论
 
-状态：待定。
+状态：v0.2.1 最小接入。
 
-阶段性结论：Go-UPC 是当前 v0.2.1 第一候选，建议最小可用版本先只接 Go-UPC。
-Barcode Lookup 适合作为第二 fallback，EAN-Search / EAN-Suche 适合作为
-`suggested_match` 兜底。国内商品条码 API 在当前德国 / 欧洲进口猫罐头样本中
-表现较弱，暂不优先。
+结论：Go-UPC 是当前 v0.2.1 第一接入供应商。Edge Function 使用服务端 secret
+`GO_UPC_API_KEY` 调用 Go-UPC，并映射为现有商品查询格式。Barcode Lookup 适合
+后续作为第二 fallback，EAN-Search / EAN-Suche 适合后续作为
+`suggested_match` 兜底；两者本轮不接入。国内商品条码 API 在当前德国 / 欧洲
+进口猫罐头样本中表现较弱，暂不优先。
 
-正式接入前仍需根据以下优先级继续复核：
+Go-UPC 状态映射：
+
+- `200` 且有可用商品名：`found`
+- `200` 且有商品记录但缺少商品名：`partial_found`
+- `404` 或无商品记录：`not_found`
+- 网络请求失败：`network_error`
+- secret 缺失、401、429、供应商 5xx 或其他非 2xx：`http_error`
+- Go-UPC 返回无法解析的 JSON：`parse_error`
+
+后续仍需根据以下优先级继续观察：
 
 1. 商品名命中率。
 2. 品牌和图片完整度。

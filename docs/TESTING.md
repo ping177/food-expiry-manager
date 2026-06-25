@@ -42,6 +42,12 @@ npm test
 - 覆盖本地 product 命中时直接返回且不调用外部查询。
 - 覆盖本地无匹配 product 时才调用外部查询。
 - 覆盖本地 partial product 仍直接复用、不调用外部查询。
+- 覆盖 Go-UPC Edge Function 命中时直接返回 `go_upc` 商品信息且不继续请求
+  开放商品库。
+- 覆盖 Go-UPC 未命中、服务配置错误或 Edge Function 不可达时继续走 Open
+  Food Facts / Open Pet Food Facts fallback。
+- 覆盖 Go-UPC `partial_found` 时继续寻找完整开放商品库结果，找不到完整结果
+  时保留 Go-UPC partial 信息。
 
 生产构建验证：
 
@@ -56,8 +62,26 @@ npm run build
 - 手机浏览器摄像头权限、后置摄像头选择和真实包装扫码。
 - Open Food Facts universal 和 Open Pet Food Facts fallback 的真实网络查询
   及图片 URL 展示。
-- 国内商品条码 API 尚未选型；将在 v0.2.1 使用 5–10 个真实猫罐头 barcode
-  评估覆盖率。
+- Go-UPC Edge Function 需要使用真实 Supabase secrets 和真实猫罐头 barcode
+  做端到端验收。
+
+## v0.2.1 Go-UPC 手动验收清单
+
+1. 确认线上或本地 Supabase Edge Function 已设置服务端 secret
+   `GO_UPC_API_KEY`，且未创建 `VITE_GO_UPC_API_KEY`。
+2. 使用已保存过的 barcode 查询，确认直接命中本地 `products`，不调用 Edge
+   Function，不消耗 Go-UPC 免费额度。
+3. 使用 Go-UPC 能命中的真实猫罐头 barcode 查询，确认预填商品名、品牌、图片
+   和分类，来源保存为 `go_upc`。
+4. 使用 Go-UPC 未命中的 barcode 查询，确认继续进入 Open Food Facts /
+   Open Pet Food Facts fallback。
+5. 暂时移除或不设置 `GO_UPC_API_KEY` 后查询，确认页面不崩溃、不暴露 secret
+   细节，并仍允许手动添加。
+6. 模拟 Go-UPC 429 或 5xx，确认提示服务暂时不可用或由后续 fallback 接管，
+   手动填写路径仍可用。
+7. 对同一 barcode 连续保存两个不同到期日批次，确认首页显示两个独立
+   `inventory_batches`，数量不合并。
+8. 刷新页面后再次输入同 barcode，确认优先命中本地 `products`。
 
 ## v0.2 已完成的真实验收
 

@@ -172,3 +172,38 @@
 - 状态语义：未来可区分 `exact_found`、`partial_found`、`suggested_match`
   和 `not_found`。`suggested_match` 只表示相近 pack 或同品牌疑似商品，必须
   经用户确认后才能保存为当前 barcode 的 `product`。
+
+## D-018：v0.2.1 最小接入 Go-UPC Edge Function
+
+- 状态：已决定
+- 日期：2026-06-25
+- 决策：v0.2.1 最小可用版本只接入 Go-UPC，由 Supabase Edge Function
+  `lookup-barcode-product` 代理调用。前端仍先查询当前用户本地 `products`；
+  本地未命中后进入统一外部查询链路：Go-UPC → Open Food Facts universal →
+  Open Pet Food Facts → 普通 Open Food Facts。
+- 职责边界：`App.jsx` 负责本地 `products` 查询、商品和库存批次保存；外部
+  fallback 编排集中在 `src/lib/productLookup.js`。
+- 安全：Go-UPC API key 只读取服务端 secret `GO_UPC_API_KEY`，不得写入前端
+  代码、文档示例值或 `VITE_` 环境变量。Edge Function 保持 Supabase 默认 JWT
+  校验，不作为公开无鉴权 API 代理。
+- 错误语义：Edge Function 对前端继续返回 `found`、`partial_found`、
+  `not_found`、`network_error`、`http_error`、`parse_error`。内部日志可区分
+  secret 缺失、401、429 和供应商 5xx，但不得记录 key 或 Authorization header。
+- 非目标：本轮不接 Barcode Lookup、不接 EAN-Search、不实现 `suggested_match`，
+  不修改数据库 schema。
+
+## D-019：第三方分类只作参考，商品主数据需要可编辑
+
+- 状态：候选决策
+- 日期：2026-06-26
+- 背景：Go-UPC 线上验收中，barcode `4255634604636` 能正确预填商品名、品牌
+  和图片，但返回的 category 被保存为 `Snack Foods`，对宠物食品场景不准确。
+  同时，商品一旦保存后当前无法编辑，后续本地 barcode 复用会持续展示第一次
+  保存的信息。
+- 候选决策：v0.2.2 设计“商品信息编辑与分类校正”。第三方 API 返回的 category
+  只能作为参考，不应把泛化或低置信度分类自动保存为用户本地分类；商品主数据
+  应允许用户编辑商品名、品牌、分类和图片链接。
+- 影响范围：编辑 `products` 后，所有引用同一 product / 同 barcode 的库存批次
+  展示同步更新；但不得合并、删除或重写既有 `inventory_batches`。
+- 约束：继续保持 `products` 与 `inventory_batches` 分离；分类校正不改变批次
+  独立保存原则。

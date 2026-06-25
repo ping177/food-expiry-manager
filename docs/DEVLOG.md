@@ -2,6 +2,46 @@
 
 记录已完成的项目工作，按日期倒序维护。
 
+## 2026-06-26
+
+### v0.2.1 Go-UPC 线上验收与 v0.2.2 候选记录
+
+- Go-UPC 线上 Edge Function 手动验收通过。
+- 真实测试 barcode `4255634604636` 成功预填商品名、品牌和图片。
+- 保存后第二次输入同 barcode 成功命中本地 `products` 并复用商品信息。
+- 同 barcode 不同到期日成功创建独立 `inventory_batches`，未合并批次。
+- 验收发现 Go-UPC 返回的 category 被自动保存为 `Snack Foods`，对宠物食品不
+  准确；已记录为 v0.2.2 分类校正候选：第三方 API category 只作为参考，泛化
+  分类不应直接自动保存，或需要用户确认。
+- 验收发现保存后当前无法编辑 product 信息；已记录为 v0.2.2 商品信息编辑候选：
+  允许编辑商品名、品牌、分类和图片链接，修改 `products` 后影响所有同 barcode
+  的库存批次展示。
+- 本次只更新文档，不修改代码逻辑，不 commit / push。
+
+## 2026-06-25
+
+### v0.2.1 Go-UPC Edge Function 接入
+
+- 新增 Supabase Edge Function `lookup-barcode-product`，从服务端 secret
+  `GO_UPC_API_KEY` 读取 Go-UPC API key，并使用 `Authorization: Bearer`
+  请求 Go-UPC。
+- Edge Function 对前端保持 `found`、`partial_found`、`not_found`、
+  `network_error`、`http_error`、`parse_error` 兼容状态。
+- Edge Function 内部日志区分 secret 缺失、401、429 和供应商 5xx，但不记录
+  API key、Authorization header 或供应商鉴权信息。
+- 前端保持本地 `products` 优先；本地未命中后进入统一外部查询编排：
+  Go-UPC Edge Function → Open Food Facts universal → Open Pet Food Facts →
+  普通 Open Food Facts。
+- `App.jsx` 只负责本地商品查询和保存链路；外部 fallback 编排集中在
+  `src/lib/productLookup.js`。
+- 保存逻辑保持不变：带 barcode 保存时写入或复用 `products`，每次保存仍创建
+  独立 `inventory_batches`。
+- 本轮未修改 `supabase/schema.sql`，未新增前端 `VITE_GO_UPC_API_KEY`，未接
+  Barcode Lookup / EAN-Search，未实现 `suggested_match`。
+- `npm test`：3 个测试文件、37 个测试全部通过。
+- `npm run build`：生产构建成功。
+- `git diff --check`：通过。
+
 ## 2026-06-24
 
 ### v0.2.1 API 覆盖率评估方向修正

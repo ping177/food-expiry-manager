@@ -31,7 +31,7 @@ products (1) ──────< inventory_batches (N)
 | `brand` | `text` | 否 | 品牌 |
 | `image_url` | `text` | 否 | 商品图片地址 |
 | `category` | `text` | 否 | 分类，如猫罐头、猫条、食品 |
-| `source` | `text` | 是 | 信息来源，如 `manual`、`open_food_facts_universal`、`open_pet_food_facts`、`open_food_facts` |
+| `source` | `text` | 是 | 信息来源，如 `manual`、`go_upc`、`open_food_facts_universal`、`open_pet_food_facts`、`open_food_facts` |
 | `created_at` | `timestamptz` | 是 | 创建时间 |
 | `updated_at` | `timestamptz` | 是 | 最后更新时间 |
 
@@ -46,6 +46,7 @@ products (1) ──────< inventory_batches (N)
 - 扫码或手输 barcode 的预填查询同样遵循本地优先：先查询当前用户的
   `products`，本地未命中才访问外部商品库。
 - 商品复用只复用 `products`，每次添加库存仍创建新的批次。
+- Go-UPC Edge Function 预填的信息将 `source` 记录为 `go_upc`。
 - Open Food Facts universal lookup 预填的信息将 `source` 记录为
   `open_food_facts_universal`；Open Pet Food Facts fallback 记录为
   `open_pet_food_facts`；普通 Open Food Facts fallback 记录为
@@ -148,3 +149,10 @@ products (1) ──────< inventory_batches (N)
 - 本轮无需新增 migration，也未修改 v0.1 已验证的 RLS 策略。
 - 条形码只用于识别或复用 `products`，绝不用于合并
   `inventory_batches`。
+
+## v0.2.1 数据模型检查
+
+- Go-UPC 接入只新增 `products.source = 'go_upc'` 的来源取值说明。
+- 当前 `supabase/schema.sql` 无需修改；`products` 和 `inventory_batches`
+  继续保持分离。
+- 同一 barcode 的每次保存仍然创建独立 `inventory_batches`，不得合并批次。

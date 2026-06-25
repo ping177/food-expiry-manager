@@ -31,18 +31,17 @@
 
 ## v0.2.1：商品条码 API 增强：优先覆盖德国进口猫罐头
 
-- 状态：评估准备阶段，供应商待定
+- 状态：Go-UPC Edge Function 最小接入阶段
 - 目标：提高德国 / 欧洲进口猫罐头第一次扫码自动匹配商品名、品牌和图片的成功率
 - 背景：用户短期主要管理德国 / 欧洲进口猫罐头，条码多为 `4` 开头；探数 API
   当前样本 0/3 命中，暂不优先
-- 使用 5–10 个真实猫罐头 barcode 评估全球 / 欧洲 EAN 商品条码 API 覆盖率
 - 查询顺序保持 Supabase 本地 `products` 优先
-- 通过 Supabase Edge Function 代理需要 API key 的商业条码服务
+- 通过 Supabase Edge Function `lookup-barcode-product` 代理 Go-UPC
 - API key 不进入 Vite 前端代码
-- 当前候选优先级：Go-UPC → Barcode Lookup → EAN-Search / EAN-Suche →
-  Open Food Facts / Open Pet Food Facts → 国内商品条码 API
-- 最小可用版本建议先只接 Go-UPC，Barcode Lookup 和 EAN-Search 可作为后续
-  fallback 增强
+- 当前接入顺序：Go-UPC → Open Food Facts universal → Open Pet Food Facts →
+  普通 Open Food Facts
+- Barcode Lookup 和 EAN-Search / EAN-Suche 可作为后续 fallback 增强，但不在
+  本轮实现
 - 图片上传/拍照另行设计，不与条码 API 接入捆绑实现
 - 评估记录：`docs/BARCODE_API_EVALUATION.md`
 

@@ -240,6 +240,173 @@ describe('lookupProductByBarcode', () => {
       },
     })
   })
+
+  it('uses Go-UPC Edge Function before the open product databases', async () => {
+    const invokeFunction = vi.fn().mockResolvedValue({
+      data: {
+        ok: true,
+        status: 'found',
+        product: {
+          barcode: '1234567890123',
+          name: 'Go UPC Cat Food',
+          brand: 'Go UPC Brand',
+          imageUrl: 'https://example.com/go-upc.jpg',
+          category: 'Cat food',
+          source: 'go_upc',
+        },
+      },
+    })
+    const fetchMock = vi.fn()
+
+    await expect(
+      lookupProductByBarcode('1234567890123', {
+        invokeFunction,
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      status: 'found',
+      product: {
+        barcode: '1234567890123',
+        name: 'Go UPC Cat Food',
+        brand: 'Go UPC Brand',
+        imageUrl: 'https://example.com/go-upc.jpg',
+        category: 'Cat food',
+        source: 'go_upc',
+      },
+    })
+    expect(invokeFunction).toHaveBeenCalledWith('lookup-barcode-product', {
+      body: { barcode: '1234567890123' },
+    })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('falls back to open product databases after Go-UPC misses', async () => {
+    const invokeFunction = vi.fn().mockResolvedValue({
+      data: {
+        ok: false,
+        status: 'not_found',
+        barcode: '1234567890123',
+      },
+    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(
+        jsonResponse({
+          status: 1,
+          product: {
+            product_name: 'Fallback Pet Food',
+            brands: 'Fallback Brand',
+          },
+        }),
+      )
+
+    await expect(
+      lookupProductByBarcode('1234567890123', {
+        invokeFunction,
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toMatchObject({
+      ok: true,
+      status: 'found',
+      product: {
+        name: 'Fallback Pet Food',
+        brand: 'Fallback Brand',
+        source: 'open_pet_food_facts',
+      },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('keeps a Go-UPC partial result when open product databases do not find a full product', async () => {
+    const invokeFunction = vi.fn().mockResolvedValue({
+      data: {
+        ok: true,
+        status: 'partial_found',
+        product: {
+          barcode: '1234567890123',
+          name: '',
+          brand: 'Go UPC Partial Brand',
+          imageUrl: 'https://example.com/partial-go-upc.jpg',
+          category: 'Cat food',
+          source: 'go_upc',
+        },
+      },
+    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+
+    await expect(
+      lookupProductByBarcode('1234567890123', {
+        invokeFunction,
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toEqual({
+      ok: true,
+      status: 'partial_found',
+      product: {
+        barcode: '1234567890123',
+        name: '',
+        brand: 'Go UPC Partial Brand',
+        imageUrl: 'https://example.com/partial-go-upc.jpg',
+        category: 'Cat food',
+        source: 'go_upc',
+      },
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('continues fallback when Go-UPC Edge Function reports a service configuration error', async () => {
+    const invokeFunction = vi.fn().mockResolvedValue({
+      data: {
+        ok: false,
+        status: 'http_error',
+        barcode: '1234567890123',
+        message: '商品信息服务暂时不可用，请稍后重试，或直接手动填写',
+      },
+    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+
+    await expect(
+      lookupProductByBarcode('1234567890123', {
+        invokeFunction,
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      status: 'not_found',
+      barcode: '1234567890123',
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
+  })
+
+  it('continues fallback when Go-UPC Edge Function is unreachable', async () => {
+    const invokeFunction = vi.fn().mockRejectedValue(new Error('offline'))
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+      .mockResolvedValueOnce(jsonResponse({ status: 0 }))
+
+    await expect(
+      lookupProductByBarcode('1234567890123', {
+        invokeFunction,
+        fetchImpl: fetchMock,
+      }),
+    ).resolves.toMatchObject({
+      ok: false,
+      status: 'not_found',
+      barcode: '1234567890123',
+    })
+  })
 })
 
 describe('lookupBarcodeInput', () => {
@@ -254,7 +421,7 @@ describe('lookupBarcodeInput', () => {
 })
 
 describe('lookupProductLocalFirst', () => {
-  it('returns a stored product without calling the external lookup', async () => {
+  it('returns a stored product without calling the external lookup or Edge Function', async () => {
     const lookupLocal = vi.fn().mockResolvedValue({
       barcode: '1234567890123',
       name: '本地猫罐头',

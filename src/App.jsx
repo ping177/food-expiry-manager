@@ -4,6 +4,7 @@ import BatchCard from './components/BatchCard'
 import ConfigNotice from './components/ConfigNotice'
 import { decrementQuantity, normalizeQuantity } from './lib/inventory'
 import {
+  lookupProductByBarcode,
   lookupProductLocalFirst,
   normalizeBarcode,
 } from './lib/productLookup'
@@ -182,17 +183,24 @@ export default function App() {
   }
 
   function lookupBarcodeProduct(barcode) {
-    return lookupProductLocalFirst(barcode, async (normalizedBarcode) => {
-      const { data: existingProducts, error: lookupError } = await supabase
-        .from('products')
-        .select('barcode, name, brand, image_url, category, source')
-        .eq('user_id', session.user.id)
-        .eq('barcode', normalizedBarcode)
-        .limit(1)
+    return lookupProductLocalFirst(
+      barcode,
+      async (normalizedBarcode) => {
+        const { data: existingProducts, error: lookupError } = await supabase
+          .from('products')
+          .select('barcode, name, brand, image_url, category, source')
+          .eq('user_id', session.user.id)
+          .eq('barcode', normalizedBarcode)
+          .limit(1)
 
-      if (lookupError) throw lookupError
-      return existingProducts?.[0] ?? null
-    })
+        if (lookupError) throw lookupError
+        return existingProducts?.[0] ?? null
+      },
+      (normalizedBarcode) =>
+        lookupProductByBarcode(normalizedBarcode, {
+          invokeFunction: supabase.functions.invoke.bind(supabase.functions),
+        }),
+    )
   }
 
   async function handleSave(form) {
