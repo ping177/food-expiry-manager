@@ -8,7 +8,7 @@
 
 ## Current version
 
-v0.2.1 Go-UPC Edge Function integration completed and pushed to remote `main`.
+v0.2.1 Go-UPC Edge Function integration completed.
 
 ## Current status
 
@@ -17,14 +17,6 @@ Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous
 ## Latest completed
 
 v0.2.1 Go-UPC Edge Function integration, deployment, and real manual acceptance. Real barcode `4255634604636` successfully prefilled product name, brand, and image; second lookup reused local `products`; same barcode with different expiry dates created independent `inventory_batches`.
-
-## Latest commit
-
-`6cee6f8 feat: add Go-UPC barcode lookup edge function`
-
-## Working tree
-
-Clean before this project state maintenance update. Current documentation maintenance changes are pending commit.
 
 ## Last verified
 
@@ -40,6 +32,7 @@ No blocker for v0.2.1. v0.2.2 needs product/design decisions for category confir
 
 ## Important Context
 
+- Git branch、latest commit、working tree 由 project-command-center 实时 Git 扫描读取；PROJECT_STATE.md 不作为这些字段的权威来源。
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
 - Supabase Anonymous Auth keeps the app open-and-use, but account recovery and cross-device continuity remain future work.
@@ -54,4 +47,4 @@ No blocker for v0.2.1. v0.2.2 needs product/design decisions for category confir
 
 ## Handoff Prompt
 
-Continue 食品过期管理 from remote `main` after v0.2.1 Go-UPC Edge Function integration. First check `git status --short`, read README and project docs, and confirm `docs/PROJECT_STATE.md` is current. Next likely work is v0.2.2: product information editing and category correction. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, and treat third-party category as reference-only unless the user confirms the intended behavior.
+Continue 食品过期管理 after v0.2.1 Go-UPC Edge Function integration. First check `git status --short`, read README and project docs, and confirm `docs/PROJECT_STATE.md` is current. Next likely work is v0.2.2: product information editing and category correction. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, and treat third-party category as reference-only unless the user confirms the intended behavior.
