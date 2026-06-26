@@ -13,6 +13,19 @@
 7. 避免破坏性 Git 命令；删除文件前必须获得用户确认。
 8. 不暴露密钥、环境变量值或其他敏感信息。
 
+## Start-of-task context
+
+开始任务前，先读取可用的相关项目上下文：
+
+- `README.md`
+- `docs/PROJECT_STATE.md`
+- `docs/BACKLOG.md`
+- `docs/DEVLOG.md`
+- `docs/DECISIONS.md`
+- `docs/TESTING.md` if present
+
+如果文件不存在，明确说明 missing。不要编造项目状态。
+
 ## 产品与范围
 
 1. 不要擅自扩大需求范围。
@@ -28,6 +41,41 @@
 3. 涉及数据模型、字段、约束或关系变化时，必须更新 `docs/DATA_MODEL.md`。
 4. 数据模型变更应考虑已有数据的兼容性，禁止直接丢弃用户数据。
 
+## Documentation mapping
+
+When relevant, update the right documentation:
+
+- `docs/DEVLOG.md` for completed work and verification notes
+- `docs/BACKLOG.md` for scope, priority, or future task changes
+- `docs/DECISIONS.md` for product, architecture, API, or workflow decisions
+- `docs/PROJECT_STATE.md` for the current dashboard-facing state
+- `docs/TESTING.md` for test strategy or smoke checklist changes, if present
+
+Do not duplicate large amounts of content across docs. Keep `PROJECT_STATE.md` concise and dashboard-oriented.
+
+## Local dev ports
+
+For local web projects:
+
+- keep dev ports explicit and stable
+- use `strictPort: true` for Vite projects
+- local APIs should prefer `127.0.0.1`
+- do not silently change dev ports
+
+If a project dev port changes, mention that `project-command-center/config/projects.json` may also need updating.
+
+## Secrets and safety
+
+Never read, print, or commit secrets:
+
+- `.env`
+- `.env.local`
+- API keys
+- tokens
+- private credentials
+
+Do not put commercial API keys in frontend code. Do not commit `node_modules`, `dist`, build output, or local environment files.
+
 ## 完成标准
 
 1. 完成功能后更新 `docs/DEVLOG.md`。
@@ -38,9 +86,53 @@
 ## Project State Maintenance
 
 1. 每次 meaningful change 后，必须检查 `docs/PROJECT_STATE.md` 是否仍准确。
-2. 如果版本、当前状态、最新完成事项、最新 commit、工作区状态、验证结果、
-   下一步、阻塞项、重要上下文或交接提示发生变化，必须同步更新
-   `docs/PROJECT_STATE.md`。
-3. 不确定的信息不要编造，写 `Needs verification`。
-4. 更新项目状态时不得读取、打印或记录 secrets、`.env`、API key、access token
-   或其他敏感信息。
+2. 如果 current version or phase、current status、latest completed work、next recommended action、blockers、important context、handoff prompt、ports / environment assumptions、deployment or verification status 发生变化，必须同步更新 `docs/PROJECT_STATE.md`。
+3. 不要因为 trivial formatting-only changes 更新 `PROJECT_STATE.md`，除非项目状态确实发生变化。
+4. `PROJECT_STATE.md` 应保持 project-command-center 可读取的稳定 headings：
+   - Current version
+   - Current status
+   - Latest completed
+   - Next Action
+   - Blockers
+   - Important Context
+   - Handoff Prompt
+5. Git branch、latest commit、working tree 由 project-command-center 实时 Git 扫描读取，`PROJECT_STATE.md` 不应作为这些字段的权威来源。
+6. 不确定的信息不要编造，写 `Needs verification`。
+7. 更新项目状态时不得读取、打印或记录 secrets、`.env`、API key、access token 或其他敏感信息。
+
+## Git workflow
+
+Do not commit or push unless the user explicitly asks.
+
+Before finishing a task, run or request the appropriate status checks:
+
+- `git branch --show-current`
+- `git status --short`
+- `git log --oneline -5` when useful
+
+If on a non-main branch, clearly state the current branch and whether it has an upstream.
+
+## Verification
+
+Run the smallest relevant verification for the type of change:
+
+- Vite / React code changes: `npm run build`
+- Node syntax-sensitive files: `node --check` where applicable
+- Python changes: `python -m py_compile` or the project test command where applicable
+- docs-only changes: `git diff --check` is enough unless docs tooling exists
+
+Do not run unnecessary heavy checks for docs-only changes.
+
+## Final response format
+
+At the end of each task, report:
+
+- modified files
+- whether business code changed
+- whether external project files changed
+- whether secrets were read or printed
+- verification run and result
+- git status summary
+- whether `PROJECT_STATE.md` was updated or why it was not needed
+- whether commit is recommended
+- next suggested action
