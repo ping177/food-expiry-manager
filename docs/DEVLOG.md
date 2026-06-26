@@ -4,6 +4,14 @@
 
 ## 2026-06-26
 
+### P1 文档引用关系整理
+
+- 明确 README 只作为项目入口，不复制专项评估正文。
+- 明确 `docs/ROADMAP.md` 维护长期版本路线，`docs/BACKLOG.md` 维护近期执行优先级。
+- 保留 `docs/BARCODE_API_EVALUATION.md` 和 `docs/DATA_MODEL.md` 作为专项文档。
+- 收紧 `docs/PROJECT_STATE.md` 为 project-command-center 使用的人工状态摘要，不维护
+  Git branch、latest commit 或 working tree 快照字段。
+
 ### v0.2.1 Go-UPC 线上验收与 v0.2.2 候选记录
 
 - Go-UPC 线上 Edge Function 手动验收通过。

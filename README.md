@@ -149,11 +149,15 @@ supabase secrets set GO_UPC_API_KEY=你的本地或线上密钥 --project-ref <p
 
 ## 项目文档
 
-- `docs/DATA_MODEL.md`：数据模型与业务约束。
-- `docs/ROADMAP.md`：版本路线和范围。
-- `docs/DECISIONS.md`：重要产品与技术决策。
-- `docs/DEVLOG.md`：开发记录。
-- `docs/BACKLOG.md`：暂不实施的后续功能。
-- `docs/TESTING.md`：测试策略与手动验收清单。
-- `docs/BARCODE_API_EVALUATION.md`：v0.2.1 全球 / 欧洲 EAN 商品条码 API
-  候选评估与真实 barcode 测试记录。
+README 只作为项目入口，记录使用方式、当前能力和关键文档入口；专项评估与历史
+细节不在这里重复维护。
+
+- `docs/PROJECT_STATE.md`：project-command-center 使用的人工状态摘要，只放当前
+  状态、结论和下一步。
+- `docs/ROADMAP.md`：长期版本路线图和版本范围。
+- `docs/BACKLOG.md`：近期执行优先级、下一步候选任务和暂不实施事项。
+- `docs/DECISIONS.md`：关键产品、架构、API、数据模型和工作流决策日志。
+- `docs/DATA_MODEL.md`：`products` / `inventory_batches` 数据模型与业务约束。
+- `docs/BARCODE_API_EVALUATION.md`：条码 API 专项评估与 Go-UPC 接入结论。
+- `docs/TESTING.md`：自动化测试策略与手动验收清单。
+- `docs/DEVLOG.md`：按日期倒序记录已完成工作和验证结果。

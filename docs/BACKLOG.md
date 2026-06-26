@@ -1,5 +1,9 @@
 # Backlog
 
+本文件记录近期执行优先级、下一步候选任务和暂不实施事项。长期版本方向放在
+`docs/ROADMAP.md`；条码 API 的详细评估放在
+`docs/BARCODE_API_EVALUATION.md`；数据模型约束放在 `docs/DATA_MODEL.md`。
+
 以下功能有价值，但暂不纳入当前版本路线的近期交付范围：
 
 - 家庭共享
