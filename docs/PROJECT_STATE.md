@@ -8,27 +8,27 @@
 
 ## Current version
 
-v0.2.1 Go-UPC Edge Function integration completed.
+v0.2.2 first step completed: saved product information editing.
 
 ## Current status
 
-Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, Go-UPC service-side lookup through Supabase Edge Function, and Open Food Facts / Open Pet Food Facts fallback. Go-UPC is deployed and has passed real manual acceptance. Documentation ownership is now lightweight: `ROADMAP` for long-term route, `BACKLOG` for near-term execution, and dedicated docs for data model and barcode API evaluation.
+Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, Go-UPC service-side lookup through Supabase Edge Function, and Open Food Facts / Open Pet Food Facts fallback. Go-UPC is deployed and has passed real manual acceptance. The home inventory list now uses lightweight summary cards; tapping a batch opens a detail view where product information can be edited, current batch quantity can be corrected, and daily usage can be recorded with “消耗 1”.
 
 ## Latest completed
 
-v0.2.1 Go-UPC Edge Function integration, deployment, and real manual acceptance. Real barcode `4255634604636` successfully prefilled product name, brand, and image; second lookup reused local `products`; same barcode with different expiry dates created independent `inventory_batches`.
+v0.2.2 first step: saved product information editing moved into a batch detail view. Home cards are now scan-friendly summaries with no edit button stack. The detail view shows product, barcode, expiry status, remaining days, and inventory quantity; editing updates product fields and the selected batch's current quantity through separate update calls, “消耗 1” decrements only the selected batch, barcode stays read-only, and shared product edits synchronize across batches.
 
 ## Last verified
 
-2026-06-26: Go-UPC online Edge Function manual acceptance passed. Automated verification from the implementation record: `npm test`, `npm run build`, and `git diff --check` passed on 2026-06-25. Current docs-only verification: `git diff --check` passed.
+2026-06-28: `npm test` passed with 6 test files and 49 tests. `npm run build` passed. `git diff --check` passed.
 
 ## Next Action
 
-Decide whether to start v0.2.2: product information editing and category correction. Before implementation, clarify how API-provided category should be treated as reference-only and how product edits should update all batches sharing the same `product`.
+Continue v0.2.2 with the remaining category correction decision: clarify whether API-provided category should be treated as reference-only during save, require user confirmation, or be filtered by a small local category rule.
 
 ## Blockers
 
-No blocker for v0.2.1. v0.2.2 needs product/design decisions for category confirmation and product edit UX. Current-session automated verification is still Needs verification.
+No blocker for saved product editing. Remaining v0.2.2 category correction needs product/design decisions before implementation.
 
 ## Important Context
 
@@ -42,9 +42,10 @@ No blocker for v0.2.1. v0.2.2 needs product/design decisions for category confir
 - Barcode Lookup is a possible future fallback, not implemented.
 - EAN-Search / EAN-Suche is a possible future `suggested_match` fallback, not implemented.
 - Go-UPC category can be too generic for pet food, e.g. `Snack Foods`; third-party category should be treated as reference-only until v0.2.2 resolves category correction.
-- Saved product information is reused locally by barcode; incorrect first-save product data currently persists until product editing exists.
+- Saved product information is reused locally by barcode; users can now edit saved product display fields from the inventory batch detail view.
+- Product editing updates `products` only. Quantity correction and “消耗 1” in detail update the selected `inventory_batches` row only. `inventory_batches` remain separate and keep their own expiry date and status.
 - Product data APIs must not infer shelf life.
 
 ## Handoff Prompt
 
-Continue 食品过期管理 after v0.2.1 Go-UPC Edge Function integration and P1 lightweight documentation ownership cleanup. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Next likely work is v0.2.2: product information editing and category correction. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, and treat third-party category as reference-only unless the user confirms the intended behavior.
+Continue 食品过期管理 after v0.2.2 first step: saved product information editing through a batch detail view. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Next likely work is the remaining v0.2.2 category correction decision and implementation. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, and treat third-party category as reference-only unless the user confirms the intended behavior.

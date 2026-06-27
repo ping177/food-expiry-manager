@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import AddBatchForm from './components/AddBatchForm'
 import BatchCard from './components/BatchCard'
+import BatchDetail from './components/BatchDetail'
 import ConfigNotice from './components/ConfigNotice'
 import { decrementQuantity, normalizeQuantity } from './lib/inventory'
+import { applyProductUpdateToBatches } from './lib/productEdit'
 import {
   lookupProductByBarcode,
   lookupProductLocalFirst,
@@ -17,6 +19,7 @@ export default function App() {
   const [session, setSession] = useState(null)
   const [batches, setBatches] = useState([])
   const [view, setView] = useState('home')
+  const [selectedBatchId, setSelectedBatchId] = useState(null)
   const [authLoading, setAuthLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [busyBatchId, setBusyBatchId] = useState(null)
@@ -262,10 +265,31 @@ export default function App() {
     return true
   }
 
-  function handleDecrement(batch) {
-    return updateBatch(batch.id, {
-      quantity: decrementQuantity(batch.quantity),
-    })
+  async function handleUpdateProduct(batchId, productId, values) {
+    setBusyBatchId(batchId)
+    setError('')
+    setMessage('')
+
+    const { data: product, error: updateError } = await supabase
+      .from('products')
+      .update(values)
+      .eq('id', productId)
+      .select('id, barcode, name, brand, image_url, category, source')
+      .single()
+
+    if (updateError) {
+      setError(`更新商品信息失败：${updateError.message}`)
+      setBusyBatchId(null)
+      return false
+    }
+
+    setBatches((currentBatches) =>
+      applyProductUpdateToBatches(currentBatches, product),
+    )
+    await loadBatches()
+    setMessage('商品信息已更新。')
+    setBusyBatchId(null)
+    return true
   }
 
   function handleUpdateQuantity(batchId, quantity) {
@@ -282,6 +306,14 @@ export default function App() {
   function handleConsume(batchId) {
     return updateBatch(batchId, { status: 'consumed' })
   }
+
+  function handleDecrement(batch) {
+    return updateBatch(batch.id, {
+      quantity: decrementQuantity(batch.quantity),
+    })
+  }
+
+  const selectedBatch = batches.find((batch) => batch.id === selectedBatchId)
 
   if (missingSupabaseVariables.length > 0) {
     return <ConfigNotice missingVariables={missingSupabaseVariables} />
@@ -303,6 +335,11 @@ export default function App() {
           {view === 'add' && (
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
               添加一批库存
+            </h1>
+          )}
+          {view === 'detail' && (
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+              库存详情
             </h1>
           )}
           {view === 'home' && (
@@ -330,6 +367,40 @@ export default function App() {
             onLookupBarcode={lookupBarcodeProduct}
             onSave={handleSave}
           />
+        ) : view === 'detail' && selectedBatch ? (
+          <BatchDetail
+            batch={selectedBatch}
+            busy={busyBatchId === selectedBatch.id}
+            onBack={() => {
+              setSelectedBatchId(null)
+              setView('home')
+            }}
+            onConsume={async (batchId) => {
+              const saved = await handleConsume(batchId)
+              if (saved) {
+                setSelectedBatchId(null)
+                setView('home')
+              }
+              return saved
+            }}
+            onDecrement={handleDecrement}
+            onUpdateProduct={handleUpdateProduct}
+            onUpdateQuantity={handleUpdateQuantity}
+          />
+        ) : view === 'detail' ? (
+          <section className="rounded-3xl bg-white p-6 text-center shadow-card">
+            <p className="font-bold text-ink">这批库存当前不在 active 列表中。</p>
+            <button
+              className="mt-4 rounded-xl bg-leaf px-4 py-3 font-semibold text-white"
+              type="button"
+              onClick={() => {
+                setSelectedBatchId(null)
+                setView('home')
+              }}
+            >
+              返回首页
+            </button>
+          </section>
         ) : (
           <section className="space-y-4">
             {loading && batches.length === 0 ? (
@@ -348,10 +419,12 @@ export default function App() {
                 <BatchCard
                   key={batch.id}
                   batch={batch}
-                  busy={busyBatchId === batch.id}
-                  onConsume={handleConsume}
-                  onDecrement={handleDecrement}
-                  onUpdateQuantity={handleUpdateQuantity}
+                  onSelect={(batchId) => {
+                    setError('')
+                    setMessage('')
+                    setSelectedBatchId(batchId)
+                    setView('detail')
+                  }}
                 />
               ))
             )}
