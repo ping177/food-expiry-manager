@@ -37,7 +37,7 @@ describe('lookupProductByBarcode', () => {
         name: '金枪鱼猫罐头',
         brand: '示例品牌',
         imageUrl: 'https://example.com/can.jpg',
-        category: '宠物食品',
+        category: '',
         source: 'open_food_facts_universal',
       },
     })
@@ -68,7 +68,7 @@ describe('lookupProductByBarcode', () => {
       product: {
         name: 'Chicken Cat Food',
         brand: 'Pet Brand',
-        category: 'cat-food',
+        category: '',
         source: 'open_pet_food_facts',
       },
     })
@@ -235,7 +235,7 @@ describe('lookupProductByBarcode', () => {
         name: '',
         brand: 'Partial Brand',
         imageUrl: 'https://example.com/partial.jpg',
-        category: '猫罐头',
+        category: '',
         source: 'open_food_facts_universal',
       },
     })
@@ -271,7 +271,7 @@ describe('lookupProductByBarcode', () => {
         name: 'Go UPC Cat Food',
         brand: 'Go UPC Brand',
         imageUrl: 'https://example.com/go-upc.jpg',
-        category: 'Cat food',
+        category: '',
         source: 'go_upc',
       },
     })
@@ -353,7 +353,7 @@ describe('lookupProductByBarcode', () => {
         name: '',
         brand: 'Go UPC Partial Brand',
         imageUrl: 'https://example.com/partial-go-upc.jpg',
-        category: 'Cat food',
+        category: '',
         source: 'go_upc',
       },
     })

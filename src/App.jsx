@@ -3,6 +3,9 @@ import AddBatchForm from './components/AddBatchForm'
 import BatchCard from './components/BatchCard'
 import BatchDetail from './components/BatchDetail'
 import ConfigNotice from './components/ConfigNotice'
+import { PRODUCT_CATEGORIES } from './lib/categories'
+import { EXPIRY_WINDOW_OPTIONS } from './lib/expiryWindows'
+import { filterInventoryBatches } from './lib/inventoryFilters'
 import { decrementQuantity, normalizeQuantity } from './lib/inventory'
 import { applyProductUpdateToBatches } from './lib/productEdit'
 import {
@@ -15,11 +18,16 @@ import {
   supabase,
 } from './lib/supabase'
 
+export const APP_DISPLAY_NAME = '库存保质期管理'
+
 export default function App() {
   const [session, setSession] = useState(null)
   const [batches, setBatches] = useState([])
   const [view, setView] = useState('home')
   const [selectedBatchId, setSelectedBatchId] = useState(null)
+  const [expiryWindowFilter, setExpiryWindowFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [authLoading, setAuthLoading] = useState(true)
   const [loading, setLoading] = useState(false)
   const [busyBatchId, setBusyBatchId] = useState(null)
@@ -313,6 +321,16 @@ export default function App() {
     })
   }
 
+  const filteredBatches = filterInventoryBatches(batches, {
+    expiryWindow: expiryWindowFilter,
+    category: categoryFilter,
+    search: searchQuery,
+  })
+  const hasActiveBatches = batches.length > 0
+  const hasActiveFilters =
+    expiryWindowFilter !== 'all' ||
+    categoryFilter !== 'all' ||
+    searchQuery.trim() !== ''
   const selectedBatch = batches.find((batch) => batch.id === selectedBatchId)
 
   if (missingSupabaseVariables.length > 0) {
@@ -331,7 +349,7 @@ export default function App() {
     <main className="min-h-screen bg-cream pb-28">
       <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6">
         <header className="mb-5">
-          <p className="text-xs font-semibold text-leaf">食品过期管理</p>
+          <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>
           {view === 'add' && (
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
               添加一批库存
@@ -403,6 +421,59 @@ export default function App() {
           </section>
         ) : (
           <section className="space-y-4">
+            {hasActiveBatches && (
+              <div className="space-y-3 rounded-3xl border border-white/70 bg-white p-4 shadow-card">
+                <label className="block">
+                  <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                    搜索
+                  </span>
+                  <input
+                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink placeholder:text-slate-400"
+                    placeholder="商品名或品牌"
+                    type="search"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                  />
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                      到期时间
+                    </span>
+                    <select
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
+                      value={expiryWindowFilter}
+                      onChange={(event) =>
+                        setExpiryWindowFilter(event.target.value)
+                      }
+                    >
+                      {EXPIRY_WINDOW_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="block">
+                    <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+                      分类
+                    </span>
+                    <select
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
+                      value={categoryFilter}
+                      onChange={(event) => setCategoryFilter(event.target.value)}
+                    >
+                      <option value="all">全部分类</option>
+                      {PRODUCT_CATEGORIES.map((category) => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+              </div>
+            )}
             {loading && batches.length === 0 ? (
               <p className="py-12 text-center text-sm text-slate-500">
                 正在读取库存…
@@ -414,8 +485,28 @@ export default function App() {
                   添加第一批猫罐头、猫条或食品吧。
                 </p>
               </div>
+            ) : filteredBatches.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-slate-300 bg-white/60 px-6 py-10 text-center">
+                <p className="text-lg font-bold">没有符合筛选的库存</p>
+                <p className="mt-2 text-sm text-slate-500">
+                  调整状态、分类或搜索关键词后再试。
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    className="mt-4 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
+                    type="button"
+                    onClick={() => {
+                      setExpiryWindowFilter('all')
+                      setCategoryFilter('all')
+                      setSearchQuery('')
+                    }}
+                  >
+                    清除筛选
+                  </button>
+                )}
+              </div>
             ) : (
-              batches.map((batch) => (
+              filteredBatches.map((batch) => (
                 <BatchCard
                   key={batch.id}
                   batch={batch}

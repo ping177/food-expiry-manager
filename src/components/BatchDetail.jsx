@@ -1,15 +1,18 @@
 import { useState } from 'react'
-import { getExpiryStatus } from '../lib/expiry'
+import { PRODUCT_CATEGORIES } from '../lib/categories'
+import { getExpiryWindow } from '../lib/expiryWindows'
 import {
   createProductEditForm,
   normalizeProductEditForm,
 } from '../lib/productEdit'
 
-const statusStyles = {
+const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger',
-  within7: 'bg-orange-100 text-orange-800',
   within30: 'bg-amber-100 text-amber-800',
-  normal: 'bg-mint text-leaf',
+  within180: 'bg-mint text-leaf',
+  within365: 'bg-mint text-leaf',
+  within730: 'bg-mint text-leaf',
+  over730: 'bg-mint text-leaf',
 }
 
 function daysRemainingText(daysRemaining) {
@@ -18,6 +21,16 @@ function daysRemainingText(daysRemaining) {
   }
   if (daysRemaining === 0) return '今天到期'
   return `剩余 ${daysRemaining} 天`
+}
+
+function categoryOptions(currentCategory) {
+  if (
+    currentCategory &&
+    !PRODUCT_CATEGORIES.includes(currentCategory)
+  ) {
+    return [currentCategory, ...PRODUCT_CATEGORIES]
+  }
+  return PRODUCT_CATEGORIES
 }
 
 export default function BatchDetail({
@@ -38,7 +51,7 @@ export default function BatchDetail({
     createProductEditForm(batch.product),
   )
   const [detailError, setDetailError] = useState('')
-  const expiryStatus = getExpiryStatus(batch.expiry_date)
+  const expiryWindow = getExpiryWindow(batch.expiry_date)
   const product = batch.product
 
   function updateProductField(field, value) {
@@ -174,13 +187,20 @@ export default function BatchDetail({
               <span className="mb-1.5 block text-sm font-semibold text-slate-700">
                 分类
               </span>
-              <input
+              <select
                 className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
                 value={productForm.category}
                 onChange={(event) =>
                   updateProductField('category', event.target.value)
                 }
-              />
+              >
+                <option value="">未选择分类</option>
+                {categoryOptions(productForm.category).map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </label>
           </div>
           <label className="block">
@@ -244,12 +264,12 @@ export default function BatchDetail({
           <p className="text-xs text-slate-500">保质期至</p>
           <p className="mt-1 font-bold text-ink">{batch.expiry_date}</p>
           <span
-            className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${statusStyles[expiryStatus.key]}`}
+            className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${expiryWindowStyles[expiryWindow.value]}`}
           >
-            {expiryStatus.label}
+            {expiryWindow.label}
           </span>
           <p className="mt-2 text-xs text-slate-500">
-            {daysRemainingText(expiryStatus.daysRemaining)}
+            {daysRemainingText(expiryWindow.daysRemaining)}
           </p>
         </div>
         <div className="rounded-2xl bg-white p-4 shadow-card">

@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react'
 import BarcodeScanner from './BarcodeScanner'
 import DateInput from './DateInput'
 import { calculateExpiryDate, normalizeDateInput } from '../lib/expiry'
+import { PRODUCT_CATEGORIES } from '../lib/categories'
 import { normalizeBarcode } from '../lib/productLookup'
 
 const initialForm = {
@@ -273,12 +274,18 @@ export default function AddBatchForm({
               />
             </Field>
             <Field label="分类">
-              <input
+              <select
                 className={inputClass}
-                placeholder="猫罐头"
                 value={form.category}
                 onChange={(event) => update('category', event.target.value)}
-              />
+              >
+                <option value="">未选择分类</option>
+                {PRODUCT_CATEGORIES.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
+              </select>
             </Field>
           </div>
           <Field label="可选：图片链接">

@@ -1,14 +1,16 @@
-import { getExpiryStatus } from '../lib/expiry'
+import { getExpiryWindow } from '../lib/expiryWindows'
 
-const statusStyles = {
+const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger',
-  within7: 'bg-orange-100 text-orange-800',
   within30: 'bg-amber-100 text-amber-800',
-  normal: 'bg-mint text-leaf',
+  within180: 'bg-mint text-leaf',
+  within365: 'bg-mint text-leaf',
+  within730: 'bg-mint text-leaf',
+  over730: 'bg-mint text-leaf',
 }
 
 export default function BatchCard({ batch, onSelect }) {
-  const expiryStatus = getExpiryStatus(batch.expiry_date)
+  const expiryWindow = getExpiryWindow(batch.expiry_date)
   const product = batch.product
 
   return (
@@ -37,9 +39,9 @@ export default function BatchCard({ batch, onSelect }) {
                 </h2>
               </div>
               <span
-                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${statusStyles[expiryStatus.key]}`}
+                className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-bold ${expiryWindowStyles[expiryWindow.value]}`}
               >
-                {expiryStatus.label}
+                {expiryWindow.label}
               </span>
             </div>
 

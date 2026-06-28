@@ -18,6 +18,16 @@ const batch = {
   },
 }
 
+function dateFromToday(daysToAdd) {
+  const date = new Date()
+  date.setDate(date.getDate() + daysToAdd)
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
+}
+
 function renderBatchCard(props = {}) {
   return renderToStaticMarkup(
     <BatchCard batch={batch} onSelect={vi.fn()} {...props} />,
@@ -34,6 +44,19 @@ describe('BatchCard summary UI', () => {
     expect(html).toContain('6')
     expect(html).toContain('罐')
     expect(html).toContain('2026-12-01')
+  })
+
+  it('shows the shared expiry window badge instead of the old normal status', () => {
+    const html = renderBatchCard({
+      batch: {
+        ...batch,
+        expiry_date: dateFromToday(181),
+      },
+    })
+
+    expect(html).toContain('1年')
+    expect(html).not.toContain('正常')
+    expect(html).not.toContain('临期')
   })
 
   it('does not expose edit actions on the home card', () => {

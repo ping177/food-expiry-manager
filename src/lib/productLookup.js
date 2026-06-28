@@ -35,13 +35,6 @@ function firstValue(value) {
     .find(Boolean) ?? ''
 }
 
-function categoryValue(product) {
-  const category = firstValue(product.categories)
-  if (category) return category
-
-  return firstValue(product.categories_tags).replace(/^[a-z]{2}:/, '')
-}
-
 function errorResult(status, barcode) {
   return {
     ok: false,
@@ -68,7 +61,7 @@ function productResult(barcode, product, source) {
     name: product.product_name_zh || product.product_name || '',
     brand: firstValue(product.brands),
     imageUrl: product.image_front_url || product.image_url || '',
-    category: categoryValue(product),
+    category: '',
     source,
   }
 
@@ -103,7 +96,7 @@ function normalizedExternalProduct(barcode, product, fallbackSource) {
     name: product?.name || '',
     brand: product?.brand || '',
     imageUrl: product?.imageUrl || '',
-    category: product?.category || '',
+    category: '',
     source: product?.source || fallbackSource,
   }
 }

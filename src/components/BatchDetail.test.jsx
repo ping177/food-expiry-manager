@@ -1,5 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { describe, expect, it, vi } from 'vitest'
+import { PRODUCT_CATEGORIES } from '../lib/categories'
 import BatchDetail from './BatchDetail'
 
 const batch = {
@@ -16,6 +17,16 @@ const batch = {
     category: '旧分类',
     image_url: 'https://example.com/old.jpg',
   },
+}
+
+function dateFromToday(daysToAdd) {
+  const date = new Date()
+  date.setDate(date.getDate() + daysToAdd)
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-')
 }
 
 function renderBatchDetail(props = {}) {
@@ -51,6 +62,19 @@ describe('BatchDetail', () => {
     expect(html).not.toContain('更新')
   })
 
+  it('shows the shared expiry window badge in the detail view', () => {
+    const html = renderBatchDetail({
+      batch: {
+        ...batch,
+        expiry_date: dateFromToday(366),
+      },
+    })
+
+    expect(html).toContain('2年')
+    expect(html).not.toContain('正常')
+    expect(html).not.toContain('临期')
+  })
+
   it('shows product fields and current batch quantity in the edit form', () => {
     const html = renderBatchDetail({ defaultProductEditing: true })
 
@@ -63,6 +87,15 @@ describe('BatchDetail', () => {
     expect(html).toContain('当前批次')
     expect(html).toContain('当前库存')
     expect(html).toContain('value="6"')
+  })
+
+  it('uses the shared built-in category list in the edit form', () => {
+    const html = renderBatchDetail({ defaultProductEditing: true })
+
+    expect(html).toContain('<option value="">未选择分类</option>')
+    for (const category of PRODUCT_CATEGORIES) {
+      expect(html).toContain(`<option value="${category}">${category}</option>`)
+    }
   })
 
   it('keeps barcode read-only in the product edit form', () => {
