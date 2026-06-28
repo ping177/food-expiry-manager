@@ -8,19 +8,19 @@
 
 ## Current version
 
-v0.2.3 completed: manual category selection and home filtering.
+v0.2.4 completed: homepage inventory card UI refresh.
 
 ## Current status
 
-Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, Go-UPC service-side lookup through Supabase Edge Function, and Open Food Facts / Open Pet Food Facts fallback. The home inventory list uses lightweight summary cards; tapping a batch opens a detail view where product information can be edited, current batch quantity can be corrected, and daily usage can be recorded with “消耗 1”. Product category is now user-selected from an internal list, and home supports combined expiry-window, category, and product/brand search filters.
+Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, Go-UPC service-side lookup through Supabase Edge Function, and Open Food Facts / Open Pet Food Facts fallback. The home inventory list uses compact inventory-style summary cards with product image, product name, category pill, remaining quantity pill, expiry date, and expiry-window badge; tapping a batch opens a detail view where full product information can be edited, current batch quantity can be corrected, and daily usage can be recorded with “消耗 1”. Product category is user-selected from an internal list, and home supports combined expiry-window, category, and product/brand search filters.
 
 ## Latest completed
 
-v0.2.3: category selection and home filtering. Add/edit product forms use the shared built-in category list and allow empty category. Third-party API category values are ignored and are not prefilled into the category selector; locally saved product category is still reused. Home filters combine expiry time window, category, and search while preserving expiry-date order and keeping consumed batches hidden. Home cards and detail expiry badges use the same expiry-window labels. The UI display name is now “库存保质期管理”.
+v0.2.4: homepage inventory card UI refresh. Home cards now use a denser mobile-first inventory layout with a stable left image/placeholder, product name as the main visual, category and remaining quantity pills, expiry date, and the shared expiry-window badge. Home cards no longer show brand or barcode; those remain available in detail views. This release only changes UI/display code and does not change Supabase schema / RLS, Go-UPC Edge Function, barcode lookup flow, or dependencies.
 
 ## Last verified
 
-2026-06-28: `npm test` passed with 10 test files and 76 tests. `npm run build` passed. `git diff --check` passed.
+2026-06-28: `npm test -- src/components/BatchCard.test.jsx` passed with 6 tests. `npm test` passed with 10 test files and 79 tests. `npm run build` passed. `git diff --check` passed.
 
 ## Next Action
 
@@ -45,8 +45,9 @@ No current blocker.
 - Saved product information is reused locally by barcode; users can now edit saved product display fields from the inventory batch detail view.
 - Product editing updates `products` only. Quantity correction and “消耗 1” in detail update the selected `inventory_batches` row only. `inventory_batches` remain separate and keep their own expiry date and status.
 - Home filtering operates on active batches and combines expiry time window, category, and product/brand search while preserving the existing expiry-date ordering.
+- Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
 - Product data APIs must not infer shelf life.
 
 ## Handoff Prompt
 
-Continue 食品过期管理 after v0.2.3 manual category selection and home filtering. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, keep third-party category ignored unless a future product decision changes it, and do not modify Supabase schema / RLS without explicit scope.
+Continue 食品过期管理 after v0.2.4 homepage inventory card UI refresh. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, keep third-party category ignored unless a future product decision changes it, keep home cards summary-only with brand/barcode in detail views, and do not modify Supabase schema / RLS without explicit scope.
