@@ -12,7 +12,7 @@ v0.2.4 completed: homepage inventory card UI refresh.
 
 ## Current status
 
-Mobile-first React/Vite food and pet food inventory app using Supabase Anonymous Auth, Postgres, RLS, barcode scanning, Go-UPC service-side lookup through Supabase Edge Function, and Open Food Facts / Open Pet Food Facts fallback. The home inventory list uses compact inventory-style summary cards with product image, product name, category pill, remaining quantity pill, expiry date, and expiry-window badge; tapping a batch opens a detail view where full product information can be edited, current batch quantity can be corrected, and daily usage can be recorded with “消耗 1”. Product category is user-selected from an internal list, and home supports combined expiry-window, category, and product/brand search filters.
+已完成 v0.2.4 首页库存卡片优化；当前可用功能包括条码识别、批次库存、手动分类和首页筛选。下一步进入部署 readiness，评估公网部署、手机使用和 anonymous session 数据连续性风险。
 
 ## Latest completed
 
