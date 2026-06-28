@@ -12,11 +12,11 @@ v0.2.5 completed: deployment readiness docs.
 
 ## Current status
 
-已完成 v0.2.5 部署 readiness 检查；项目适合先部署到 Vercel 做手机 HTTPS smoke test。当前主要风险是 Anonymous Sign-in 的跨设备与 session 丢失问题，长期使用前建议补邮箱 / Magic Link 绑定。
+v0.2.5 已完成首页库存卡片、分类筛选、批次详情编辑和部署准备文档整理。当前重点是继续确认真实手机端使用体验，并决定是否进入公网部署 / PWA 验收。
 
 ## Latest completed
 
-v0.2.5: deployment readiness docs. Documented Vercel as the preferred deployment platform, Netlify as backup, GitHub Pages as not preferred for this stage, public frontend env boundaries, Go-UPC secret boundaries, Anonymous Sign-in continuity risks, and post-deploy smoke testing.
+v0.2.5 已完成部署 readiness 文档，明确 Vercel 优先、frontend env 边界、Go-UPC secret 边界和 post-deploy smoke checklist。
 
 ## Last verified
 
@@ -24,11 +24,11 @@ v0.2.5: deployment readiness docs. Documented Vercel as the preferred deployment
 
 ## Next Action
 
-P0: deploy to Vercel and run the phone HTTPS smoke test checklist. P1: design email / Magic Link binding or anonymous account upgrade before long-term daily use.
+继续做真实手机端使用验收，并确认下一步是否开始公网部署和 PWA 相关检查。
 
 ## Blockers
 
-No current blocker.
+暂无明确阻塞。
 
 ## Important Context
 
