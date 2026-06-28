@@ -8,23 +8,23 @@
 
 ## Current version
 
-v0.2.4 completed: homepage inventory card UI refresh.
+v0.2.5 completed: deployment readiness docs.
 
 ## Current status
 
-已完成 v0.2.4 首页库存卡片优化；当前可用功能包括条码识别、批次库存、手动分类和首页筛选。下一步进入部署 readiness，评估公网部署、手机使用和 anonymous session 数据连续性风险。
+已完成 v0.2.5 部署 readiness 检查；项目适合先部署到 Vercel 做手机 HTTPS smoke test。当前主要风险是 Anonymous Sign-in 的跨设备与 session 丢失问题，长期使用前建议补邮箱 / Magic Link 绑定。
 
 ## Latest completed
 
-v0.2.4: homepage inventory card UI refresh. Home cards now use a denser mobile-first inventory layout with a stable left image/placeholder, product name as the main visual, category and remaining quantity pills, expiry date, and the shared expiry-window badge. Home cards no longer show brand or barcode; those remain available in detail views. This release only changes UI/display code and does not change Supabase schema / RLS, Go-UPC Edge Function, barcode lookup flow, or dependencies.
+v0.2.5: deployment readiness docs. Documented Vercel as the preferred deployment platform, Netlify as backup, GitHub Pages as not preferred for this stage, public frontend env boundaries, Go-UPC secret boundaries, Anonymous Sign-in continuity risks, and post-deploy smoke testing.
 
 ## Last verified
 
-2026-06-28: `npm test -- src/components/BatchCard.test.jsx` passed with 6 tests. `npm test` passed with 10 test files and 79 tests. `npm run build` passed. `git diff --check` passed.
+2026-06-28: docs-only readiness update; `git diff --check` passed. Code test/build not rerun because business code was not changed.
 
 ## Next Action
 
-Decide the next version scope. Likely next candidates are category list tuning from real use, image upload/photo flow, or account recovery.
+P0: deploy to Vercel and run the phone HTTPS smoke test checklist. P1: design email / Magic Link binding or anonymous account upgrade before long-term daily use.
 
 ## Blockers
 
@@ -35,6 +35,7 @@ No current blocker.
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
 - Supabase Anonymous Auth keeps the app open-and-use, but account recovery and cross-device continuity remain future work.
+- Vercel is the preferred first deployment target for phone HTTPS smoke testing; Netlify is a backup and GitHub Pages is not preferred for this stage.
 - Documentation ownership: `README.md` is the entrypoint; `ROADMAP` is long-term route; `BACKLOG` is near-term priority; `BARCODE_API_EVALUATION` and `DATA_MODEL` remain dedicated specialist docs; `DECISIONS` records key decisions.
 - v0.2.1 Go-UPC Edge Function integration is complete and deployed.
 - Go-UPC API key must stay in Supabase Edge Function server-side secret `GO_UPC_API_KEY`; never expose it through Vite frontend env vars.
@@ -50,4 +51,4 @@ No current blocker.
 
 ## Handoff Prompt
 
-Continue 食品过期管理 after v0.2.4 homepage inventory card UI refresh. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, keep third-party category ignored unless a future product decision changes it, keep home cards summary-only with brand/barcode in detail views, and do not modify Supabase schema / RLS without explicit scope.
+Continue 食品过期管理 after v0.2.5 deployment readiness docs. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Next recommended action is Vercel deployment plus phone HTTPS smoke test. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, keep `GO_UPC_API_KEY` only in Supabase Edge Function secrets, and do not modify Supabase schema / RLS without explicit scope.

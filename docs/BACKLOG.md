@@ -13,10 +13,33 @@
 - 营养分析
 - 复杂购物清单
 - 多人权限管理
-- 匿名账号绑定邮箱、账号恢复与跨设备同步入口
 - v0.2.1 手机浏览器相机兼容性修补（仅在真实扫码验收发现问题时启动）
 
 ## 后续优先事项
+
+### v0.2.5：Deployment readiness
+
+已完成：
+
+- 只读检查当前 React + Vite + Supabase 项目部署 readiness。
+- 确认项目适合先部署到公网 HTTPS，并用真实手机做 smoke test。
+- 推荐 Vercel 作为首选部署平台；Netlify 作为备选；GitHub Pages 暂不优先。
+- 确认前端只需要公开 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`。
+- 确认 Go-UPC key 应继续只保留在 Supabase Edge Function 服务端 secret
+  `GO_UPC_API_KEY`，不得新增 `VITE_GO_UPC_API_KEY`。
+- 明确 Anonymous Sign-in 的跨设备和 session 丢失风险。
+
+下一步：
+
+- P0：真实 Vercel 部署 + 手机 HTTPS smoke test。
+- P1：邮箱 / Magic Link 绑定或匿名账号升级，用于长期数据连续性和跨设备恢复。
+- P1/P2：部署后根据真实手机体验再决定 PWA polish。
+
+非目标：
+
+- 不在 readiness 文档更新中直接部署。
+- 不修改业务代码、Supabase schema / RLS 或 Go-UPC Edge Function。
+- 不读取、打印或提交 `.env` / secrets。
 
 ### v0.2.4：首页库存卡片 UI refresh
 

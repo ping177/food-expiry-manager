@@ -4,6 +4,23 @@
 
 ## 2026-06-28
 
+### v0.2.5 Deployment readiness docs
+
+- 完成部署 readiness 只读检查，并进行 docs-only readiness 文档更新。
+- 当前判断：项目是标准 React + Vite 静态前端，已具备先部署到公网 HTTPS
+  做手机 smoke test 的条件。
+- 推荐 Vercel 作为首选部署平台；Netlify 作为备选；GitHub Pages 暂不优先。
+- 记录部署环境变量边界：`VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`
+  可以作为前端公开变量；`GO_UPC_API_KEY` 必须继续只保留在 Supabase Edge
+  Function 服务端 secret 中，禁止新增 `VITE_GO_UPC_API_KEY`。
+- 记录 Anonymous Sign-in 风险：手机首次访问可能创建新的 anonymous user；
+  Mac 本地匿名账号数据不会自动出现在手机；清浏览器数据、换手机、换浏览器、
+  无痕模式都可能导致无法访问原匿名账号数据。
+- 建议：可以先部署做手机 smoke test，但长期正式使用前建议补邮箱 /
+  Magic Link 绑定或匿名账号升级入口，用于账号恢复和跨设备连续性。
+- 本轮只修改文档，不修改业务代码、Supabase schema / RLS、Go-UPC Edge
+  Function，不部署，不 commit / push，未读取或打印 secrets。
+
 ### v0.2.4 首页库存卡片 UI refresh
 
 - 将首页库存批次卡片调整为更紧凑的移动端库存列表样式：左侧固定商品图片区域，

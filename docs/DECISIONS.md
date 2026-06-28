@@ -210,3 +210,26 @@
 - 约束：继续保持 `products` 与 `inventory_batches` 分离；分类校正不改变批次
   独立保存原则，不新增分类表，不修改 Supabase schema / RLS，不修改 Go-UPC
   Edge Function。
+
+## D-020：v0.2.5 部署 readiness 首选 Vercel
+
+- 状态：已决定
+- 日期：2026-06-28
+- 决策：v0.2.5 部署 readiness 阶段推荐 Vercel 作为首选公网 HTTPS 部署平台。
+  Netlify 作为备选；GitHub Pages 暂不优先。
+- 原因：当前项目是标准 React + Vite 静态前端，生产构建输出 `dist` 静态资源。
+  Vercel 的部署流程、默认 HTTPS、环境变量管理和 preview URL 管理更适合当前
+  手机 smoke test 阶段。Netlify 也适合静态前端部署，可作为备选。GitHub Pages
+  可部署静态站点，但通常需要额外处理构建流程、环境变量和子路径配置，不作为
+  当前首选。
+- 前端公开变量边界：`VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY` 可以配置为
+  前端公开环境变量，因为浏览器需要它们连接 Supabase；数据安全依赖 Supabase
+  Auth、`auth.uid()` 和 RLS。
+- 服务端 secret 边界：`GO_UPC_API_KEY` 只能保留在 Supabase Edge Function
+  服务端 secret 中，由 `lookup-barcode-product` 读取；禁止新增
+  `VITE_GO_UPC_API_KEY`。
+- 禁止暴露：不得把 Supabase service role key、数据库密码、Dashboard token、
+  第三方商业 API key 或其他 private credentials 放入前端环境变量、源码、
+  文档示例值或构建产物。
+- 非目标：本决策不执行真实部署，不修改 Supabase schema / RLS，不修改
+  Go-UPC Edge Function，不改变现有 Anonymous Sign-in 行为。
