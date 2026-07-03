@@ -25,6 +25,16 @@ Public URL: none
 Provider: none
 Notes: 暂无人工维护的公网部署信息。
 
+## Version Index
+
+- v0.1 — 手动录入 MVP
+- v0.2 — 扫码与商品信息
+- v0.2.1 — Go-UPC 条码接入
+- v0.2.2 — 批次详情编辑
+- v0.2.3 — 分类与筛选
+- v0.2.4 — 首页库存卡片
+- v0.2.5 — 部署准备文档
+
 ## Last verified
 
 2026-06-28: docs-only readiness update; `git diff --check` passed. Code test/build not rerun because business code was not changed.
