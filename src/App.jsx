@@ -1,8 +1,18 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import AddBatchForm from './components/AddBatchForm'
+import AuthPanel from './components/AuthPanel'
 import BatchCard from './components/BatchCard'
 import BatchDetail from './components/BatchDetail'
 import ConfigNotice from './components/ConfigNotice'
+import {
+  getAccountStatus,
+  getSessionTransition,
+  loadInventoryBatchesForSession,
+  restoreExistingSession,
+  sendMagicLink,
+  signOutCurrentUser,
+  startMagicLinkCooldown,
+} from './lib/auth'
 import { PRODUCT_CATEGORIES } from './lib/categories'
 import { EXPIRY_WINDOW_OPTIONS } from './lib/expiryWindows'
 import { filterInventoryBatches } from './lib/inventoryFilters'
@@ -22,6 +32,9 @@ export const APP_DISPLAY_NAME = '库存保质期管理'
 
 export default function App() {
   const [session, setSession] = useState(null)
+  const [sessionUserId, setSessionUserId] = useState(null)
+  const sessionRef = useRef(null)
+  const cooldownCleanupRef = useRef(null)
   const [batches, setBatches] = useState([])
   const [view, setView] = useState('home')
   const [selectedBatchId, setSelectedBatchId] = useState(null)
@@ -33,39 +46,58 @@ export default function App() {
   const [busyBatchId, setBusyBatchId] = useState(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  const [authBusy, setAuthBusy] = useState(false)
+  const [magicLinkCooldown, setMagicLinkCooldown] = useState(0)
 
-  const loadBatches = useCallback(async () => {
+  const clearAccountScopedState = useCallback(() => {
+    setBatches([])
+    setView('home')
+    setSelectedBatchId(null)
+    setExpiryWindowFilter('all')
+    setCategoryFilter('all')
+    setSearchQuery('')
+    setBusyBatchId(null)
+    setMessage('')
+  }, [])
+
+  const applySession = useCallback(
+    (nextSession) => {
+      const { nextUserId, userChanged } = getSessionTransition(
+        sessionRef.current,
+        nextSession,
+      )
+
+      if (userChanged) {
+        clearAccountScopedState()
+        setLoading(false)
+        setSessionUserId(nextUserId)
+      }
+
+      sessionRef.current = nextSession
+      setSession(nextSession)
+    },
+    [clearAccountScopedState],
+  )
+
+  const loadBatches = useCallback(async (targetSession = sessionRef.current) => {
     if (!supabase) return
+
+    if (!targetSession?.user?.id) {
+      clearAccountScopedState()
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     setError('')
-    const { data, error: queryError } = await supabase
-      .from('inventory_batches')
-      .select(
-        `
-          id,
-          quantity,
-          unit,
-          production_date,
-          shelf_life_value,
-          shelf_life_unit,
-          expiry_date,
-          storage_location,
-          note,
-          status,
-          product:products (
-            id,
-            barcode,
-            name,
-            brand,
-            image_url,
-            category,
-            source
-          )
-        `,
-      )
-      .eq('status', 'active')
-      .order('expiry_date', { ascending: true })
+    const { data, error: queryError, stale } =
+      await loadInventoryBatchesForSession({
+        supabaseClient: supabase,
+        session: targetSession,
+        getCurrentUserId: () => sessionRef.current?.user?.id ?? null,
+      })
+
+    if (stale) return
 
     if (queryError) {
       setError(`读取库存失败：${queryError.message}`)
@@ -73,67 +105,96 @@ export default function App() {
       setBatches(data ?? [])
     }
     setLoading(false)
-  }, [])
+  }, [clearAccountScopedState])
 
   useEffect(() => {
     if (!supabase) return undefined
 
     let active = true
+    let authEventSeen = false
 
-    async function ensureAnonymousSession() {
-      const {
-        data: { session: existingSession },
-        error: sessionError,
-      } = await supabase.auth.getSession()
+    async function initializeSession() {
+      const { session: existingSession, errorMessage } =
+        await restoreExistingSession(supabase)
 
       if (!active) return
-      if (sessionError) {
-        setError(`读取登录状态失败：${sessionError.message}`)
-        setAuthLoading(false)
-        return
-      }
-
-      if (existingSession) {
-        setSession(existingSession)
-        setAuthLoading(false)
-        return
-      }
-
-      const { data, error: signInError } =
-        await supabase.auth.signInAnonymously()
-      if (!active) return
-
-      if (signInError) {
-        setError(
-          `匿名登录失败：${signInError.message}。请确认 Supabase 已开启 Anonymous Sign-ins。`,
-        )
-      } else {
-        setSession(data.session)
+      if (errorMessage && !authEventSeen) setError(errorMessage)
+      if (!authEventSeen) {
+        applySession(existingSession)
       }
       setAuthLoading(false)
     }
-
-    ensureAnonymousSession()
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, nextSession) => {
       if (active) {
-        setSession(nextSession)
+        authEventSeen = true
+        applySession(nextSession)
+        setAuthLoading(false)
       }
     })
+
+    initializeSession()
 
     return () => {
       active = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [applySession])
 
   useEffect(() => {
-    if (session) {
-      loadBatches()
+    if (sessionUserId) {
+      loadBatches(sessionRef.current)
     }
-  }, [session, loadBatches])
+  }, [sessionUserId, loadBatches])
+
+  useEffect(
+    () => () => {
+      cooldownCleanupRef.current?.()
+    },
+    [],
+  )
+
+  async function handleSendMagicLink(email) {
+    if (!supabase || authBusy || magicLinkCooldown > 0) return false
+
+    setAuthBusy(true)
+    setError('')
+    setMessage('')
+    const result = await sendMagicLink(supabase, email, window.location.origin)
+
+    if (result.ok) {
+      setMessage('登录链接已发送，请检查邮箱。')
+      cooldownCleanupRef.current?.()
+      cooldownCleanupRef.current = startMagicLinkCooldown({
+        setCooldownSeconds: setMagicLinkCooldown,
+        setIntervalFn: window.setInterval.bind(window),
+        clearIntervalFn: window.clearInterval.bind(window),
+      })
+    } else {
+      setError(result.errorMessage)
+    }
+
+    setAuthBusy(false)
+    return result.ok
+  }
+
+  async function handleSignOut() {
+    if (!supabase) return false
+
+    clearAccountScopedState()
+    setLoading(false)
+    setError('')
+    const result = await signOutCurrentUser(supabase)
+    if (!result.ok) {
+      setError(result.errorMessage)
+      return false
+    }
+
+    applySession(null)
+    return true
+  }
 
   async function findOrCreateProduct(form) {
     const barcode = normalizeBarcode(form.barcode) || null
@@ -332,6 +393,7 @@ export default function App() {
     categoryFilter !== 'all' ||
     searchQuery.trim() !== ''
   const selectedBatch = batches.find((batch) => batch.id === selectedBatchId)
+  const accountStatus = getAccountStatus(session)
 
   if (missingSupabaseVariables.length > 0) {
     return <ConfigNotice missingVariables={missingSupabaseVariables} />
@@ -342,6 +404,18 @@ export default function App() {
       <main className="flex min-h-screen items-center justify-center bg-cream px-5">
         <p className="text-sm font-semibold text-leaf">正在准备你的库存空间…</p>
       </main>
+    )
+  }
+
+  if (!session) {
+    return (
+      <AuthPanel
+        busy={authBusy}
+        cooldownSeconds={magicLinkCooldown}
+        error={error}
+        message={message}
+        onSendMagicLink={handleSendMagicLink}
+      />
     )
   }
 
@@ -366,6 +440,30 @@ export default function App() {
             </p>
           )}
         </header>
+
+        <section className="mb-4 rounded-3xl border border-white/70 bg-white p-4 shadow-card">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-ink">
+                {accountStatus.label}
+              </p>
+              {accountStatus.type === 'anonymous' && (
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  访客数据可能因清浏览器数据、换浏览器或换设备而无法恢复。退出访客不会自动迁移数据。
+                </p>
+              )}
+            </div>
+            <button
+              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
+              type="button"
+              onClick={handleSignOut}
+            >
+              {accountStatus.type === 'anonymous'
+                ? '退出访客并使用邮箱登录'
+                : '退出登录'}
+            </button>
+          </div>
+        </section>
 
         {error && (
           <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-6 text-danger">

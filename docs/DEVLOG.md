@@ -4,6 +4,31 @@
 
 ## 2026-07-08
 
+### v0.2.7 Permanent Email Auth implementation Phase 1
+
+- 将 App 启动认证流程从“无 session 自动 anonymous sign-in”改为“只恢复已有
+  Supabase session；无 session 显示邮箱 Magic Link 登录界面”。
+- 本轮不再调用 `signInAnonymously()`，也不提供“以访客身份继续”按钮。
+- 已有 anonymous session 继续兼容读取当前访客数据，并显示“访客账号”状态、
+  清浏览器数据 / 换浏览器 / 换设备后可能无法恢复的风险提示，以及“退出访客并
+  使用邮箱登录”入口。
+- 永久邮箱账号显示脱敏邮箱状态，并提供退出登录。
+- 登录、退出或 user ID 切换时立即清空上一账号的库存、详情和筛选状态；库存加载
+  增加 user ID stale guard，防止旧用户延迟返回的数据污染新用户视图。
+- 新增 `AuthPanel` 和 Auth helper，Magic Link 使用 `window.location.origin`
+  作为 redirect，并设置 `shouldCreateUser: true`。
+- 新增 Auth 自动化测试，覆盖 anonymous session 识别、Magic Link 参数、发送
+  成功 / 失败 / cooldown、退出登录、旧库存请求 stale guard 和生产代码不再创建
+  anonymous user。
+- Review fixes：库存加载改为由稳定 `sessionUserId` 触发，同一 user 的 initial
+  auth event 或 token refresh 不重复加载；补充 mocked Auth state-machine 行为测试、
+  stale request 顺序测试和 fake timer cooldown 测试。
+- 更新 README、决策记录、测试文档、运维指南、backlog 和项目状态。
+- 运维指南新增 Supabase Dashboard Magic Link 配置说明、真实 smoke checklist、
+  fail-closed 旧数据迁移 SQL 模板和精确 ID 回滚模板。
+- 本轮未执行真实 Dashboard 配置、未发送真实 Magic Link、未执行真实 SQL、未删除
+  Auth 用户、未修改 Supabase schema / RLS、未部署、未读取或打印 secrets。
+
 ### v0.2.6 Supabase Free Tier 运行风险与恢复说明
 
 - 收到 Supabase Free Tier inactivity pause 相关通知，项目 `food-expiry-manager`

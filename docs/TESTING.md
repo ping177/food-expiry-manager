@@ -15,6 +15,9 @@
 - `src/lib/expiry.test.js`
 - `src/lib/inventory.test.js`
 - `src/lib/productLookup.test.js`
+- `src/lib/auth.test.js`
+- `src/components/AuthPanel.test.jsx`
+- `src/App.test.jsx`
 
 运行命令：
 
@@ -57,21 +60,79 @@ npm run build
 
 结果：Vite 生产构建成功。
 
-## v0.2.5 部署后 smoke test checklist
+## v0.2.7 Auth 自动化测试
+
+覆盖范围：
+
+- Source guard：生产 `src/App.jsx` 不包含 `signInAnonymously()`，并注册 /
+  清理 Supabase auth listener。
+- Component render test：无 session 登录面板显示邮箱 Magic Link UI，不提供
+  “以访客身份继续”。
+- anonymous session 基于 Supabase user/session 匿名属性识别，而不是只靠是否有
+  email 猜测。
+- 永久邮箱账号显示脱敏邮箱状态。
+- Magic Link 使用输入邮箱、`window.location.origin` 对应 origin，并设置
+  `shouldCreateUser: true`。
+- Magic Link 成功、失败和发送中按钮 disabled 状态。
+- Fake timer test：Magic Link cooldown 从 60 秒开始，1 秒后显示 59 秒，结束后
+  回到 0，并清理 interval；失败发送不进入 cooldown。
+- 退出登录调用 Supabase `signOut()`，失败时显示通用错误。
+- Mocked Auth state-machine test：`getSession()` 和 listener 返回同一 user ID
+  时只触发一次库存加载；同一 user 的 token refresh 只更新 session，不重复加载。
+- Mocked Auth state-machine test：`null -> user A`、`user A -> null`、
+  `user A -> user B`、anonymous A -> email B 都按 user ID 变化触发账号状态清理。
+- Mocked stale-request test：A 的库存请求 pending、切换到 B、B 先返回、A 后返回时，
+  A 的结果和错误都不会覆盖 B 的当前状态。
+
+当前测试仍使用 mock Supabase，不发真实 Magic Link，不访问真实网络，不执行真实 SQL。
+
+## v0.2.7 Magic Link 本地 smoke
+
+Dashboard 配置完成后执行：
+
+1. 使用无 session 浏览器访问 `http://127.0.0.1:5177`，确认显示邮箱登录界面。
+2. 输入真实邮箱并发送 Magic Link，确认按钮进入发送中并启动 60 秒 cooldown。
+3. 确认成功提示不会透露邮箱是否已注册。
+4. 点击邮件中的 Magic Link 后回到发起登录的本地 origin。
+5. 确认 session 恢复，刷新后仍保持邮箱账号登录。
+6. 点击退出登录后库存立即不可见，并回到邮箱登录界面。
+7. 再次使用同一邮箱登录，确认仍是同一永久账号。
+8. 无痕窗口或另一浏览器使用同一邮箱登录，确认可访问同一账号数据。
+9. 已有 anonymous session 访问时，确认仍能看到其自己的库存，并显示访客风险提示。
+
+## v0.2.7 数据迁移验收
+
+迁移前后都必须验证：
+
+- 旧用户迁移前为 8 个 `products`、12 个 `inventory_batches`。
+- 旧用户迁移前为 9 个 active batches、3 个 consumed batches。
+- 旧用户迁移前 active 总数量为 27。
+- 新永久账号迁移前 `products` 和 `inventory_batches` 均为 0。
+- 迁移后旧 user ID 在业务表中为 0。
+- 迁移后新永久账号仍为 8 / 12 / 9 / 3 / 27。
+- 所有 batch 的 `product_id` 仍引用有效 product。
+- product 和 batch owner mismatch 为 0。
+- 新永久账号可访问全部迁移数据。
+- 其他 anonymous user 仍无法读取正式账号数据。
+- 备份和精确 ID 回滚材料已确认可用，且未进入 Git。
+
+## v0.2.7 部署后 smoke test checklist
 
 1. 手机 HTTPS 访问页面，确认无白屏。
-2. 首次打开自动 anonymous sign-in 成功。
-3. 新增商品成功。
-4. 扫码可打开后置摄像头。
-5. 扫码失败时可手输 barcode。
-6. Go-UPC 可命中真实 barcode，并预填名称、品牌和图片。
-7. Go-UPC 未命中或失败时仍可手动填写。
-8. 保存库存批次后首页出现独立 batch。
-9. 首页到期窗口、分类、搜索组合筛选生效。
-10. 详情页编辑商品信息和库存数量成功。
-11. 另一浏览器 / 另一设备的新匿名用户看不到原用户数据。
-12. 同 barcode 保存两个不同到期日，确认不合并批次。
-13. 刷新页面后数据仍存在。
+2. 无 session 时显示邮箱登录 UI，不自动创建 anonymous user。
+3. 已有 anonymous session 可继续恢复并看到自己的数据，同时显示访客风险提示。
+4. 邮箱 Magic Link 登录后进入同一永久账号。
+5. 新增商品成功。
+6. 扫码可打开后置摄像头。
+7. 扫码失败时可手输 barcode。
+8. Go-UPC 可命中真实 barcode，并预填名称、品牌和图片。
+9. Go-UPC 未命中或失败时仍可手动填写。
+10. 保存库存批次后首页出现独立 batch。
+11. 首页到期窗口、分类、搜索组合筛选生效。
+12. 详情页编辑商品信息和库存数量成功。
+13. 另一 anonymous user 看不到永久账号数据。
+14. 同 barcode 保存两个不同到期日，确认不合并批次。
+15. 刷新页面后数据仍存在。
 
 ## Supabase Resume Smoke
 

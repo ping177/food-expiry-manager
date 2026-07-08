@@ -40,7 +40,9 @@ v0.1 直接接入 Supabase，不使用 `localStorage` 作为主数据层。Stora
 supabase/schema.sql
 ```
 
-然后在 Supabase 控制台的 Authentication 设置中开启 Anonymous Sign-ins。
+然后在 Supabase 控制台的 Authentication 设置中启用 Email Magic Link，并配置
+本地 redirect URL。Anonymous Sign-ins 仅用于兼容已有访客 session，不再作为新
+用户默认入口。
 
 ### 2. 配置环境变量
 
@@ -75,13 +77,18 @@ npm test
 
 ## 认证方式
 
-- 页面首次打开时，如果没有现有 session，会自动调用 Supabase Anonymous Sign-in。
-- 前端不显示强制登录页。
+- 页面首次打开时会先恢复已有 Supabase session。
+- 如果没有 session，前端显示邮箱 Magic Link 登录界面，不再静默创建新的
+  anonymous user。
+- 已有 anonymous session 仍可继续访问当前访客数据，但页面会显示访客风险提示
+  和退出切换入口。
 - `products` 和 `inventory_batches` 都使用当前 `auth.uid()` 作为
   `user_id`，并由 RLS 隔离用户数据。
 - 如果缺少 Supabase 环境变量，页面会显示配置提示而不是白屏。
 
-匿名账号存在重要限制：清除浏览器数据、主动退出或更换设备后，可能无法再访问原匿名账号及其数据。后续版本需要提供绑定邮箱/升级正式账号的入口，用于账号恢复、备份和跨设备同步。
+匿名账号存在重要限制：清除浏览器数据、主动退出或更换设备后，可能无法再访问原
+匿名账号及其数据。v0.2.7 开始优先使用可恢复的邮箱账号；旧匿名数据迁移到永久
+邮箱账号需要按操作文档执行一次性受控迁移，不能在浏览器中跨用户迁移。
 
 ## 当前版本范围
 

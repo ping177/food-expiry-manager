@@ -250,3 +250,27 @@
   RLS 或修改库存 / 条码业务逻辑作为保活方式。
 - 凭据边界：如未来实施 Cron，凭据必须存放在部署平台 secrets 中，不得写入
   前端代码、Git、文档示例值或构建产物。
+
+## D-022：v0.2.7 永久邮箱账号优先，不再创建新的 anonymous user
+
+- 状态：已决定
+- 日期：2026-07-08
+- 背景：Supabase Resume 后确认旧业务数据仍存在，但当前浏览器恢复的是另一个
+  anonymous user，因此 RLS 正常隔离导致页面看不到旧数据。继续默认创建
+  anonymous user 会让跨浏览器、跨设备和清浏览器数据后的恢复问题继续扩大。
+- 决策：应用启动时只恢复已有 Supabase session；没有 session 时显示邮箱
+  Magic Link 登录界面，不再默认或显式创建新的 anonymous user。
+- 已有 anonymous session：暂时兼容读取其当前数据，页面显示“访客账号”状态、
+  session 丢失风险提示和“退出访客并使用邮箱登录”操作；本轮不实现
+  anonymous-to-permanent identity linking。
+- 永久账号：使用 Supabase Email Magic Link / OTP API 发送登录链接，并允许
+  首次邮箱创建账号。Magic Link redirect 使用发起登录时的
+  `window.location.origin`。
+- 旧数据归属：不尝试直接恢复旧 anonymous user 或手工修改 Auth identity。
+  推荐先创建新的永久邮箱账号，再用受控 SQL 事务把旧用户的 `products.user_id`
+  和 `inventory_batches.user_id` 迁移到新永久账号。
+- 安全边界：不使用 service role key 或 Admin API 于前端；不关闭或放宽 RLS；
+  不把真实 UUID、邮箱、token、dump 或一次性 SQL 提交 Git；Go-UPC secret
+  边界不变。
+- 非目标：本决策不执行真实 Dashboard 配置、真实数据迁移、用户删除、Vercel
+  部署或 Cron 配置。

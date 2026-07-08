@@ -22,6 +22,48 @@
 
 ## 后续优先事项
 
+### v0.2.7：永久邮箱登录与旧匿名数据安全迁移
+
+Phase 1 代码、测试、操作文档和 post-review fixes 已完成，仍需人工完成真实配置与验收。
+
+已完成：
+
+- 应用启动时只恢复已有 Supabase session，不再在无 session 时自动创建新的
+  anonymous user。
+- 无 session 时显示邮箱 Magic Link 登录界面。
+- 已有 anonymous session 继续兼容读取当前数据，并显示访客状态、恢复风险和
+  退出切换入口。
+- 邮箱账号显示账号状态并支持退出登录。
+- 登录、退出或 user ID 切换时清空上一账号的库存和详情状态，库存加载增加旧请求
+  防污染保护。
+- 同一 user 的 initial auth event 或 token refresh 不会重复触发库存加载。
+- 新增 Auth helper、Auth UI、mocked Auth state-machine 测试、stale request 顺序测试
+  和 fake timer cooldown 测试。
+- 新增 Dashboard 配置说明、Magic Link smoke、旧数据 fail-closed 迁移模板和
+  精确 ID 回滚模板。
+
+P0：
+
+- 在 Supabase Dashboard 启用并核对 Email Magic Link 配置。
+- 将 redirect allow list 加入 `http://localhost:5177/**` 和
+  `http://127.0.0.1:5177/**`。
+- 使用真实邮箱完成本地 Magic Link smoke。
+- 创建新的永久邮箱账号后，按 `docs/OPERATOR_GUIDE.md` 备份、执行并验收旧数据迁移。
+
+P1：
+
+- 迁移后验证同一邮箱在无痕窗口或另一浏览器可看到同一数据。
+- 验证旧 anonymous user 在业务表中无残留后，再评估是否清理无数据 Auth 用户。
+- v0.2.8 再处理 Vercel production / preview redirect URL 和公网 smoke。
+
+当前非目标：
+
+- 不恢复旧 anonymous identity。
+- 不在浏览器执行跨用户迁移。
+- 不使用 service role key、Admin API 或 manual identity linking。
+- 不删除 Auth 用户。
+- 不部署 Vercel、不配置 Cron。
+
 ### v0.2.6：Supabase Free Tier 运行风险与恢复说明
 
 已完成：
