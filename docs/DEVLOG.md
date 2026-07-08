@@ -4,6 +4,30 @@
 
 ## 2026-07-08
 
+### v0.2.7 Permanent Email Auth final acceptance and migration closure
+
+- 已完成 Supabase Email Provider、Confirm email、本地 Site URL 和本地 Redirect URL
+  配置，并使用默认 Supabase 邮件服务完成真实 Magic Link 登录。
+- Magic Link 曾因默认邮件服务短时间发送频率限制出现一次临时发送失败；等待额度
+  恢复后重新发送并使用最新邮件链接登录成功，该问题不属于应用代码缺陷。
+- 永久邮箱账号已建立，刷新后 session 保持；同一邮箱跨浏览器登录确认是同一账号。
+- 退出邮箱账号后页面库存立即清空并返回登录页；再次使用同一邮箱登录后库存恢复。
+- 迁移前已生成本地 JSON 备份并由用户保留在仓库外；备份内容、完整 UUID 和邮箱
+  未写入文档或 Git。
+- 已通过 fail-closed 单事务将旧 anonymous 库存迁移到永久邮箱账号，只更新
+  `products.user_id` 和 `inventory_batches.user_id`，product 主键和 batch 的
+  `product_id` 保持不变。
+- 迁移数量验收通过：8 个 products、12 个 inventory batches，其中 active 9、
+  consumed 3、active quantity 27，invalid product refs = 0，owner mismatches = 0。
+- 首页只显示 9 个 active 批次是正确行为；3 个 consumed 批次保留在数据库中。
+- 迁移后旧 anonymous session 无权访问已迁移库存，邮箱账号可正常读取库存，说明
+  RLS 隔离、页面缓存清理和账号切换保护均按预期工作。
+- 已确认三个无业务数据 anonymous users 的 products、batches 和 active quantity
+  均为 0，随后通过 Supabase Dashboard 删除。
+- 删除后最终只读验收通过：永久邮箱账号存在且不是 anonymous，已删除 anonymous
+  users 不再存在，业务数据仍为 8 / 12 / 9 / 3 / 27，关系校验为 0 异常。
+- 本次最终收口未修改 Supabase schema、RLS、Edge Function 或业务数据结构。
+
 ### v0.2.7 Permanent Email Auth implementation Phase 1
 
 - 将 App 启动认证流程从“无 session 自动 anonymous sign-in”改为“只恢复已有

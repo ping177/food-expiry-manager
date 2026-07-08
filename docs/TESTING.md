@@ -10,7 +10,8 @@
 
 ## 自动化测试
 
-使用 Vitest，测试文件：
+使用 Vitest。v0.2.7 最终代码验收时结果为 12 个测试文件、105 个测试通过。
+核心测试文件包括：
 
 - `src/lib/expiry.test.js`
 - `src/lib/inventory.test.js`
@@ -88,7 +89,7 @@ npm run build
 
 ## v0.2.7 Magic Link 本地 smoke
 
-Dashboard 配置完成后执行：
+已完成并通过：
 
 1. 使用无 session 浏览器访问 `http://127.0.0.1:5177`，确认显示邮箱登录界面。
 2. 输入真实邮箱并发送 Magic Link，确认按钮进入发送中并启动 60 秒 cooldown。
@@ -100,9 +101,13 @@ Dashboard 配置完成后执行：
 8. 无痕窗口或另一浏览器使用同一邮箱登录，确认可访问同一账号数据。
 9. 已有 anonymous session 访问时，确认仍能看到其自己的库存，并显示访客风险提示。
 
+Supabase 默认邮件服务可能因短时间发送频率限制出现临时发送失败。遇到该情况时，
+等待限额恢复后只重新发送一次，并使用最新邮件链接登录；这不会影响已存在的
+数据库数据。
+
 ## v0.2.7 数据迁移验收
 
-迁移前后都必须验证：
+已完成并通过：
 
 - 旧用户迁移前为 8 个 `products`、12 个 `inventory_batches`。
 - 旧用户迁移前为 9 个 active batches、3 个 consumed batches。
@@ -116,12 +121,42 @@ Dashboard 配置完成后执行：
 - 其他 anonymous user 仍无法读取正式账号数据。
 - 备份和精确 ID 回滚材料已确认可用，且未进入 Git。
 
-## v0.2.7 部署后 smoke test checklist
+页面登录后恢复 9 个 active 批次是正确行为；数据库总计仍为 12 个批次，其中
+active 9、consumed 3。
+
+## v0.2.7 最终人工 / Supabase 验收矩阵
+
+结果：passed。
+
+- 首次 Magic Link 登录成功。
+- 刷新后 session 保持。
+- 跨浏览器使用同一邮箱登录后确认为同一账号。
+- 退出后页面缓存立即清空。
+- 同邮箱重新登录后库存恢复。
+- 登录后首页恢复 9 个 active 批次。
+- 数据库总计 12 个 batches，其中 active 9、consumed 3。
+- 数据库总计 8 个 products。
+- active quantity 为 27。
+- anonymous session 无法读取已迁移库存。
+- 清理前完成 anonymous users 与业务数据只读检查。
+- 三个无业务数据 anonymous users 已删除。
+- 删除后 Auth 和业务数据最终只读验收通过。
+- invalid product refs = 0。
+- owner mismatches = 0。
+
+## v0.2.7 验证结果汇总
+
+- 自动测试：12 files / 105 tests passed。
+- Production build：passed。
+- `git diff --check`：passed。
+- 真实人工 / Supabase smoke：passed。
+
+## v0.2.8 部署后 smoke test checklist
 
 1. 手机 HTTPS 访问页面，确认无白屏。
 2. 无 session 时显示邮箱登录 UI，不自动创建 anonymous user。
-3. 已有 anonymous session 可继续恢复并看到自己的数据，同时显示访客风险提示。
-4. 邮箱 Magic Link 登录后进入同一永久账号。
+3. 邮箱 Magic Link 登录后进入同一永久账号。
+4. 同一邮箱在手机浏览器可恢复已迁移库存。
 5. 新增商品成功。
 6. 扫码可打开后置摄像头。
 7. 扫码失败时可手输 barcode。
@@ -159,15 +194,15 @@ Supabase Free 项目从 Paused 恢复到 Active 后，先做这组最小真实 s
 - 单次 Supabase Resume 后通常先执行恢复 smoke。
 - 只有代码、schema、RLS、Edge Function 或部署配置发生变化时，才需要完整
   自动化 regression。
-- v0.2.6 是 docs-only 更新，不运行 `npm test` / `npm run build`。
+- docs-only 更新通常只需要 `git diff --check` 和范围 / 敏感信息检查，不需要重新
+  运行完整业务测试。
 
-## v0.2 尚未完成的验证
+## 手机端仍待验证
 
-- 手机浏览器摄像头权限、后置摄像头选择和真实包装扫码。
-- Open Food Facts universal 和 Open Pet Food Facts fallback 的真实网络查询
-  及图片 URL 展示。
-- Go-UPC Edge Function 需要使用真实 Supabase secrets 和真实猫罐头 barcode
-  做端到端验收。
+- 手机浏览器摄像头权限、后置摄像头选择和真实包装扫码仍待 v0.2.8 公网 HTTPS
+  环境验收。
+- 生产环境 Magic Link、手机同邮箱登录、库存恢复、Go-UPC Edge Function 和
+  Open Food Facts fallback 需要在 v0.2.8 部署后重新 smoke。
 
 ## v0.2.1 Go-UPC 手动验收清单
 

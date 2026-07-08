@@ -54,13 +54,14 @@
 
 ## v0.2.7 Email Magic Link 配置
 
-本节只记录后续人工配置，不在代码或文档中写入真实 secret、邮箱、token 或完整
-UUID。
+本节记录已完成的本地配置检查点和后续复核原则。不在代码或文档中写入真实
+secret、邮箱、token 或完整 UUID。
 
 ### Dashboard 配置
 
-1. 在 Supabase Dashboard 确认 Email Auth / Passwordless 已启用。
-2. 确认邮件模板使用 Magic Link，而不是六位 OTP 输入码。
+1. 在 Supabase Dashboard `Authentication -> Providers -> Email` 确认 Email
+   Provider 已启用。
+2. 确认 Confirm email 开启，邮件模板使用 Magic Link，而不是六位 OTP 输入码。
 3. 本地开发阶段 Site URL 使用实际主要开发 origin。
 4. Redirect allow list 加入：
    - `http://localhost:5177/**`
@@ -71,7 +72,12 @@ UUID。
 7. 不启用 manual identity linking。
 8. 不把 service role key、数据库密码或 Dashboard token 配置到前端。
 
+`localhost` 和 `127.0.0.1` 是不同 origin，拥有独立 localStorage 和 Supabase
+session。测试登录、退出、跨浏览器和 Redirect URL 时必须明确当前使用的 origin。
+
 ### Magic Link smoke
+
+v0.2.7 本地 smoke 已通过。后续复测时：
 
 1. 启动本地开发服务。
 2. 在无 session 浏览器打开本地 App，确认显示邮箱登录界面。
@@ -81,10 +87,13 @@ UUID。
 6. 确认页面显示邮箱账号状态，刷新后仍保持登录。
 7. 点击退出登录后，库存立即不可见并回到邮箱登录界面。
 
+如果 Supabase 默认邮件服务触发短时间发送频率限制，等待限额恢复后只重新发送一次，
+并使用最新邮件链接。不要反复点击发送；不要把临时限额视为应用代码缺陷。
+
 ## v0.2.7 旧 anonymous 数据迁移 runbook
 
-本节只提供模板和流程。本轮不执行真实 SQL，不提交真实 UUID、邮箱、dump、CSV、
-product ID 列表、batch ID 列表或一次性 SQL。
+v0.2.7 迁移已完成。本节保留脱敏模板和未来同类操作原则。不要提交真实 UUID、
+邮箱、dump、CSV、product ID 列表、batch ID 列表、备份内容或一次性 SQL。
 
 ### 迁移前条件
 
@@ -92,7 +101,8 @@ product ID 列表、batch ID 列表或一次性 SQL。
 - 已确认新永久账号 UUID，且该账号不是 anonymous user。
 - 新账号在 `products` 和 `inventory_batches` 中均为 0 条记录。
 - 迁移期间停止在 App 中新增、编辑、消耗或删除库存。
-- 已导出旧用户相关数据备份，备份文件不进入 Git。
+- 已导出旧用户相关数据备份，备份文件不进入 Git。v0.2.7 迁移前已生成本地
+  JSON 备份并由用户保留在仓库外。
 - 已保存本次 8 个 product ID 和 12 个 batch ID 到本地私密记录。
 - 真实 UUID、邮箱、备份和 ID 列表不得进入 Git、文档或聊天记录。
 - 不关闭或放宽 RLS，不直接修改 `auth.users`，不在前端使用 Admin API 或
@@ -360,6 +370,31 @@ begin
 end $$;
 ```
 
-删除旧 Auth 用户是最后一步，本轮不执行。只有在永久账号登录、跨浏览器 smoke、
-迁移数量、RLS 隔离、旧 user ID 残留和备份可用性全部验证完成后，才可以另行评估
-是否删除旧 anonymous Auth 用户。
+### Anonymous user 清理原则
+
+v0.2.7 已在迁移和只读验收后，通过 Supabase Dashboard
+`Authentication -> Users` 删除三个无业务数据 anonymous users。未来如需清理
+Auth 用户，必须遵守：
+
+- 删除前先只读确认待删除 anonymous user 的 `products = 0`、`batches = 0`、
+  `active quantity = 0`。
+- 同时确认永久邮箱账号仍拥有预期 products、batches、active / consumed 数量和
+  active quantity。
+- 不得删除正式邮箱账号。
+- 不直接修改 `auth.users`。
+- 不关闭或放宽 RLS。
+- 删除后必须复核 Auth 用户、`products`、`inventory_batches`、active /
+  consumed 数量、active quantity、invalid product refs 和 owner mismatches。
+- 本地备份不得放入 Git。
+
+### v0.2.7 最终验收标准
+
+最终只读验收已通过，标准如下：
+
+- 永久邮箱账号存在，且不是 anonymous。
+- 已删除 anonymous users 不再存在。
+- 正式账号拥有 8 个 products、12 个 batches，其中 active 9、consumed 3、
+  active quantity 27。
+- 被删除 owner 的 products 和 batches 均为 0。
+- invalid product refs = 0。
+- owner mismatches = 0。

@@ -5,6 +5,8 @@
 
 版本范围按“先建立可用闭环，再快速扩展录入效率”的原则安排。
 
+v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，不作为当前锁定计划。
+
 ## v0.1：手动录入 MVP
 
 - 状态：已完成并通过真实 Supabase 验收
@@ -54,6 +56,34 @@
 - 不做图片上传或拍照
 - 不做 AI 图片识别
 - 不改变库存批次独立保存原则
+
+## v0.2.7：永久邮箱账号与旧数据迁移
+
+- 状态：已完成并通过本地真实验收
+- 使用邮箱 Magic Link 作为正式账号体系
+- 不再为无 session 用户自动创建新的 anonymous user
+- 旧 anonymous 库存已迁移到永久邮箱账号
+- 迁移保持 product 主键和 batch `product_id` 不变
+- 迁移后数据库数量验收通过：8 个 products、12 个 batches，其中 active 9、
+  consumed 3
+- 无业务数据 anonymous users 已清理
+
+## v0.2.8：Vercel 公网部署与手机验收
+
+- 状态：下一步
+- 连接 GitHub 仓库到 Vercel
+- 配置前端公开 Supabase 环境变量
+- 配置 Production Site URL / Redirect URL
+- 验证生产 Magic Link、手机同邮箱登录和库存恢复
+- 验证手机 HTTPS 摄像头扫码、Go-UPC fallback 和核心库存 smoke
+- 不混入 Cron / Supabase 自动保活
+
+## v0.2.9：Supabase 轻度保活与运维策略
+
+- 状态：候选
+- 先观察 v0.2.8 公网部署后的真实使用频率
+- 如确有需要，再设计无副作用健康查询
+- 不默认实施 Cron，不用业务写入或 anonymous user 创建作为保活方式
 
 ## v0.3：批次和筛选体验优化
 

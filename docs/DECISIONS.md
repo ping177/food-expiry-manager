@@ -260,17 +260,38 @@
   anonymous user 会让跨浏览器、跨设备和清浏览器数据后的恢复问题继续扩大。
 - 决策：应用启动时只恢复已有 Supabase session；没有 session 时显示邮箱
   Magic Link 登录界面，不再默认或显式创建新的 anonymous user。
-- 已有 anonymous session：暂时兼容读取其当前数据，页面显示“访客账号”状态、
-  session 丢失风险提示和“退出访客并使用邮箱登录”操作；本轮不实现
-  anonymous-to-permanent identity linking。
+- 已有 anonymous session：作为迁移过渡兼容读取其当前数据，页面显示“访客账号”
+  状态、session 丢失风险提示和“退出访客并使用邮箱登录”操作；不实现
+  anonymous-to-permanent identity linking。迁移和清理完成后，正式库存 owner
+  为永久邮箱账号。
 - 永久账号：使用 Supabase Email Magic Link / OTP API 发送登录链接，并允许
   首次邮箱创建账号。Magic Link redirect 使用发起登录时的
   `window.location.origin`。
 - 旧数据归属：不尝试直接恢复旧 anonymous user 或手工修改 Auth identity。
-  推荐先创建新的永久邮箱账号，再用受控 SQL 事务把旧用户的 `products.user_id`
-  和 `inventory_batches.user_id` 迁移到新永久账号。
+  先创建新的永久邮箱账号，再用受控 SQL 事务把旧用户的 `products.user_id`
+  和 `inventory_batches.user_id` 迁移到新永久账号；不重建 product 或 batch 主键，
+  不修改 batch 的 `product_id`。
 - 安全边界：不使用 service role key 或 Admin API 于前端；不关闭或放宽 RLS；
   不把真实 UUID、邮箱、token、dump 或一次性 SQL 提交 Git；Go-UPC secret
   边界不变。
-- 非目标：本决策不执行真实 Dashboard 配置、真实数据迁移、用户删除、Vercel
-  部署或 Cron 配置。
+- 操作边界：迁移前必须有本地备份；删除 anonymous user 前必须确认其业务数据为
+  0；不得删除永久邮箱账号。
+- 数量解释：首页只显示 active batches，consumed batches 保留在数据库中；迁移
+  完整性以数据库总数和关系校验为准，不以首页可见数量判断。
+- Origin 边界：`localhost` 和 `127.0.0.1` 是不同 origin，拥有独立 localStorage
+  和 Supabase session；测试和 Redirect URL 配置必须明确区分。
+- 非目标：本决策不执行 Vercel 部署或 Cron 配置。
+
+## D-023：v0.2.8 只做公网部署和手机验收，保活延后决策
+
+- 状态：已决定
+- 日期：2026-07-08
+- 决策：v0.2.8 只处理 Vercel 公网部署、Production Site URL / Redirect URL、
+  生产 Magic Link、手机同邮箱登录、库存恢复、扫码、Go-UPC fallback 和核心库存
+  smoke。
+- 保活边界：Supabase Cron / 轻度保活不混入 v0.2.8。是否实施保活留到 v0.2.9，
+  根据公网部署后的真实使用频率和暂停风险再决定。
+- 安全边界：Vercel 前端环境变量只配置 `VITE_SUPABASE_URL` 和
+  `VITE_SUPABASE_ANON_KEY`；不得配置 service role key、数据库密码、Dashboard
+  token 或 Go-UPC API key 到前端。
+- 后续范围：v0.3 以后仍为候选方向，具体顺序不在当前阶段锁定。

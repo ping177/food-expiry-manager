@@ -19,7 +19,7 @@
 - React
 - Vite
 - Tailwind CSS
-- Supabase Anonymous Auth / Postgres
+- Supabase Email Magic Link Auth / Postgres
 - Supabase Edge Functions
 - `@zxing/browser`
 - Go-UPC API via server-side Edge Function
@@ -41,8 +41,8 @@ supabase/schema.sql
 ```
 
 然后在 Supabase 控制台的 Authentication 设置中启用 Email Magic Link，并配置
-本地 redirect URL。Anonymous Sign-ins 仅用于兼容已有访客 session，不再作为新
-用户默认入口。
+本地 redirect URL。当前正式账号体系使用邮箱 Magic Link，不再自动创建新的
+anonymous user。
 
 ### 2. 配置环境变量
 
@@ -80,19 +80,19 @@ npm test
 - 页面首次打开时会先恢复已有 Supabase session。
 - 如果没有 session，前端显示邮箱 Magic Link 登录界面，不再静默创建新的
   anonymous user。
-- 已有 anonymous session 仍可继续访问当前访客数据，但页面会显示访客风险提示
-  和退出切换入口。
+- 永久邮箱账号是正式库存 owner；旧匿名库存已迁移到邮箱账号。
 - `products` 和 `inventory_batches` 都使用当前 `auth.uid()` 作为
   `user_id`，并由 RLS 隔离用户数据。
 - 如果缺少 Supabase 环境变量，页面会显示配置提示而不是白屏。
 
 匿名账号存在重要限制：清除浏览器数据、主动退出或更换设备后，可能无法再访问原
-匿名账号及其数据。v0.2.7 开始优先使用可恢复的邮箱账号；旧匿名数据迁移到永久
-邮箱账号需要按操作文档执行一次性受控迁移，不能在浏览器中跨用户迁移。
+匿名账号及其数据。v0.2.7 已完成永久邮箱账号、旧匿名库存迁移和无业务数据
+anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前已在提交 `7585fb2` 的 v0.1 稳定基线上完成 v0.2 代码实现：
+当前仍为本地运行，公网部署和手机 HTTPS 验收属于 v0.2.8。当前已在提交
+`7585fb2` 的 v0.1 稳定基线上完成 v0.2 代码实现：
 
 - 使用摄像头扫描商品条形码，扫码成功后立即停止摄像头。
 - 支持取消扫码、摄像头不可用时降级到手动输入条形码。
@@ -108,7 +108,7 @@ npm test
 Supabase 手动验收。开放商品库对真实猫罐头覆盖不足的问题留到 v0.2.1，通过
 商品条码 API 增强首次扫码命中率。
 
-v0.2.1 当前进入 Go-UPC Edge Function 接入：前端仍然先查询当前用户的本地
+v0.2.1 已完成 Go-UPC Edge Function 接入：前端仍然先查询当前用户的本地
 `products`，本地未命中后调用 Supabase Edge Function 代理 Go-UPC；Go-UPC
 未命中或失败时继续走 Open Food Facts universal、Open Pet Food Facts 和普通
 Open Food Facts fallback。Go-UPC API key 只允许配置为 Supabase Edge Function
