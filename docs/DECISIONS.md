@@ -233,3 +233,20 @@
   文档示例值或构建产物。
 - 非目标：本决策不执行真实部署，不修改 Supabase schema / RLS，不修改
   Go-UPC Edge Function，不改变现有 Anonymous Sign-in 行为。
+
+## D-021：继续使用 Supabase Free，并在 Vercel 部署后再决定是否实施轻度保活
+
+- 状态：已决定
+- 日期：2026-07-08
+- 背景：Supabase 项目 `food-expiry-manager` 曾因 Free Tier inactivity 自动暂停，
+  用户已于 2026-07-07 在 Supabase Dashboard 手动 Resume。
+- 决策：当前继续使用 Supabase Free，不迁移 PocketBase、IndexedDB-only、自托管
+  Supabase、NAS 或 VPS，也暂不升级 Pro。
+- 顺序：先完成 Resume 后恢复核验、备份说明和 Vercel 部署；部署后观察真实使用
+  活动，再判断是否需要轻度保活。
+- 保活边界：只有在仍存在重复暂停风险且需要持续可用时，才设计每日或每 3-5 天
+  一次的无副作用 Cron 健康查询。保活不能被描述为绝对保证 Supabase 永不暂停。
+- 禁止方式：不使用业务写入、垃圾数据、Go-UPC 调用、匿名账号创建、放宽业务表
+  RLS 或修改库存 / 条码业务逻辑作为保活方式。
+- 凭据边界：如未来实施 Cron，凭据必须存放在部署平台 secrets 中，不得写入
+  前端代码、Git、文档示例值或构建产物。

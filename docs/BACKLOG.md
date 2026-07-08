@@ -14,8 +14,47 @@
 - 复杂购物清单
 - 多人权限管理
 - v0.2.1 手机浏览器相机兼容性修补（仅在真实扫码验收发现问题时启动）
+- PocketBase 迁移
+- IndexedDB-only 改造
+- 购买 NAS / VPS
+- 自托管 Supabase
+- 升级 Supabase Pro
 
 ## 后续优先事项
+
+### v0.2.6：Supabase Free Tier 运行风险与恢复说明
+
+已完成：
+
+- 记录 Supabase Free 项目 `food-expiry-manager` 曾因 inactivity 自动暂停，用户已于
+  2026-07-07 在 Dashboard 手动 Resume。
+- 新增 Pause / Resume 操作说明、Resume 后恢复 smoke checklist、备份边界和未来
+  轻度保活策略。
+- 明确当前继续使用 Supabase Free，不迁移后端、不升级 Pro。
+
+P0：
+
+- 完成 Supabase Resume 后真实 smoke。
+- 完成 Vercel 公网部署。
+- 完成手机 HTTPS smoke test。
+
+P1：
+
+- 建立可执行的数据备份方案。
+- 建立最小恢复演练。
+- 明确 Anonymous user / `user_id` 恢复边界。
+- Vercel 部署后评估是否需要轻度 Cron 健康查询。
+- 邮箱 / Magic Link 绑定或匿名账号升级。
+
+当前非目标：
+
+- 不迁移 PocketBase。
+- 不改 IndexedDB-only。
+- 不购买 NAS / VPS。
+- 不自托管 Supabase。
+- 不升级 Pro。
+- 不实施自动保活。
+- 不修改库存或条码业务逻辑。
 
 ### v0.2.5：Deployment readiness
 

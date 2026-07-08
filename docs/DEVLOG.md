@@ -2,6 +2,21 @@
 
 记录已完成的项目工作，按日期倒序维护。
 
+## 2026-07-08
+
+### v0.2.6 Supabase Free Tier 运行风险与恢复说明
+
+- 收到 Supabase Free Tier inactivity pause 相关通知，项目 `food-expiry-manager`
+  曾因 inactivity 自动暂停。
+- 用户已于 2026-07-07 在 Supabase Dashboard 手动 Resume。
+- 新增 Pause / Resume、Resume 后恢复 smoke、备份边界和未来轻度保活说明。
+- 当前尚未实施 Vercel Cron 或任何自动保活。
+- 当前尚未部署 Vercel。
+- 当前策略是继续使用 Supabase Free，先完成恢复核验、备份说明和 Vercel 部署，
+  再根据真实使用情况决定是否增加轻度 Cron 健康查询。
+- 本轮只修改文档，不修改业务代码、Supabase schema / RLS、Realtime 配置、
+  Go-UPC Edge Function 或部署配置，未读取、展示或提交 secrets。
+
 ## 2026-06-28
 
 ### v0.2.5 Deployment readiness docs

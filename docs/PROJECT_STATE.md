@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.5 completed: deployment readiness docs.
+v0.2.6 completed: Supabase Free Tier operations docs.
 
 ## Current status
 
-v0.2.5 已完成首页库存卡片、分类筛选、批次详情编辑和部署准备文档整理。当前重点是继续确认真实手机端使用体验，并决定是否进入公网部署 / PWA 验收。
+Supabase Free 项目曾因 inactivity 自动暂停，已于 2026-07-07 手动 Resume。当前继续使用 Supabase Free，下一步完成恢复核验、备份说明和 Vercel 部署，再根据真实使用情况决定是否启用轻度保活。
 
 ## Latest completed
 
-v0.2.5 已完成部署 readiness 文档，明确 Vercel 优先、frontend env 边界、Go-UPC secret 边界和 post-deploy smoke checklist。
+v0.2.6 已完成 Supabase Free Tier pause / resume、恢复 smoke、备份边界和未来轻度保活策略的 docs-only 收口。
 
 ## Deployment
 
@@ -34,14 +34,15 @@ Notes: 暂无人工维护的公网部署信息。
 - v0.2.3 — 分类与筛选
 - v0.2.4 — 首页库存卡片
 - v0.2.5 — 部署准备文档
+- v0.2.6 — Supabase Free Tier 运维风险说明
 
 ## Last verified
 
-2026-06-28: docs-only readiness update; `git diff --check` passed. Code test/build not rerun because business code was not changed.
+2026-07-08: docs-only operations update; `git diff --check` passed. Code test/build not rerun because business code was not changed.
 
 ## Next Action
 
-继续做真实手机端使用验收，并确认下一步是否开始公网部署和 PWA 相关检查。
+P0: complete Supabase Resume smoke, then deploy to Vercel and run phone HTTPS smoke test. P1: define executable backup / restore practice and decide whether light keepalive is needed after real usage.
 
 ## Blockers
 
@@ -52,6 +53,7 @@ Notes: 暂无人工维护的公网部署信息。
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
 - Supabase Anonymous Auth keeps the app open-and-use, but account recovery and cross-device continuity remain future work.
+- Supabase Free may pause after inactivity; recovery window details must come from real email or Dashboard, not estimates.
 - Vercel is the preferred first deployment target for phone HTTPS smoke testing; Netlify is a backup and GitHub Pages is not preferred for this stage.
 - Documentation ownership: `README.md` is the entrypoint; `ROADMAP` is long-term route; `BACKLOG` is near-term priority; `BARCODE_API_EVALUATION` and `DATA_MODEL` remain dedicated specialist docs; `DECISIONS` records key decisions.
 - v0.2.1 Go-UPC Edge Function integration is complete and deployed.
@@ -68,4 +70,4 @@ Notes: 暂无人工维护的公网部署信息。
 
 ## Handoff Prompt
 
-Continue 食品过期管理 after v0.2.5 deployment readiness docs. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Next recommended action is Vercel deployment plus phone HTTPS smoke test. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, keep `GO_UPC_API_KEY` only in Supabase Edge Function secrets, and do not modify Supabase schema / RLS without explicit scope.
+Continue 食品过期管理 after v0.2.6 Supabase Free Tier operations docs. Read README and project docs, then confirm `docs/PROJECT_STATE.md` is current. Next recommended action is Supabase Resume smoke, then Vercel deployment plus phone HTTPS smoke test. Preserve `products` / `inventory_batches` separation, keep every same-barcode save as an independent batch, keep provider keys out of frontend code, keep `GO_UPC_API_KEY` only in Supabase Edge Function secrets, do not read or record secrets, and do not modify Supabase schema / RLS without explicit scope.

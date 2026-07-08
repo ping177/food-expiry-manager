@@ -73,6 +73,33 @@ npm run build
 12. 同 barcode 保存两个不同到期日，确认不合并批次。
 13. 刷新页面后数据仍存在。
 
+## Supabase Resume Smoke
+
+Supabase Free 项目从 Paused 恢复到 Active 后，先做这组最小真实 smoke。
+测试完成后清理测试数据。
+
+1. App 可以启动，页面无白屏。
+2. 原 anonymous session 能否继续访问。
+3. 原有商品可读取。
+4. 原有库存批次可读取。
+5. 新增测试商品或测试批次成功。
+6. 编辑商品信息成功。
+7. 修改库存数量成功。
+8. “消耗 1”成功。
+9. 编辑到期日期成功。
+10. 分类筛选成功。
+11. 搜索成功。
+12. 同商品多批次仍互不影响。
+13. Edge Function 条码查询成功，或明确记录外部查询不可用。
+14. 另一浏览器 / 新匿名用户看不到原用户数据。
+
+## Full Regression
+
+- 单次 Supabase Resume 后通常先执行恢复 smoke。
+- 只有代码、schema、RLS、Edge Function 或部署配置发生变化时，才需要完整
+  自动化 regression。
+- v0.2.6 是 docs-only 更新，不运行 `npm test` / `npm run build`。
+
 ## v0.2 尚未完成的验证
 
 - 手机浏览器摄像头权限、后置摄像头选择和真实包装扫码。
