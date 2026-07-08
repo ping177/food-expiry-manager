@@ -151,23 +151,32 @@ active 9、consumed 3。
 - `git diff --check`：passed。
 - 真实人工 / Supabase smoke：passed。
 
-## v0.2.8 部署后 smoke test checklist
+## v0.2.8 生产部署与手机 smoke
 
-1. 手机 HTTPS 访问页面，确认无白屏。
-2. 无 session 时显示邮箱登录 UI，不自动创建 anonymous user。
-3. 邮箱 Magic Link 登录后进入同一永久账号。
-4. 同一邮箱在手机浏览器可恢复已迁移库存。
-5. 新增商品成功。
-6. 扫码可打开后置摄像头。
-7. 扫码失败时可手输 barcode。
-8. Go-UPC 可命中真实 barcode，并预填名称、品牌和图片。
-9. Go-UPC 未命中或失败时仍可手动填写。
-10. 保存库存批次后首页出现独立 batch。
-11. 首页到期窗口、分类、搜索组合筛选生效。
-12. 详情页编辑商品信息和库存数量成功。
-13. 另一 anonymous user 看不到永久账号数据。
-14. 同 barcode 保存两个不同到期日，确认不合并批次。
-15. 刷新页面后数据仍存在。
+结果：passed。
+
+- Vercel Production URL `https://food-expiry-manager-two.vercel.app/` 可正常打开。
+- 无 session 时显示邮箱登录 UI，不自动创建 anonymous user。
+- 电脑端 Magic Link 登录成功。
+- 手机端 Magic Link 登录成功。
+- 刷新和重新打开后 session 保持。
+- 退出后库存立即清空。
+- 手机 HTTPS 环境下摄像头可以启动。
+- 手机扫描此前未录入的真实猫罐头条码后，生产远程查询成功并自动填写商品信息。
+- 第三方数据此次没有返回图片，但不阻塞部署。
+- 新增真实商品数据刷新后仍然存在。
+- 页面无明显报错。
+
+## v0.2.8 测试库存清理验收
+
+已完成：
+
+- 原迁移过来的测试库存已由用户在 Supabase 中主动清空。
+- 清空只删除永久邮箱账号名下的 `products` 和 `inventory_batches`。
+- 永久邮箱 Auth 用户保留。
+- 清理后只读验收：`products = 0`、`inventory_batches = 0`。
+- 随后开始录入真实库存。
+- 桌面迁移前 JSON 备份继续保留在仓库外。
 
 ## Supabase Resume Smoke
 
@@ -199,10 +208,8 @@ Supabase Free 项目从 Paused 恢复到 Active 后，先做这组最小真实 s
 
 ## 手机端仍待验证
 
-- 手机浏览器摄像头权限、后置摄像头选择和真实包装扫码仍待 v0.2.8 公网 HTTPS
-  环境验收。
-- 生产环境 Magic Link、手机同邮箱登录、库存恢复、Go-UPC Edge Function 和
-  Open Food Facts fallback 需要在 v0.2.8 部署后重新 smoke。
+- 暂无 v0.2.8 阻塞项。
+- 未来如新增 PWA、通知、导出、图片上传或其他手机能力，需要单独补充验收清单。
 
 ## v0.2.1 Go-UPC 手动验收清单
 

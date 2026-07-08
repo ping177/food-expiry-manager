@@ -45,12 +45,57 @@
 ### 轻度保活当前状态
 
 - 当前尚未实施自动保活。
-- 当前计划先部署 Vercel，并观察真实使用。
+- Vercel 公网部署已完成，下一步观察真实使用频率和 Supabase pause 风险。
 - 如后续需要，再设计每日或每 3-5 天一次的无副作用查询。
 - 保活查询不得新增垃圾记录、修改业务数据、调用 Go-UPC、创建新的 anonymous
   user，或放宽业务表 RLS。
 - 凭据必须存放在部署平台 secrets 中。
 - 保活不能被描述为绝对保证 Supabase 永不暂停。
+
+## v0.2.8 Vercel Production 运维记录
+
+### Vercel 配置
+
+- GitHub 仓库已连接 Vercel。
+- Framework：Vite。
+- Root Directory：`.`。
+- Build Command：`npm run build`。
+- Output Directory：`dist`。
+- Production URL：`https://food-expiry-manager-two.vercel.app/`。
+- 前端环境变量只配置：
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+- 不得把 Supabase service role key、数据库密码、Dashboard token 或 Go-UPC API key
+  配置到前端。
+
+### Supabase Auth 正式域名
+
+- Production Site URL 已配置为 Vercel Production URL。
+- Production Redirect URL 已加入。
+- `http://localhost:5177/**` 和 `http://127.0.0.1:5177/**` 本地 Redirect 继续
+  保留，用于本地开发和复测。
+
+### 生产 smoke 结果
+
+- 电脑端 Production URL 正常打开。
+- 电脑端 Magic Link 登录成功。
+- 手机端 Magic Link 登录成功。
+- 刷新和重新打开后 session 保持。
+- 退出后库存立即清空。
+- 手机 HTTPS 摄像头可以启动。
+- 手机扫描此前未录入的真实猫罐头条码后，生产远程查询成功并自动填写商品信息。
+- 第三方数据此次没有返回图片，但不阻塞部署。
+- 新增真实商品数据刷新后仍然存在。
+- 页面无明显报错。
+
+### 测试库存清理边界
+
+- 原迁移过来的测试库存已由用户在 Supabase 中主动清空。
+- 清空只删除永久邮箱账号名下的 `products` 和 `inventory_batches`。
+- 永久邮箱 Auth 用户保留。
+- 清理后只读验收为 `products = 0`、`inventory_batches = 0`。
+- 桌面迁移前 JSON 备份继续保留在仓库外。
+- 不在文档中记录完整用户 UUID、邮箱、备份内容或敏感数据。
 
 ## v0.2.7 Email Magic Link 配置
 
@@ -68,7 +113,7 @@ secret、邮箱、token 或完整 UUID。
    - `http://127.0.0.1:5177/**`
 5. App 使用 `window.location.origin` 作为 Magic Link `emailRedirectTo`，确保回到
    发起登录的 origin。
-6. 暂不加入 Vercel production 或 preview URL；Vercel redirect 留到 v0.2.8。
+6. Vercel Production Redirect 已在 v0.2.8 加入；本地 Redirect 继续保留。
 7. 不启用 manual identity linking。
 8. 不把 service role key、数据库密码或 Dashboard token 配置到前端。
 

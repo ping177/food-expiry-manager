@@ -19,36 +19,74 @@
 - 购买 NAS / VPS
 - 自托管 Supabase
 - 升级 Supabase Pro
+- 手机直接拍照或从相册选择商品图片；后续可能使用 Supabase Storage，实施前需评估
+  图片压缩、Storage RLS、上传 / 替换 / 删除和孤立文件清理。该事项不属于
+  v0.2.8，建议在 Supabase 运维 / 保活策略之后再排期。
 
 ## 后续优先事项
 
-### v0.2.8：Vercel 公网部署与手机验收
+### v0.2.9：Supabase 轻度保活与运维策略
 
-下一版本目标是在不混入 Cron / 保活的前提下，把当前本地可用版本部署到公网 HTTPS，并完成真实手机端验收。
+下一步先观察 v0.2.8 公网部署后的真实使用频率和暂停风险，再决定是否需要轻度
+健康查询；不默认直接实施 Cron。
 
-P0：
+候选目标：
 
-- 连接 GitHub 仓库到 Vercel。
-- 配置 Vercel 前端公开环境变量：
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
-- 禁止把 Supabase service role key、数据库密码、Dashboard token 或 Go-UPC API key
-  放入前端环境变量。
-- 获取正式 HTTPS Production URL。
-- 在 Supabase Auth 配置 Production Site URL / Redirect URL。
-- 生产环境 Magic Link 登录验收。
-- 手机浏览器使用同一邮箱登录，确认库存恢复。
-- 验证刷新、退出、重新登录。
-- 验证 HTTPS 摄像头扫码。
-- 验证 Go-UPC Edge Function 命中和 Open Food Facts fallback。
-- 验证新增、编辑、消耗、筛选 smoke。
+- 观察真实生产使用频率、Supabase pause 风险和恢复成本。
+- 如果仍存在实际 pause 风险，再评估是否需要轻度健康查询。
+- 如实施，必须使用无副作用查询，不新增垃圾数据，不调用 Go-UPC，不创建
+  anonymous user，不放宽 RLS。
+- 凭据只能放在部署平台 secrets 中，不进入前端代码或文档。
 
 当前非目标：
 
-- 不配置 Cron。
-- 不实施 Supabase 自动保活。
+- 不默认实施 Cron。
+- 不修改库存、条码、认证或数据模型。
+- 不把保活描述为绝对保证 Supabase 永不暂停。
+
+### v0.2.8：Vercel 公网部署与手机验收
+
+已完成：在不混入 Cron / 保活的前提下，把当前版本部署到 Vercel 公网 HTTPS，
+并完成电脑端和手机端真实验收。
+
+部署配置：
+
+- GitHub 仓库已连接 Vercel。
+- Framework：Vite。
+- Root Directory：`.`。
+- Build Command：`npm run build`。
+- Output Directory：`dist`。
+- Production URL：`https://food-expiry-manager-two.vercel.app/`。
+- Vercel 前端只配置：
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
+- 未向前端暴露 Supabase service role key、数据库密码、Dashboard token 或
+  Go-UPC API key。
+
+已验收：
+
+- Supabase Auth Production Site URL 已配置。
+- Supabase Auth Production Redirect URL 已加入。
+- `localhost:5177` 和 `127.0.0.1:5177` 本地 Redirect 继续保留。
+- 电脑端 Production URL 正常打开，Magic Link 登录成功。
+- 手机端 Magic Link 登录成功，刷新和重新打开后 session 保持。
+- 退出后库存立即清空。
+- 手机 HTTPS 摄像头可以启动。
+- 手机扫描此前未录入的真实猫罐头条码，生产远程查询成功并自动填写商品信息。
+- 第三方数据此次没有返回图片，但不阻塞部署。
+- 新增真实商品数据刷新后仍然存在。
+- 页面无明显报错。
+- 原迁移测试库存已由用户在 Supabase 中主动清空；清空仅针对永久邮箱账号名下
+  `products` 和 `inventory_batches`，永久邮箱 Auth 用户保留。
+- 清理后只读验收：`products = 0`、`inventory_batches = 0`。
+- 桌面迁移前 JSON 备份继续保留在仓库外。
+
+当前非目标：
+
+- 不配置 Cron，不实施 Supabase 自动保活。
 - 不修改 schema / RLS / Edge Function。
 - 不引入新的账号迁移或用户清理任务。
+- 不把 PWA、通知、导出或图片上传列入 v0.2.8 已完成范围。
 
 ### v0.2.7：永久邮箱登录与旧匿名数据安全迁移
 
@@ -88,16 +126,6 @@ P0：
 - 不使用 service role key、Admin API 或 manual identity linking。
 - 不部署 Vercel、不配置 Cron。
 
-### v0.2.9：Supabase 轻度保活与运维策略
-
-候选目标：
-
-- 先观察 v0.2.8 公网部署后的真实使用频率。
-- 如果仍存在实际 pause 风险，再评估是否需要轻度健康查询。
-- 不默认直接实施 Cron。
-- 如实施，必须使用无副作用查询，不新增垃圾数据，不调用 Go-UPC，不创建
-  anonymous user，不放宽 RLS。
-
 v0.3 以后仍只是候选方向，具体顺序不在当前阶段锁定。
 
 ### v0.2.6：Supabase Free Tier 运行风险与恢复说明
@@ -112,7 +140,7 @@ v0.3 以后仍只是候选方向，具体顺序不在当前阶段锁定。
 
 后续：
 
-- Vercel 公网部署和手机 HTTPS smoke 已转入 v0.2.8。
+- Vercel 公网部署和手机 HTTPS smoke 已在 v0.2.8 完成。
 - Supabase 轻度保活是否实施已转入 v0.2.9，根据真实使用频率决定。
 
 当前非目标：
@@ -296,8 +324,9 @@ Supabase Edge Function 完成；Barcode Lookup、EAN-Search / EAN-Suche 和
 下次同 barcode 本地命中时复用图片
 ```
 
-该能力需要设计 Storage bucket、上传权限、图片压缩和 Storage RLS，不属于
-v0.2 范围。
+该能力需要设计 Storage bucket、上传权限、图片压缩、Storage RLS、上传 /
+替换 / 删除和孤立文件清理，不属于 v0.2.8；建议在 Supabase 运维 / 保活策略
+之后再排期。
 
 ## 说明
 

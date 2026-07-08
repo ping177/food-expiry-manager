@@ -70,20 +70,33 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 
 ## v0.2.8：Vercel 公网部署与手机验收
 
-- 状态：下一步
-- 连接 GitHub 仓库到 Vercel
-- 配置前端公开 Supabase 环境变量
-- 配置 Production Site URL / Redirect URL
-- 验证生产 Magic Link、手机同邮箱登录和库存恢复
-- 验证手机 HTTPS 摄像头扫码、Go-UPC fallback 和核心库存 smoke
+- 状态：已完成并通过生产与手机验收
+- GitHub 仓库已连接 Vercel
+- Vercel 使用 Vite，Root Directory 为 `.`
+- Build Command 为 `npm run build`，Output Directory 为 `dist`
+- Production URL 为 `https://food-expiry-manager-two.vercel.app/`
+- 前端只配置 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`
+- Supabase Production Site URL / Redirect URL 已配置，本地 Redirect 继续保留
+- 电脑端和手机端 Magic Link 登录通过
+- 刷新 / 重新打开后 session 保持，退出后库存立即清空
+- 手机 HTTPS 摄像头可启动，真实条码远程查询成功并可保存真实库存
+- 原迁移测试库存已由用户清空，永久邮箱 Auth 用户保留
 - 不混入 Cron / Supabase 自动保活
 
 ## v0.2.9：Supabase 轻度保活与运维策略
 
-- 状态：候选
+- 状态：下一步
 - 先观察 v0.2.8 公网部署后的真实使用频率
 - 如确有需要，再设计无副作用健康查询
 - 不默认实施 Cron，不用业务写入或 anonymous user 创建作为保活方式
+
+## 后续候选：商品图片上传体验
+
+- 支持手机直接拍照或从相册选择商品图片
+- 替代当前只能手工填写图片 URL 的体验
+- 可能使用 Supabase Storage
+- 实施前需评估图片压缩、Storage RLS、上传 / 替换 / 删除和孤立文件清理
+- 建议在 Supabase 运维 / 保活策略之后再排期，不强行绑定到当前 v0.3 顺序
 
 ## v0.3：批次和筛选体验优化
 

@@ -91,8 +91,13 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前仍为本地运行，公网部署和手机 HTTPS 验收属于 v0.2.8。当前已在提交
-`7585fb2` 的 v0.1 稳定基线上完成 v0.2 代码实现：
+当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
+
+```text
+https://food-expiry-manager-two.vercel.app/
+```
+
+当前已在提交 `7585fb2` 的 v0.1 稳定基线上完成 v0.2 代码实现：
 
 - 使用摄像头扫描商品条形码，扫码成功后立即停止摄像头。
 - 支持取消扫码、摄像头不可用时降级到手动输入条形码。
@@ -128,6 +133,11 @@ Open Food Facts fallback。Go-UPC API key 只允许配置为 Supabase Edge Funct
 
 摄像头访问需要安全上下文。本地使用固定地址
 `http://127.0.0.1:5177`，线上部署必须使用 HTTPS。
+
+Vercel 部署使用 Vite preset，Root Directory 为仓库根目录，Build Command 为
+`npm run build`，Output Directory 为 `dist`。前端只配置
+`VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`；Supabase service role key 和
+Go-UPC API key 不得配置到前端。
 
 Open Food Facts 和 Open Pet Food Facts 仅用于商品信息预填，不负责提供或推断
 保质期。正常未找到与网络、HTTP、返回解析异常会显示不同提示，任何查询失败

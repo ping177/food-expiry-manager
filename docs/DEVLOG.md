@@ -4,6 +4,30 @@
 
 ## 2026-07-08
 
+### v0.2.8 Vercel production deployment and phone smoke
+
+- 已将 GitHub 仓库连接到 Vercel，并以 Vite 作为 Framework 部署当前静态前端。
+- Vercel Root Directory 为 `.`，Build Command 为 `npm run build`，Output
+  Directory 为 `dist`。
+- Production URL 为 `https://food-expiry-manager-two.vercel.app/`。
+- Vercel 前端只配置 `VITE_SUPABASE_URL` 和 `VITE_SUPABASE_ANON_KEY`；未向前端
+  暴露 Supabase service role key、数据库密码、Dashboard token 或 Go-UPC API key。
+- Supabase Auth 已配置 Production Site URL 和 Production Redirect URL；
+  `localhost:5177` 与 `127.0.0.1:5177` 本地 Redirect 继续保留。
+- 电脑端 Production URL 正常打开，Magic Link 登录成功。
+- 手机端 Magic Link 登录成功；刷新和重新打开后 session 保持。
+- 退出后库存立即清空。
+- 手机 HTTPS 环境下摄像头可以启动。
+- 手机扫描此前未录入的真实猫罐头条码后，生产远程查询成功并自动填写商品信息。
+- 第三方数据此次没有返回图片，但不阻塞部署；后续图片体验作为独立候选事项处理。
+- 新增真实商品数据刷新后仍然存在，页面无明显报错。
+- 原迁移过来的测试库存已由用户在 Supabase 中主动清空；清空仅删除永久邮箱账号
+  名下的 `products` 和 `inventory_batches`，永久邮箱 Auth 用户保留。
+- 清理后只读验收为 `products = 0`、`inventory_batches = 0`，随后开始录入真实库存。
+- 桌面迁移前 JSON 备份继续保留在仓库外；本次文档不记录完整 UUID、邮箱或敏感数据。
+- 本轮未修改业务代码、测试、package / lockfile、Supabase schema / RLS、
+  Edge Function、Vercel 配置或 `.env` / secrets。
+
 ### v0.2.7 Permanent Email Auth final acceptance and migration closure
 
 - 已完成 Supabase Email Provider、Confirm email、本地 Site URL 和本地 Redirect URL
