@@ -10,7 +10,8 @@
 
 ## 自动化测试
 
-使用 Vitest。v0.2.7 最终代码验收时结果为 12 个测试文件、105 个测试通过。
+使用 Vitest。v0.2.9 本地实现验收结果为 13 个测试文件、110 个测试通过；其中
+原有 12 个测试文件、105 个测试继续通过，新增 keepalive endpoint 测试 5 个。
 核心测试文件包括：
 
 - `src/lib/expiry.test.js`
@@ -19,6 +20,7 @@
 - `src/lib/auth.test.js`
 - `src/components/AuthPanel.test.jsx`
 - `src/App.test.jsx`
+- `tests/supabase-keepalive.test.js`
 
 运行命令：
 
@@ -60,6 +62,30 @@ npm run build
 ```
 
 结果：Vite 生产构建成功。
+
+## v0.2.9 Keepalive 自动化与生产验收
+
+自动化覆盖：
+
+- 无 Authorization 和错误 credential 返回 401，且不调用 Supabase。
+- 正确 credential 且 3 次 RPC 全部成功时返回 200，并确认实际调用 3 次。
+- 第 1、2、3 次分别失败时均立即返回非 2xx。
+- Supabase 请求抛出异常时返回 502。
+- 响应和日志不包含 credential、anon key 或 Supabase URL。
+- endpoint 只调用 `keepalive_ping()`，不进入商品、库存或条码业务逻辑。
+
+Production 完成标准：
+
+1. migration 已部署，函数只返回固定 boolean。
+2. 浏览器直接访问 endpoint 返回 401。
+3. 正确授权手动调用返回 200，Runtime Logs 显示 3 次成功 RPC。
+4. Cron 已注册为每天一次；Hobby 在 UTC 04:00-04:59 窗口内执行。
+5. 首次自动 Cron 返回 200，3 次 RPC 成功，日志无敏感信息。
+6. 验收前后业务数据数量和内容无非预期变化。
+7. Supabase Dashboard 显示 Active。
+8. Production URL、邮箱登录、库存读取、一次新增或更新和条码查询 smoke 通过。
+
+首次自动 Cron 通过前，v0.2.9 状态保持“验收中”。
 
 ## v0.2.7 Auth 自动化测试
 

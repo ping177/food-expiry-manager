@@ -2,6 +2,26 @@
 
 记录已完成的项目工作，按日期倒序维护。
 
+## 2026-07-09
+
+### v0.2.9 Supabase light keepalive implementation
+
+- 状态为“验收中”，尚未标记版本完成。
+- 新增 tracked migration：`keepalive_ping()` 使用 `security invoker`，只返回
+  固定 boolean，不访问 `products`、`inventory_batches` 或 Auth 数据，不执行写操作。
+- 显式撤销函数对 `PUBLIC` 和 `authenticated` 的执行权限，只授权 `anon`。
+- 新增 `/api/supabase-keepalive` Web Standard GET handler：校验服务端 `CRON_SECRET`，
+  使用 Supabase URL 和 anon key 顺序调用 3 次 RPC，任意失败即返回非 2xx。
+- endpoint 不调用 Go-UPC、Open Food Facts 或其他第三方服务；未修改前端、
+  Auth、库存逻辑、业务表 schema 或 RLS。
+- 新增 `vercel.json` 每日 Cron。`17 4 * * *` 在 Vercel Hobby 下表示每天于
+  UTC 04:00-04:59 窗口内执行一次，不保证精确在 04:17。
+- 新增 5 个自动化测试，覆盖 401、3 次顺序成功、失败停止、fetch 异常和日志 /
+  响应脱敏。
+- 本地完整自动化测试通过：13 files / 110 tests；其中原有 105 个测试继续通过。
+- Production migration、平台配置、手动 401/200、首次自动 Cron 和 App smoke
+  尚未执行；完成这些验收前 v0.2.9 不算完成。
+
 ## 2026-07-08
 
 ### v0.2.8 Vercel production deployment and phone smoke

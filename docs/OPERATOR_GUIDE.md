@@ -24,8 +24,8 @@
 2. 数据库可以访问。
 3. 原有 `products` 数据仍在。
 4. 原有 `inventory_batches` 数据仍在。
-5. Anonymous Sign-in 仍启用。
-6. 原浏览器 session 能否读取原数据。
+5. Email Magic Link 登录正常，App 不主动创建 anonymous user。
+6. 永久邮箱账号 session 能否恢复并读取原数据。
 7. 新增、编辑、数量修改是否正常。
 8. “消耗 1”是否正常。
 9. RLS 隔离是否正常。
@@ -41,16 +41,53 @@
 - 后续需要设计可执行的完整备份 / 恢复方案。
 - dump、CSV、备份文件不得提交 Git。
 - 不把 service role key、数据库密码或 Go-UPC key 写入文档或仓库。
+- 桌面 JSON 只是 v0.2.7 旧迁移前备份，不是持续数据库备份。
 
 ### 轻度保活当前状态
 
-- 当前尚未实施自动保活。
-- Vercel 公网部署已完成，下一步观察真实使用频率和 Supabase pause 风险。
-- 如后续需要，再设计每日或每 3-5 天一次的无副作用查询。
-- 保活查询不得新增垃圾记录、修改业务数据、调用 Go-UPC、创建新的 anonymous
-  user，或放宽业务表 RLS。
-- 凭据必须存放在部署平台 secrets 中。
-- 保活不能被描述为绝对保证 Supabase 永不暂停。
+- v0.2.9 本地实现已完成，Production 验收尚未完成。
+- Vercel Cron 目标为 `/api/supabase-keepalive`，`17 4 * * *` 在 Hobby 下表示
+  每天于 UTC 04:00-04:59 窗口内执行一次，不保证精确在 04:17。
+- endpoint 由 Vercel Production 的服务端 `CRON_SECRET` 保护；该变量
+  不使用 `VITE_` 前缀，不进入 Git、文档实际值、浏览器响应或日志。
+- endpoint 使用公开 Supabase URL 和 anon key 连续调用 3 次 `keepalive_ping()`。
+- anon RPC 本身不是私有接口，但它只返回固定 boolean，不读取业务数据、不写入数据，
+  因此接受这一最小权限方案，不引入 service role key。
+- Cron 失败只影响本次保活调用，不阻断网站部署，也不影响 App 登录、库存和扫码。
+- 保活降低 inactivity pause 风险，但不能描述为保证 Supabase 永不暂停。
+
+### 部署与首次验收
+
+1. 在 Supabase 部署 tracked migration，确认函数为 `security invoker`，且执行权限
+   只授予 `anon`。
+2. 在 Vercel Production 设置服务端 `CRON_SECRET`；不要把实际值写入命令历史、
+   文档、截图或聊天。
+3. 从已提交并 push 的 Git 版本触发 Production 部署，不用 Vercel CLI 部署未提交代码。
+4. 浏览器直接访问 endpoint，预期 401。
+5. 在本地安全终端使用正确 Authorization 手动调用，预期 200 和
+   `successfulRequests: 3`；不要保存或分享带凭据的命令。
+6. 在 Vercel `Settings -> Cron Jobs` 确认每日任务已注册。
+7. 从 Cron Jobs 的 `View Logs` 或项目 Runtime Logs 按 endpoint 路径过滤，确认
+   成功计数为 3，且日志无 credential、anon key 或 URL。
+8. 等待 UTC 04:00-04:59 窗口内首次自动执行，确认返回 200。
+9. 对比验收前后的业务数据，确认没有新增、修改或删除。
+10. 确认 Supabase Active，并完成 Production URL、邮箱登录、库存读取、一次正常
+    新增或更新和条码查询 smoke。
+
+### 故障排查与关闭
+
+- 401：确认 Production 已设置服务端 `CRON_SECRET`，并在修改后重新部署；不要
+  输出或比对实际值。
+- 502：检查 Vercel Production 是否仍配置公开 Supabase URL 和 anon key 的变量名；
+  再根据 Runtime Logs 中的失败请求序号检查 Supabase 是否 Paused、migration 是否
+  已部署、函数权限和项目网络状态。
+- Supabase Paused：先在 Dashboard 手动 Resume，再执行本指南的 Resume 后最小检查。
+- 临时关闭：在 Vercel `Settings -> Cron Jobs` 使用 Disable Cron Jobs。恢复时重新
+  Enable，并确认下一次窗口执行。
+- 永久关闭：从 `vercel.json` 移除对应 Cron 后重新部署；删除配置前需先走代码变更
+  和 review，不在 Dashboard 留下与 Git 不一致的长期状态。
+- 更换 `CRON_SECRET`：在 Vercel Production 生成并替换服务端值，重新部署，再用新值
+  做一次 401/200 验收；旧值不得记录或复用。
 
 ## v0.2.8 Vercel Production 运维记录
 
