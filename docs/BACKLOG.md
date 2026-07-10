@@ -25,24 +25,39 @@
 
 ## 后续优先事项
 
-### v0.2.9：Supabase 轻度保活与运维策略
+### 下一候选：手机拍照 / 相册选择 / Supabase Storage 商品图片
 
-下一步先观察 v0.2.8 公网部署后的真实使用频率和暂停风险，再决定是否需要轻度
-健康查询；不默认直接实施 Cron。
+v0.2.9 Supabase 轻度保活已完成。下一候选是改善商品图片录入体验，但实施前需要
+先做独立方案设计，不强行指定未经确认的具体版本号。
 
 候选目标：
 
-- 观察真实生产使用频率、Supabase pause 风险和恢复成本。
-- 如果仍存在实际 pause 风险，再评估是否需要轻度健康查询。
-- 如实施，必须使用无副作用查询，不新增垃圾数据，不调用 Go-UPC，不创建
-  anonymous user，不放宽 RLS。
-- 凭据只能放在部署平台 secrets 中，不进入前端代码或文档。
+- 支持手机直接拍照或从相册选择商品图片。
+- 替代目前只能手工填写图片 URL 的体验。
+- 评估 Supabase Storage、图片压缩、Storage RLS、上传 / 替换 / 删除和孤立文件清理。
 
 当前非目标：
 
-- 不默认实施 Cron。
-- 不修改库存、条码、认证或数据模型。
-- 不把保活描述为绝对保证 Supabase 永不暂停。
+- 不在本轮实现图片上传。
+- 不把 PWA、通知、导出或其他库存产品功能混入图片方案。
+- 不读取或提交任何本地图片、备份或 secret。
+
+### v0.2.9：Supabase 轻度保活与运维策略
+
+已完成：Vercel Cron 每天一次调用 `/api/supabase-keepalive`，经服务端
+`CRON_SECRET` 鉴权后连续执行 3 次只读 `keepalive_ping()` RPC。
+
+已验收：
+
+- Cron Path 为 `/api/supabase-keepalive`。
+- Schedule 为 `17 4 * * *`；Hobby 按 UTC 04:00-04:59 窗口执行一次理解。
+- `CRON_SECRET` 只配置在 Vercel Production 服务端环境变量中，不进入文档实际值。
+- Supabase migration 已执行，RPC 只返回固定 boolean，不读取或修改业务数据。
+- 浏览器无授权访问 endpoint 返回 401 / `{"ok":false}`。
+- Supabase API Logs 已确认首次自动保活连续 3 条
+  `POST /rest/v1/rpc/keepalive_ping` 200。
+- 不使用 service role key，不调用 Go-UPC，不创建 anonymous user，不放宽 RLS。
+- 保活降低 inactivity pause 风险，但不保证 Supabase 永不暂停。
 
 ### v0.2.8：Vercel 公网部署与手机验收
 

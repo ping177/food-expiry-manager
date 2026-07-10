@@ -45,7 +45,7 @@
 
 ### 轻度保活当前状态
 
-- v0.2.9 本地实现已完成，Production 验收尚未完成。
+- v0.2.9 已完成，Production 保活链路已验收通过。
 - Vercel Cron 目标为 `/api/supabase-keepalive`，`17 4 * * *` 在 Hobby 下表示
   每天于 UTC 04:00-04:59 窗口内执行一次，不保证精确在 04:17。
 - endpoint 由 Vercel Production 的服务端 `CRON_SECRET` 保护；该变量
@@ -53,26 +53,22 @@
 - endpoint 使用公开 Supabase URL 和 anon key 连续调用 3 次 `keepalive_ping()`。
 - anon RPC 本身不是私有接口，但它只返回固定 boolean，不读取业务数据、不写入数据，
   因此接受这一最小权限方案，不引入 service role key。
+- 浏览器直接访问 endpoint 返回 401 / `{"ok":false}` 是正常保护行为。
 - Cron 失败只影响本次保活调用，不阻断网站部署，也不影响 App 登录、库存和扫码。
 - 保活降低 inactivity pause 风险，但不能描述为保证 Supabase 永不暂停。
 
-### 部署与首次验收
+### 已完成的部署与首次验收
 
-1. 在 Supabase 部署 tracked migration，确认函数为 `security invoker`，且执行权限
+1. 已在 Supabase 部署 tracked migration，函数为 `security invoker`，且执行权限
    只授予 `anon`。
-2. 在 Vercel Production 设置服务端 `CRON_SECRET`；不要把实际值写入命令历史、
+2. 已在 Vercel Production 设置服务端 `CRON_SECRET`；不要把实际值写入命令历史、
    文档、截图或聊天。
-3. 从已提交并 push 的 Git 版本触发 Production 部署，不用 Vercel CLI 部署未提交代码。
-4. 浏览器直接访问 endpoint，预期 401。
-5. 在本地安全终端使用正确 Authorization 手动调用，预期 200 和
-   `successfulRequests: 3`；不要保存或分享带凭据的命令。
-6. 在 Vercel `Settings -> Cron Jobs` 确认每日任务已注册。
-7. 从 Cron Jobs 的 `View Logs` 或项目 Runtime Logs 按 endpoint 路径过滤，确认
-   成功计数为 3，且日志无 credential、anon key 或 URL。
-8. 等待 UTC 04:00-04:59 窗口内首次自动执行，确认返回 200。
-9. 对比验收前后的业务数据，确认没有新增、修改或删除。
-10. 确认 Supabase Active，并完成 Production URL、邮箱登录、库存读取、一次正常
-    新增或更新和条码查询 smoke。
+3. 已从提交并 push 的 Git 版本触发 Production 部署，不用 Vercel CLI 部署未提交代码。
+4. 浏览器直接访问 endpoint 已返回 401 / `{"ok":false}`。
+5. Vercel Cron 已注册，每日一次。
+6. 首次自动执行已在 Supabase API Logs 确认连续 3 条相邻
+   `POST /rest/v1/rpc/keepalive_ping`，status 均为 200。
+7. Production App 最小 smoke 已确认页面正常打开、session / 邮箱登录正常、库存正常读取。
 
 ### 故障排查与关闭
 

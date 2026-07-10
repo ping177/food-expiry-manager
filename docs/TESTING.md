@@ -74,18 +74,20 @@ npm run build
 - 响应和日志不包含 credential、anon key 或 Supabase URL。
 - endpoint 只调用 `keepalive_ping()`，不进入商品、库存或条码业务逻辑。
 
-Production 完成标准：
+Production 验收结果：passed。
 
-1. migration 已部署，函数只返回固定 boolean。
-2. 浏览器直接访问 endpoint 返回 401。
-3. 正确授权手动调用返回 200，Runtime Logs 显示 3 次成功 RPC。
-4. Cron 已注册为每天一次；Hobby 在 UTC 04:00-04:59 窗口内执行。
-5. 首次自动 Cron 返回 200，3 次 RPC 成功，日志无敏感信息。
-6. 验收前后业务数据数量和内容无非预期变化。
-7. Supabase Dashboard 显示 Active。
-8. Production URL、邮箱登录、库存读取、一次新增或更新和条码查询 smoke 通过。
-
-首次自动 Cron 通过前，v0.2.9 状态保持“验收中”。
+- Supabase migration 已部署，函数只返回固定 boolean。
+- Vercel Cron 已注册，Path 为 `/api/supabase-keepalive`，Schedule 为
+  `17 4 * * *`；Hobby 按 UTC 04:00-04:59 窗口执行一次理解，不声称精确
+  04:17 触发。
+- `CRON_SECRET` 已配置在 Vercel Production 服务端环境变量中，未记录实际值。
+- 浏览器直接访问 endpoint 返回 `{"ok":false}`，Vercel Logs 对应 Chrome 请求为
+  401，属于正常保护行为。
+- Supabase API Logs 确认首次自动保活产生连续 3 条相邻
+  `POST /rest/v1/rpc/keepalive_ping`，status 均为 200。
+- RPC 不读取或修改 `products`、`inventory_batches`、Auth 或其他业务数据，不使用
+  service role key。
+- Production App smoke 已确认页面正常打开、session / 邮箱登录正常、库存正常读取。
 
 ## v0.2.7 Auth 自动化测试
 

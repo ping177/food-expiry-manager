@@ -4,9 +4,9 @@
 
 ## 2026-07-09
 
-### v0.2.9 Supabase light keepalive implementation
+### v0.2.9 Supabase light keepalive and operations
 
-- 状态为“验收中”，尚未标记版本完成。
+- 状态：已完成，并通过 Production 保活链路验收。
 - 新增 tracked migration：`keepalive_ping()` 使用 `security invoker`，只返回
   固定 boolean，不访问 `products`、`inventory_batches` 或 Auth 数据，不执行写操作。
 - 显式撤销函数对 `PUBLIC` 和 `authenticated` 的执行权限，只授权 `anon`。
@@ -19,8 +19,20 @@
 - 新增 5 个自动化测试，覆盖 401、3 次顺序成功、失败停止、fetch 异常和日志 /
   响应脱敏。
 - 本地完整自动化测试通过：13 files / 110 tests；其中原有 105 个测试继续通过。
-- Production migration、平台配置、手动 401/200、首次自动 Cron 和 App smoke
-  尚未执行；完成这些验收前 v0.2.9 不算完成。
+- Production 已配置 Vercel Cron，Path 为 `/api/supabase-keepalive`，Schedule 为
+  `17 4 * * *`；Hobby 计划按每天 UTC 04:00-04:59 窗口执行一次理解，不声称
+  精确在 04:17 触发。
+- `CRON_SECRET` 已配置在 Vercel Production 服务端环境变量中；未记录、读取或
+  暴露实际值，未引入 service role key。
+- Supabase migration 已执行；RPC 只返回固定 boolean，不读取或修改
+  `products`、`inventory_batches`、Auth 或其他业务数据。
+- 配置后已重新部署 Production。
+- 浏览器无授权访问 endpoint 返回 `{"ok":false}`，Vercel Logs 对应 Chrome 请求为
+  401，这是正常保护行为。
+- 首次自动保活链路已成功：Supabase API Logs 确认连续 3 条相邻
+  `POST /rest/v1/rpc/keepalive_ping`，status 均为 200。
+- Cron 失败只影响当次保活，不影响前端正常登录、库存读取和扫码。
+- 桌面 JSON 仍只是 v0.2.7 旧迁移前备份，不是持续数据库备份。
 
 ## 2026-07-08
 

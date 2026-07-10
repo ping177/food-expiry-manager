@@ -85,10 +85,14 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 
 ## v0.2.9：Supabase 轻度保活与运维策略
 
-- 状态：下一步
-- 先观察 v0.2.8 公网部署后的真实使用频率
-- 如确有需要，再设计无副作用健康查询
-- 不默认实施 Cron，不用业务写入或 anonymous user 创建作为保活方式
+- 状态：已完成并通过 Production 保活链路验收
+- Vercel Cron 每天一次调用 `/api/supabase-keepalive`
+- Schedule 为 `17 4 * * *`；Hobby 按 UTC 04:00-04:59 窗口执行一次理解
+- endpoint 使用服务端 `CRON_SECRET` 鉴权
+- 连续调用 3 次只读 `keepalive_ping()` RPC
+- RPC 只返回固定 boolean，不读取或修改 `products`、`inventory_batches`、Auth 或其他业务数据
+- 不使用 service role key，不调用 Go-UPC，不创建 anonymous user，不放宽 RLS
+- 首次自动保活已在 Supabase API Logs 确认 3 条 `POST /rest/v1/rpc/keepalive_ping` 200
 
 ## 后续候选：商品图片上传体验
 
