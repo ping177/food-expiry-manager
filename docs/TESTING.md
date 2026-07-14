@@ -89,15 +89,28 @@ Production 验收结果：passed。
   service role key。
 - Production App smoke 已确认页面正常打开、session / 邮箱登录正常、库存正常读取。
 
-## v0.2.10 Email OTP 自动化与待执行验收
+## v0.2.10 Email OTP 自动化与验收
 
 本地自动化覆盖：OTP 发送保留 `shouldCreateUser: true` 且不传递
 `emailRedirectTo`、8 位验证码格式校验、`verifyOtp({ email, token, type: 'email' })`
 参数和 session 返回、SDK returned/rejected error 的通用提示、两阶段 UI、发送冷却不
 阻止验证码提交，以及既有 session / logout / user switching / inventory loading 行为。
 
-Production / iOS standalone 待执行：发送真实 OTP、在主屏幕 Web App 内输入验证码、
-刷新恢复、退出后清空、同邮箱恢复同一库存，并确认不会创建 anonymous user。
+本地真实验收：passed。
+
+- 在 `http://127.0.0.1:5177/` 完成 OTP 发送、8 位验证码验证、session 恢复、退出
+  清理和同邮箱库存恢复。
+
+Production Web 验收：passed。
+
+- 已部署 OTP UI，邮件发送和验证码登录正常。
+
+iPhone 主屏幕 standalone Web App 验收：passed。
+
+- 已完成“输入邮箱 → 收验证码 → 输入 OTP → 登录”的闭环；确认不再依赖 Magic Link
+  跳转 Safari。
+- iPhone Safari 未单独测试；不阻塞本版本，因为 standalone Web App 是本次修复的核心
+  场景。
 
 ## v0.2.7 Auth 自动化测试
 

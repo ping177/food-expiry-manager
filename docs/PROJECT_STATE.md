@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.10 implemented locally: Email OTP Authentication Flow, pending human review and Production acceptance.
+v0.2.10 completed: Email OTP Authentication Flow.
 
 ## Current status
 
-v0.2.10 已完成本地实现与自动化/生产构建验证，等待人工 review 和 Production OTP 验收；v0.2.9 保活链路保持已验收状态。
+v0.2.10 已完成并通过本地、Production Web 与 iPhone 主屏幕 standalone Web App 验收；v0.2.9 保活链路保持已验收状态。
 
 ## Latest completed
 
-v0.2.10 将登录 UI 从 Magic Link 改为两阶段 Email OTP：发送阶段保留 `signInWithOtp()` 和 `shouldCreateUser: true`，不再传递 `emailRedirectTo`；验证阶段使用 `verifyOtp({ email, token, type: 'email' })`。原有 session 恢复、auth listener、user ID 变化检测、库存 stale guard 和登出清理保持不变。未修改 schema、migration、RLS 或业务数据逻辑。
+v0.2.10 已完成 Email OTP migration：Resend SMTP 与已验证邮件域支持 8 位 OTP 邮件；本地、Production Web 和 iPhone 主屏幕 standalone Web App 均已验证发送、验证、session 恢复、退出清理和同邮箱库存恢复。登录不再依赖 Magic Link 回跳 Safari。未修改 schema、migration、RLS 或业务数据逻辑。
 
 ## Deployment
 
@@ -42,11 +42,11 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Last verified
 
-2026-07-10: v0.2.9 Production keepalive acceptance completed: Cron registered, migration deployed, `CRON_SECRET` configured server-side, unauthorized browser access returned 401, and first automatic keepalive produced three Supabase RPC 200 logs.
+2026-07-14: v0.2.10 Email OTP acceptance completed locally, on Production Web, and in the iPhone standalone Web App.
 
 ## Next Action
 
-Review v0.2.10 diff，然后部署并在 iOS 主屏幕 standalone Web App 完成 Email OTP 登录、刷新恢复、退出和同邮箱库存恢复验收；通过后再恢复图片上传候选的方案设计。
+Next candidate: 手机拍照 / 相册选择 / Supabase Storage 商品图片。先做独立方案设计，暂不指定未经确认的具体版本号。
 
 ## Blockers
 
@@ -64,6 +64,7 @@ None.
 - Vercel frontend environment variables are limited to `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; service role keys and Go-UPC API keys must not be exposed to the frontend.
 - Supabase Production Site URL / Redirect URL are configured; local `localhost:5177` and `127.0.0.1:5177` redirects remain available for local testing.
 - v0.2.10 keeps `detectSessionInUrl` unchanged for possible future Auth flows, but Email OTP no longer supplies `emailRedirectTo` or requires a URL callback. Supabase Auth + Resend SMTP and the hosted email template have been configured outside Git to send `{{ .Token }}`.
+- v0.2.10 acceptance passed for local development, Production Web, and iPhone standalone Web App. iPhone Safari was not separately tested; it is non-blocking because the standalone scenario was the target regression.
 - Migrated test inventory was cleared by the user in Supabase for the permanent email account only; the permanent Auth user was kept. Local pre-migration JSON backup remains outside Git.
 - v0.2.9 uses a daily Vercel Cron scheduled as `17 4 * * *`; on Hobby it runs once during the UTC 04:00-04:59 window, not necessarily at 04:17.
 - The Cron endpoint uses server-only `CRON_SECRET`; the anon RPC is intentionally public but only returns `true` and has no business-data access or write effects. No service role key is used.
@@ -86,4 +87,4 @@ None.
 
 ## Handoff Prompt
 
-Review and manually accept v0.2.10 Email OTP in the deployed app, especially the iOS standalone Web App flow. Do not modify schema, RLS, business tables, anonymous-user cleanup results, or Supabase Dashboard settings as part of that review.
+Start only with planning for the next candidate: 手机拍照 / 相册选择 / Supabase Storage 商品图片. Do not implement it until the scope, Storage RLS, compression, upload / replace / delete behavior, and orphan-file cleanup plan are confirmed.

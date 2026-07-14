@@ -6,7 +6,7 @@
 
 ### v0.2.10 Email OTP Authentication Flow
 
-- 状态：本地实现完成，等待人工 review 与 Production / iOS standalone 验收。
+- 状态：已完成，并通过本地、Production Web 与 iPhone standalone Web App 验收。
 - 登录流程改为“发送邮箱 8 位验证码 → 同页输入验证码验证”；发送继续使用
   `signInWithOtp()` 和 `shouldCreateUser: true`，不再传递 `emailRedirectTo`。
 - 验证使用 `verifyOtp({ email, token, type: 'email' })`；验证码格式在前端限制为
@@ -15,6 +15,11 @@
   user switch stale guard 和退出清理；`detectSessionInUrl` 未修改。
 - 未修改 Supabase Dashboard、schema、migration、RLS、`products`、
   `inventory_batches`、`user_id`、数据迁移或 barcode 功能；未读取或打印 secrets。
+- Resend SMTP 与已验证邮件域已用于 OTP 邮件投递；未在仓库记录凭据、API key 或
+  用户邮箱。
+- 本地与 Production Web 均验证 OTP 发送、8 位验证码登录、session 恢复、退出清理和
+  同邮箱库存恢复；iPhone 主屏幕 standalone Web App 已验证同一闭环，确认不再依赖
+  Magic Link 跳转 Safari。iPhone Safari 未单独测试，不阻塞本版本。
 
 ## 2026-07-09
 
