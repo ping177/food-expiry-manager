@@ -10,8 +10,8 @@
 
 ## 自动化测试
 
-使用 Vitest。v0.2.9 本地实现验收结果为 13 个测试文件、110 个测试通过；其中
-原有 12 个测试文件、105 个测试继续通过，新增 keepalive endpoint 测试 5 个。
+使用 Vitest。v0.2.10 本地实现验收结果为 13 个测试文件、117 个测试通过；其中
+v0.2.9 的 110 个测试继续通过，新增 Email OTP 测试 7 个。
 核心测试文件包括：
 
 - `src/lib/expiry.test.js`
@@ -88,6 +88,16 @@ Production 验收结果：passed。
 - RPC 不读取或修改 `products`、`inventory_batches`、Auth 或其他业务数据，不使用
   service role key。
 - Production App smoke 已确认页面正常打开、session / 邮箱登录正常、库存正常读取。
+
+## v0.2.10 Email OTP 自动化与待执行验收
+
+本地自动化覆盖：OTP 发送保留 `shouldCreateUser: true` 且不传递
+`emailRedirectTo`、8 位验证码格式校验、`verifyOtp({ email, token, type: 'email' })`
+参数和 session 返回、SDK returned/rejected error 的通用提示、两阶段 UI、发送冷却不
+阻止验证码提交，以及既有 session / logout / user switching / inventory loading 行为。
+
+Production / iOS standalone 待执行：发送真实 OTP、在主屏幕 Web App 内输入验证码、
+刷新恢复、退出后清空、同邮箱恢复同一库存，并确认不会创建 anonymous user。
 
 ## v0.2.7 Auth 自动化测试
 

@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.9 completed: Supabase light keepalive and operations.
+v0.2.10 implemented locally: Email OTP Authentication Flow, pending human review and Production acceptance.
 
 ## Current status
 
-v0.2.9 已完成并通过 Production 保活链路验收。Vercel Cron 每天一次调用 `/api/supabase-keepalive`，经服务端 `CRON_SECRET` 鉴权后连续执行 3 次只读 `keepalive_ping()` RPC。
+v0.2.10 已完成本地实现与自动化/生产构建验证，等待人工 review 和 Production OTP 验收；v0.2.9 保活链路保持已验收状态。
 
 ## Latest completed
 
-v0.2.9 已新增固定返回 `true` 的无副作用 `keepalive_ping()` migration、受服务端 `CRON_SECRET` 保护的 `/api/supabase-keepalive`、每日一次 Vercel Cron 配置和 endpoint 自动化测试；Production 已确认浏览器无授权访问返回 401，首次自动保活产生 3 条相邻的 `POST /rest/v1/rpc/keepalive_ping` 200 日志。
+v0.2.10 将登录 UI 从 Magic Link 改为两阶段 Email OTP：发送阶段保留 `signInWithOtp()` 和 `shouldCreateUser: true`，不再传递 `emailRedirectTo`；验证阶段使用 `verifyOtp({ email, token, type: 'email' })`。原有 session 恢复、auth listener、user ID 变化检测、库存 stale guard 和登出清理保持不变。未修改 schema、migration、RLS 或业务数据逻辑。
 
 ## Deployment
 
@@ -38,6 +38,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.7｜永久邮箱账号与旧数据迁移
 - v0.2.8｜Vercel 公网部署与手机验收
 - v0.2.9｜Supabase 轻度保活与运维策略
+- v0.2.10｜Email OTP Authentication Flow
 
 ## Last verified
 
@@ -45,7 +46,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Next Action
 
-Next candidate: 手机拍照 / 相册选择 / Supabase Storage 商品图片。先做独立方案设计，暂不指定未经确认的具体版本号。
+Review v0.2.10 diff，然后部署并在 iOS 主屏幕 standalone Web App 完成 Email OTP 登录、刷新恢复、退出和同邮箱库存恢复验收；通过后再恢复图片上传候选的方案设计。
 
 ## Blockers
 
@@ -55,13 +56,14 @@ None.
 
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
-- App no longer creates new anonymous users when no session exists; email Magic Link is now the default login path.
+- App no longer creates new anonymous users when no session exists; email OTP is now the default login path.
 - Existing anonymous sessions were only a migration bridge; current formal inventory owner is the permanent email account.
 - Old anonymous business data was migrated by changing `products.user_id` and `inventory_batches.user_id` to the permanent account in a fail-closed SQL transaction; product IDs and batch `product_id` references were preserved.
 - Supabase Free may pause after inactivity; recovery window details must come from real email or Dashboard, not estimates.
 - Vercel Production URL is https://food-expiry-manager-two.vercel.app/.
 - Vercel frontend environment variables are limited to `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`; service role keys and Go-UPC API keys must not be exposed to the frontend.
 - Supabase Production Site URL / Redirect URL are configured; local `localhost:5177` and `127.0.0.1:5177` redirects remain available for local testing.
+- v0.2.10 keeps `detectSessionInUrl` unchanged for possible future Auth flows, but Email OTP no longer supplies `emailRedirectTo` or requires a URL callback. Supabase Auth + Resend SMTP and the hosted email template have been configured outside Git to send `{{ .Token }}`.
 - Migrated test inventory was cleared by the user in Supabase for the permanent email account only; the permanent Auth user was kept. Local pre-migration JSON backup remains outside Git.
 - v0.2.9 uses a daily Vercel Cron scheduled as `17 4 * * *`; on Hobby it runs once during the UTC 04:00-04:59 window, not necessarily at 04:17.
 - The Cron endpoint uses server-only `CRON_SECRET`; the anon RPC is intentionally public but only returns `true` and has no business-data access or write effects. No service role key is used.
@@ -84,4 +86,4 @@ None.
 
 ## Handoff Prompt
 
-Start only with planning for the next candidate: 手机拍照 / 相册选择 / Supabase Storage 商品图片. Do not implement it until the scope, Storage RLS, compression, upload / replace / delete behavior, and orphan-file cleanup plan are confirmed.
+Review and manually accept v0.2.10 Email OTP in the deployed app, especially the iOS standalone Web App flow. Do not modify schema, RLS, business tables, anonymous-user cleanup results, or Supabase Dashboard settings as part of that review.

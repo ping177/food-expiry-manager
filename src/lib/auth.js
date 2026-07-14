@@ -1,4 +1,4 @@
-export const MAGIC_LINK_COOLDOWN_SECONDS = 60
+export const EMAIL_OTP_COOLDOWN_SECONDS = 60
 
 export function isAnonymousUser(user) {
   if (!user) return false
@@ -63,14 +63,14 @@ export function createAuthSessionController({
   }
 }
 
-export function startMagicLinkCooldown({
+export function startEmailOtpCooldown({
   setCooldownSeconds,
   setIntervalFn = globalThis.setInterval,
   clearIntervalFn = globalThis.clearInterval,
 }) {
   let intervalId
 
-  setCooldownSeconds(MAGIC_LINK_COOLDOWN_SECONDS)
+  setCooldownSeconds(EMAIL_OTP_COOLDOWN_SECONDS)
   intervalId = setIntervalFn(() => {
     setCooldownSeconds((currentSeconds) => {
       if (currentSeconds <= 1) {
@@ -122,29 +122,71 @@ export async function restoreExistingSession(supabaseClient) {
   return { session: session ?? null, errorMessage: '' }
 }
 
-export async function sendMagicLink(supabaseClient, email, origin) {
+export function validateEmailOtp(token) {
+  return /^\d{8}$/.test(token.trim()) ? '' : '请输入 8 位验证码。'
+}
+
+export async function sendEmailOtp(supabaseClient, email) {
   const trimmedEmail = email.trim()
   const validationError = validateEmail(trimmedEmail)
   if (validationError) {
     return { ok: false, errorMessage: validationError }
   }
 
-  const { error } = await supabaseClient.auth.signInWithOtp({
-    email: trimmedEmail,
-    options: {
-      emailRedirectTo: origin,
-      shouldCreateUser: true,
-    },
-  })
+  let error
+  try {
+    const response = await supabaseClient.auth.signInWithOtp({
+      email: trimmedEmail,
+      options: {
+        shouldCreateUser: true,
+      },
+    })
+    error = response.error
+  } catch {
+    error = true
+  }
 
   if (error) {
     return {
       ok: false,
-      errorMessage: '发送登录链接失败，请稍后重试。',
+      errorMessage: '发送验证码失败，请稍后重试。',
     }
   }
 
   return { ok: true, errorMessage: '' }
+}
+
+export async function verifyEmailOtp(supabaseClient, email, token) {
+  const trimmedEmail = email.trim()
+  const trimmedToken = token.trim()
+  const tokenValidationError = validateEmailOtp(trimmedToken)
+  if (tokenValidationError) {
+    return { ok: false, errorMessage: tokenValidationError, session: null }
+  }
+
+  let session = null
+  let error
+  try {
+    const response = await supabaseClient.auth.verifyOtp({
+      email: trimmedEmail,
+      token: trimmedToken,
+      type: 'email',
+    })
+    session = response.data.session
+    error = response.error
+  } catch {
+    error = true
+  }
+
+  if (error || !session) {
+    return {
+      ok: false,
+      errorMessage: '验证码无效或已过期，请重新发送。',
+      session: null,
+    }
+  }
+
+  return { ok: true, errorMessage: '', session }
 }
 
 export async function signOutCurrentUser(supabaseClient) {

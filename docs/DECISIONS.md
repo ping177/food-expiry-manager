@@ -295,3 +295,19 @@
   `VITE_SUPABASE_ANON_KEY`；不得配置 service role key、数据库密码、Dashboard
   token 或 Go-UPC API key 到前端。
 - 后续范围：v0.3 以后仍为候选方向，具体顺序不在当前阶段锁定。
+
+## D-024：v0.2.10 使用 Email OTP，移除 Magic Link 回跳依赖
+
+- 状态：已决定
+- 日期：2026-07-14
+- 背景：iOS 主屏幕 standalone Web App 可能在点击 Magic Link 后跳转到 Safari，导致
+  session 建立在不同容器中，无法回到 PWA 内的原始 session storage。
+- 决策：保留 `signInWithOtp()` 作为验证码发送 API，并保持 `shouldCreateUser: true`；
+  不再传递 `emailRedirectTo`。前端在同一页面收集 8 位验证码，并使用
+  `verifyOtp({ email, token, type: 'email' })` 建立 session。
+- 会话边界：保留既有 `getSession()`、`onAuthStateChange`、user ID 变化检测、库存
+  stale guard 和退出清理。`detectSessionInUrl` 暂不修改，供未来独立 Auth flow 使用，
+  但 OTP 登录不再依赖 URL callback。
+- 数据边界：不修改 Auth 用户、`products`、`inventory_batches`、`user_id`、schema、
+  migration 或 RLS；不会恢复或创建 anonymous user，也不改变既有 anonymous user
+  清理结果。

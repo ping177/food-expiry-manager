@@ -1,16 +1,18 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  MAGIC_LINK_COOLDOWN_SECONDS,
+  EMAIL_OTP_COOLDOWN_SECONDS,
   createAuthSessionController,
   getAccountStatus,
   isAnonymousUser,
   loadInventoryBatchesForSession,
   maskEmail,
   restoreExistingSession,
-  sendMagicLink,
+  sendEmailOtp,
   signOutCurrentUser,
-  startMagicLinkCooldown,
+  startEmailOtpCooldown,
+  validateEmailOtp,
   validateEmail,
+  verifyEmailOtp,
 } from './auth'
 
 function createSession(user) {
@@ -73,7 +75,7 @@ describe('auth helpers', () => {
     expect(maskEmail('alex@example.com')).toBe('a***@example.com')
   })
 
-  it('validates only the minimal email shape before sending magic links', () => {
+  it('validates only the minimal email shape before sending email OTPs', () => {
     expect(validateEmail('')).toBe('请输入邮箱地址。')
     expect(validateEmail('not-an-email')).toBe('请输入有效的邮箱地址。')
     expect(validateEmail(' user@example.com ')).toBe('')
@@ -149,28 +151,27 @@ describe('auth helpers', () => {
     })
   })
 
-  it('sends magic links with the current origin and allows first-time email users', async () => {
+  it('sends email OTPs without a redirect and allows first-time email users', async () => {
     const signInWithOtp = vi.fn(async () => ({ error: null }))
     const supabaseClient = { auth: { signInWithOtp } }
 
     await expect(
-      sendMagicLink(supabaseClient, ' user@example.com ', 'http://127.0.0.1:5177'),
+      sendEmailOtp(supabaseClient, ' user@example.com '),
     ).resolves.toEqual({ ok: true, errorMessage: '' })
 
     expect(signInWithOtp).toHaveBeenCalledWith({
       email: 'user@example.com',
       options: {
-        emailRedirectTo: 'http://127.0.0.1:5177',
         shouldCreateUser: true,
       },
     })
   })
 
-  it('does not call Supabase when magic link email validation fails', async () => {
+  it('does not call Supabase when email OTP email validation fails', async () => {
     const signInWithOtp = vi.fn()
     const supabaseClient = { auth: { signInWithOtp } }
 
-    await expect(sendMagicLink(supabaseClient, 'bad', 'http://x')).resolves.toEqual(
+    await expect(sendEmailOtp(supabaseClient, 'bad')).resolves.toEqual(
       {
         ok: false,
         errorMessage: '请输入有效的邮箱地址。',
@@ -179,7 +180,7 @@ describe('auth helpers', () => {
     expect(signInWithOtp).not.toHaveBeenCalled()
   })
 
-  it('uses a generic magic link failure message', async () => {
+  it('uses a generic email OTP send failure message', async () => {
     const supabaseClient = {
       auth: {
         signInWithOtp: vi.fn(async () => ({
@@ -189,10 +190,99 @@ describe('auth helpers', () => {
     }
 
     await expect(
-      sendMagicLink(supabaseClient, 'user@example.com', 'http://127.0.0.1:5177'),
+      sendEmailOtp(supabaseClient, 'user@example.com'),
     ).resolves.toEqual({
       ok: false,
-      errorMessage: '发送登录链接失败，请稍后重试。',
+      errorMessage: '发送验证码失败，请稍后重试。',
+    })
+  })
+
+  it('uses a generic email OTP send failure message when Supabase rejects', async () => {
+    const supabaseClient = {
+      auth: {
+        signInWithOtp: vi.fn(async () => {
+          throw new Error('network detail')
+        }),
+      },
+    }
+
+    await expect(sendEmailOtp(supabaseClient, 'user@example.com')).resolves.toEqual({
+      ok: false,
+      errorMessage: '发送验证码失败，请稍后重试。',
+    })
+  })
+
+  it('validates eight-digit email OTPs before verification', () => {
+    expect(validateEmailOtp('')).toBe('请输入 8 位验证码。')
+    expect(validateEmailOtp('1234567')).toBe('请输入 8 位验证码。')
+    expect(validateEmailOtp('123456789')).toBe('请输入 8 位验证码。')
+    expect(validateEmailOtp('12a45678')).toBe('请输入 8 位验证码。')
+    expect(validateEmailOtp(' 12345678 ')).toBe('')
+  })
+
+  it('verifies an email OTP and returns the established session', async () => {
+    const session = createSession({ id: 'email-user', email: 'me@example.com' })
+    const verifyOtp = vi.fn(async () => ({ data: { session }, error: null }))
+    const supabaseClient = { auth: { verifyOtp } }
+
+    await expect(
+      verifyEmailOtp(supabaseClient, ' me@example.com ', ' 12345678 '),
+    ).resolves.toEqual({ ok: true, errorMessage: '', session })
+
+    expect(verifyOtp).toHaveBeenCalledWith({
+      email: 'me@example.com',
+      token: '12345678',
+      type: 'email',
+    })
+  })
+
+  it('does not call Supabase when the email OTP format is invalid', async () => {
+    const verifyOtp = vi.fn()
+
+    await expect(
+      verifyEmailOtp({ auth: { verifyOtp } }, 'me@example.com', '1234567'),
+    ).resolves.toEqual({
+      ok: false,
+      errorMessage: '请输入 8 位验证码。',
+      session: null,
+    })
+    expect(verifyOtp).not.toHaveBeenCalled()
+  })
+
+  it('uses a generic email OTP verification failure message', async () => {
+    const supabaseClient = {
+      auth: {
+        verifyOtp: vi.fn(async () => ({
+          data: { session: null },
+          error: { message: 'token expired' },
+        })),
+      },
+    }
+
+    await expect(
+      verifyEmailOtp(supabaseClient, 'me@example.com', '12345678'),
+    ).resolves.toEqual({
+      ok: false,
+      errorMessage: '验证码无效或已过期，请重新发送。',
+      session: null,
+    })
+  })
+
+  it('uses a generic email OTP verification failure message when Supabase rejects', async () => {
+    const supabaseClient = {
+      auth: {
+        verifyOtp: vi.fn(async () => {
+          throw new Error('network detail')
+        }),
+      },
+    }
+
+    await expect(
+      verifyEmailOtp(supabaseClient, 'me@example.com', '12345678'),
+    ).resolves.toEqual({
+      ok: false,
+      errorMessage: '验证码无效或已过期，请重新发送。',
+      session: null,
     })
   })
 
@@ -281,7 +371,7 @@ describe('auth helpers', () => {
     expect(appliedError).toBe('')
   })
 
-  it('counts down magic link cooldown with fake timers and clears the interval', () => {
+  it('counts down email OTP cooldown with fake timers and clears the interval', () => {
     vi.useFakeTimers()
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval')
     const clearIntervalSpy = vi.spyOn(globalThis, 'clearInterval')
@@ -291,7 +381,7 @@ describe('auth helpers', () => {
         typeof nextValue === 'function' ? nextValue(cooldownSeconds) : nextValue
     }
 
-    const cleanup = startMagicLinkCooldown({ setCooldownSeconds })
+    const cleanup = startEmailOtpCooldown({ setCooldownSeconds })
 
     expect(cooldownSeconds).toBe(60)
     expect(setIntervalSpy).toHaveBeenCalledTimes(1)
@@ -311,7 +401,7 @@ describe('auth helpers', () => {
     clearIntervalSpy.mockRestore()
   })
 
-  it('does not start a cooldown when magic link sending fails', async () => {
+  it('does not start a cooldown when email OTP sending fails', async () => {
     vi.useFakeTimers()
     const setIntervalSpy = vi.spyOn(globalThis, 'setInterval')
     const supabaseClient = {
@@ -322,11 +412,7 @@ describe('auth helpers', () => {
       },
     }
 
-    const result = await sendMagicLink(
-      supabaseClient,
-      'user@example.com',
-      'http://127.0.0.1:5177',
-    )
+    const result = await sendEmailOtp(supabaseClient, 'user@example.com')
 
     expect(result.ok).toBe(false)
     expect(setIntervalSpy).not.toHaveBeenCalled()
@@ -335,7 +421,7 @@ describe('auth helpers', () => {
     setIntervalSpy.mockRestore()
   })
 
-  it('keeps the magic link resend cooldown at 60 seconds', () => {
-    expect(MAGIC_LINK_COOLDOWN_SECONDS).toBe(60)
+  it('keeps the email OTP resend cooldown at 60 seconds', () => {
+    expect(EMAIL_OTP_COOLDOWN_SECONDS).toBe(60)
   })
 })

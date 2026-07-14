@@ -2,6 +2,20 @@
 
 记录已完成的项目工作，按日期倒序维护。
 
+## 2026-07-14
+
+### v0.2.10 Email OTP Authentication Flow
+
+- 状态：本地实现完成，等待人工 review 与 Production / iOS standalone 验收。
+- 登录流程改为“发送邮箱 8 位验证码 → 同页输入验证码验证”；发送继续使用
+  `signInWithOtp()` 和 `shouldCreateUser: true`，不再传递 `emailRedirectTo`。
+- 验证使用 `verifyOtp({ email, token, type: 'email' })`；验证码格式在前端限制为
+  8 位数字，发送与验证失败均返回通用提示，不记录验证码或 Supabase 内部错误。
+- 保留 session 恢复、auth state listener、同 user token refresh 不重复加载库存、
+  user switch stale guard 和退出清理；`detectSessionInUrl` 未修改。
+- 未修改 Supabase Dashboard、schema、migration、RLS、`products`、
+  `inventory_batches`、`user_id`、数据迁移或 barcode 功能；未读取或打印 secrets。
+
 ## 2026-07-09
 
 ### v0.2.9 Supabase light keepalive and operations

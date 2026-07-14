@@ -9,9 +9,10 @@ import {
   getSessionTransition,
   loadInventoryBatchesForSession,
   restoreExistingSession,
-  sendMagicLink,
+  sendEmailOtp,
   signOutCurrentUser,
-  startMagicLinkCooldown,
+  startEmailOtpCooldown,
+  verifyEmailOtp,
 } from './lib/auth'
 import { PRODUCT_CATEGORIES } from './lib/categories'
 import { EXPIRY_WINDOW_OPTIONS } from './lib/expiryWindows'
@@ -47,7 +48,8 @@ export default function App() {
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [authBusy, setAuthBusy] = useState(false)
-  const [magicLinkCooldown, setMagicLinkCooldown] = useState(0)
+  const [emailOtpCooldown, setEmailOtpCooldown] = useState(0)
+  const [pendingOtpEmail, setPendingOtpEmail] = useState('')
 
   const clearAccountScopedState = useCallback(() => {
     setBatches([])
@@ -156,22 +158,41 @@ export default function App() {
     [],
   )
 
-  async function handleSendMagicLink(email) {
-    if (!supabase || authBusy || magicLinkCooldown > 0) return false
+  async function handleSendEmailOtp(email) {
+    if (!supabase || authBusy || emailOtpCooldown > 0) return false
 
     setAuthBusy(true)
     setError('')
     setMessage('')
-    const result = await sendMagicLink(supabase, email, window.location.origin)
+    const result = await sendEmailOtp(supabase, email)
 
     if (result.ok) {
-      setMessage('登录链接已发送，请检查邮箱。')
+      setPendingOtpEmail(email.trim())
       cooldownCleanupRef.current?.()
-      cooldownCleanupRef.current = startMagicLinkCooldown({
-        setCooldownSeconds: setMagicLinkCooldown,
+      cooldownCleanupRef.current = startEmailOtpCooldown({
+        setCooldownSeconds: setEmailOtpCooldown,
         setIntervalFn: window.setInterval.bind(window),
         clearIntervalFn: window.clearInterval.bind(window),
       })
+    } else {
+      setError(result.errorMessage)
+    }
+
+    setAuthBusy(false)
+    return result.ok
+  }
+
+  async function handleVerifyEmailOtp(token) {
+    if (!supabase || authBusy || !pendingOtpEmail) return false
+
+    setAuthBusy(true)
+    setError('')
+    setMessage('')
+    const result = await verifyEmailOtp(supabase, pendingOtpEmail, token)
+
+    if (result.ok) {
+      setPendingOtpEmail('')
+      applySession(result.session)
     } else {
       setError(result.errorMessage)
     }
@@ -186,6 +207,7 @@ export default function App() {
     clearAccountScopedState()
     setLoading(false)
     setError('')
+    setPendingOtpEmail('')
     const result = await signOutCurrentUser(supabase)
     if (!result.ok) {
       setError(result.errorMessage)
@@ -411,10 +433,12 @@ export default function App() {
     return (
       <AuthPanel
         busy={authBusy}
-        cooldownSeconds={magicLinkCooldown}
+        cooldownSeconds={emailOtpCooldown}
         error={error}
         message={message}
-        onSendMagicLink={handleSendMagicLink}
+        onSendEmailOtp={handleSendEmailOtp}
+        onVerifyEmailOtp={handleVerifyEmailOtp}
+        pendingOtpEmail={pendingOtpEmail}
       />
     )
   }

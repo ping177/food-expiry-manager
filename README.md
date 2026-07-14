@@ -19,7 +19,7 @@
 - React
 - Vite
 - Tailwind CSS
-- Supabase Email Magic Link Auth / Postgres
+- Supabase Email OTP Auth / Postgres
 - Supabase Edge Functions
 - `@zxing/browser`
 - Go-UPC API via server-side Edge Function
@@ -40,9 +40,9 @@ v0.1 直接接入 Supabase，不使用 `localStorage` 作为主数据层。Stora
 supabase/schema.sql
 ```
 
-然后在 Supabase 控制台的 Authentication 设置中启用 Email Magic Link，并配置
-本地 redirect URL。当前正式账号体系使用邮箱 Magic Link，不再自动创建新的
-anonymous user。
+然后在 Supabase 控制台的 Authentication 设置中启用 Email Provider，并将登录
+邮件模板配置为包含 `{{ .Token }}` 的 8 位验证码。当前正式账号体系使用邮箱
+OTP，不再自动创建新的 anonymous user。
 
 ### 2. 配置环境变量
 
@@ -78,8 +78,8 @@ npm test
 ## 认证方式
 
 - 页面首次打开时会先恢复已有 Supabase session。
-- 如果没有 session，前端显示邮箱 Magic Link 登录界面，不再静默创建新的
-  anonymous user。
+- 如果没有 session，前端先发送邮箱验证码，再在同一页面输入验证码登录；不再
+  静默创建新的 anonymous user。
 - 永久邮箱账号是正式库存 owner；旧匿名库存已迁移到邮箱账号。
 - `products` 和 `inventory_batches` 都使用当前 `auth.uid()` 作为
   `user_id`，并由 RLS 隔离用户数据。

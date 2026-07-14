@@ -19,6 +19,8 @@ describe('App auth integration source guards', () => {
   it('does not create anonymous users when no session exists', () => {
     expect(appSource).not.toContain('signInAnonymously')
     expect(appSource).toContain('restoreExistingSession')
+    expect(appSource).toContain('verifyEmailOtp')
+    expect(appSource).not.toContain('emailRedirectTo')
   })
 
   it('registers and cleans up the Supabase auth state listener', () => {
