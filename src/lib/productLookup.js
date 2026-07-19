@@ -78,6 +78,7 @@ export function storedProductResult(barcode, product) {
     name: product.name || '',
     brand: product.brand || '',
     imageUrl: product.image_url || '',
+    userImageUrl: product.user_image_url || '',
     category: product.category || '',
     source: product.source || 'manual',
   }

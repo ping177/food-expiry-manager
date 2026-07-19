@@ -1,5 +1,15 @@
 # 开发日志
 
+## 2026-07-19
+
+### v0.2.11 商品图片上传（远程 Storage 已部署，Production 真机验收待完成）
+
+- 新增 `products.user_image_url` migration、Public `product-images` bucket 与按 user_id 首段限制的 Storage 写入、更新、删除 policy。
+- 新增前端 JPEG 压缩、1600 px 长边、10 MB 原文件和 1.5 MB 输出限制；支持拍照、相册、本地预览、上传、替换和删除。
+- 用户图优先于 API / 历史外链 `image_url`；上传失败不会回滚已保存商品和库存批次。
+- Supabase migration、Public bucket 与 Storage policy 已由用户在远程成功执行；Production
+  手机真实图片上传、替换、删除与双账号验收仍待完成。未读取 secrets。
+
 记录已完成的项目工作，按日期倒序维护。
 
 ## 2026-07-14

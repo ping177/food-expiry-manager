@@ -3,6 +3,13 @@
 本文件记录少量人工运维步骤和安全边界。不要在这里写入真实 secret、API key、
 数据库密码、Dashboard token 或 `.env` 内容。
 
+## v0.2.11 商品图片 Storage 状态与验收
+
+1. `20260719090000_add_product_user_images.sql` 已在远程 Supabase 成功执行。
+2. `product-images` 已存在且为 Public；INSERT、UPDATE、DELETE policy 已按 `auth.uid()` 路径首段部署。
+3. 不要手工放宽 policy 或创建第二个同名 bucket。
+4. Public URL 的获得者可以读取图片。Production 的 iPhone、Android 和两个不同账号上传、替换、删除、跨账号拒绝验收仍待完成。
+
 ## Supabase Free Tier Pause / Resume
 
 ### 状态确认

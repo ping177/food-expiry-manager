@@ -58,6 +58,10 @@ describe('normalizeProductEditForm', () => {
     })
   })
 
+  it('does not include user_image_url in external-link form updates', () => {
+    expect(normalizeProductEditForm({ name: '商品', brand: '', category: '', imageUrl: '' })).not.toHaveProperty('user_image_url')
+  })
+
   it('rejects an empty product name before saving', () => {
     expect(() =>
       normalizeProductEditForm({

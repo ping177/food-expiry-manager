@@ -1,4 +1,5 @@
 import { getExpiryWindow } from '../lib/expiryWindows'
+import { getProductImageUrl } from '../lib/productImage'
 
 const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger ring-red-200',
@@ -14,6 +15,7 @@ export default function BatchCard({ batch, onSelect }) {
   const product = batch.product
   const category = product?.category || '未分类'
   const quantityLabel = `剩余 ${batch.quantity} 件`
+  const imageUrl = getProductImageUrl(product)
 
   return (
     <article className="rounded-2xl border border-white/70 bg-white shadow-card">
@@ -24,11 +26,11 @@ export default function BatchCard({ batch, onSelect }) {
       >
         <div className="flex min-h-24 items-stretch gap-3">
           <div className="h-24 w-24 shrink-0 overflow-hidden rounded-2xl border border-slate-100 bg-cream">
-            {product?.image_url ? (
+            {imageUrl ? (
               <img
                 alt=""
                 className="h-full w-full object-cover"
-                src={product.image_url}
+                src={imageUrl}
               />
             ) : (
               <div

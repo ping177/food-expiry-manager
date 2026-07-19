@@ -27,8 +27,9 @@
 - 移动端优先的响应式 Web UI
 - 后续支持 PWA
 
-v0.1 直接接入 Supabase，不使用 `localStorage` 作为主数据层。Storage
-将在后续需要商品图片时接入。
+v0.1 直接接入 Supabase，不使用 `localStorage` 作为主数据层。v0.2.11 已加入
+商品图片上传代码：用户图保存在 Public Storage bucket `product-images`，其 URL
+获得者可读取图片；写入、替换和删除由 user_id 路径 Storage RLS 限制。
 
 ## 启动方式
 
@@ -161,8 +162,8 @@ supabase secrets set GO_UPC_API_KEY=你的本地或线上密钥 --project-ref <p
 `GO_UPC_API_KEY`。不要创建 `VITE_GO_UPC_API_KEY`，不要把真实 key 写入
 `.env.local`、源码、文档或前端构建产物。
 
-后续图片上传/拍照将单独设计 Supabase Storage、图片压缩和 Storage RLS；当前
-版本不会把图片链接作为必填项。
+商品图片显示优先级为 `user_image_url → image_url → 无图占位`。v0.2.11 migration
+已在远程 Supabase 执行；Production 手机真机拍照、相册与双账号权限验收仍待完成。
 
 ## 项目文档
 

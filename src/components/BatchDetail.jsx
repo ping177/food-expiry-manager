@@ -5,6 +5,8 @@ import {
   createProductEditForm,
   normalizeProductEditForm,
 } from '../lib/productEdit'
+import ProductImagePicker from './ProductImagePicker'
+import { getProductImageUrl } from '../lib/productImage'
 
 const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger',
@@ -41,6 +43,8 @@ export default function BatchDetail({
   onDecrement,
   onUpdateProduct,
   onUpdateQuantity,
+  onUpdateProductImage,
+  onDeleteProductImage,
   defaultProductEditing = false,
 }) {
   const [isProductEditing, setIsProductEditing] = useState(
@@ -53,6 +57,9 @@ export default function BatchDetail({
   const [detailError, setDetailError] = useState('')
   const expiryWindow = getExpiryWindow(batch.expiry_date)
   const product = batch.product
+  const imageUrl = getProductImageUrl(product)
+  const [pendingImageFile, setPendingImageFile] = useState(null)
+  const [imagePickerKey, setImagePickerKey] = useState(0)
 
   function updateProductField(field, value) {
     setProductForm((current) => ({ ...current, [field]: value }))
@@ -77,6 +84,12 @@ export default function BatchDetail({
       return
     }
 
+    if (pendingImageFile) {
+      const imageResult = await onUpdateProductImage(batch.id, product, pendingImageFile)
+      if (!imageResult.ok) return
+      setPendingImageFile(null)
+      setImagePickerKey((current) => current + 1)
+    }
     const quantitySaved = await onUpdateQuantity(batch.id, quantity)
     if (quantitySaved) {
       setProductForm({
@@ -120,12 +133,16 @@ export default function BatchDetail({
 
       <article className="rounded-3xl bg-white p-5 shadow-card">
         <div className="flex gap-4">
-          {product?.image_url && (
+          {imageUrl ? (
             <img
               alt=""
               className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 object-cover"
-              src={product.image_url}
+              src={imageUrl}
             />
+          ) : (
+            <div aria-label="库存图片占位" className="flex h-24 w-24 shrink-0 items-center justify-center rounded-2xl border border-slate-100 bg-cream text-xs font-semibold text-slate-400" role="img">
+              无图
+            </div>
           )}
           <div className="min-w-0 flex-1">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
@@ -205,7 +222,7 @@ export default function BatchDetail({
           </div>
           <label className="block">
             <span className="mb-1.5 block text-sm font-semibold text-slate-700">
-              图片链接
+              外部兜底图片链接（可选）
             </span>
             <input
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
@@ -217,6 +234,15 @@ export default function BatchDetail({
               }
             />
           </label>
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-700">用户上传主图</p>
+            <ProductImagePicker key={imagePickerKey} disabled={busy} onChange={setPendingImageFile} />
+            {product?.user_image_url && (
+              <button className="rounded-xl px-2 py-2 text-sm font-semibold text-danger disabled:opacity-50" disabled={busy} type="button" onClick={() => onDeleteProductImage(batch.id, product)}>
+                删除用户图片
+              </button>
+            )}
+          </div>
           <div className="border-t border-slate-100 pt-3">
             <h3 className="font-bold text-ink">当前批次</h3>
             <label className="mt-3 block">

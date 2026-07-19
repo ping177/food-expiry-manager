@@ -30,6 +30,7 @@ products (1) ──────< inventory_batches (N)
 | `name` | `text` | 是 | 商品名称 |
 | `brand` | `text` | 否 | 品牌 |
 | `image_url` | `text` | 否 | 商品图片地址 |
+| `user_image_url` | `text` | 否 | 用户上传的 Storage 主图公开 URL；优先于 `image_url` |
 | `category` | `text` | 否 | 分类，如猫罐头、猫条、食品 |
 | `source` | `text` | 是 | 信息来源，如 `manual`、`go_upc`、`open_food_facts_universal`、`open_pet_food_facts`、`open_food_facts` |
 | `created_at` | `timestamptz` | 是 | 创建时间 |
@@ -54,6 +55,8 @@ products (1) ──────< inventory_batches (N)
 - `partial_found` 是查询流程状态，不是数据库字段值。它表示 barcode 对应商品
   存在但名称缺失；保存前用户仍必须补充满足 `products.name` 非空约束的名称。
 - 商品数据库字段缺失时允许用户补充，不会自动推断保质期。
+- `image_url` 保留 API 图片和历史外部链接；不得由用户上传流程覆盖或删除。
+- `user_image_url` 只属于 product，不属于 batch；为空时自动回退到 `image_url`。
 
 ## inventory_batches
 
@@ -138,8 +141,9 @@ products (1) ──────< inventory_batches (N)
 - 批次的 insert/update 策略额外验证关联商品属于当前用户。
 - `inventory_batches.product_id` 使用 `on delete restrict`，避免误删库存历史。
 - `updated_at` 由轻量数据库触发器维护。
-- v0.2 保存 Open Food Facts 或 Open Pet Food Facts 返回的远程图片 URL，
-  不上传图片，也不接入 Supabase Storage。
+- v0.2.11 使用 Public bucket `product-images` 保存用户主图，路径为
+  `{user_id}/{product_id}/{random_uuid}.jpg`。URL 获得者可公开读取；Storage RLS
+  仅允许 authenticated 用户写入、替换和删除自己 user_id 首段的对象。
 
 ## v0.2 数据模型检查
 

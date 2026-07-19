@@ -28,6 +28,10 @@ import {
   missingSupabaseVariables,
   supabase,
 } from './lib/supabase'
+import {
+  deleteProductUserImage,
+  uploadAndReplaceProductImage,
+} from './lib/productImage'
 
 export const APP_DISPLAY_NAME = '库存保质期管理'
 
@@ -225,10 +229,11 @@ export default function App() {
     const productValues = {
       name,
       brand: brand || null,
-      image_url: form.imageUrl.trim() || null,
       category: form.category.trim() || null,
       source: form.source || 'manual',
     }
+    const imageUrl = form.imageUrl.trim()
+    if (imageUrl) productValues.image_url = imageUrl
 
     if (barcode) {
       const { data: existingProducts, error: lookupError } = await supabase
@@ -282,7 +287,7 @@ export default function App() {
       async (normalizedBarcode) => {
         const { data: existingProducts, error: lookupError } = await supabase
           .from('products')
-          .select('barcode, name, brand, image_url, category, source')
+          .select('barcode, name, brand, image_url, user_image_url, category, source')
           .eq('user_id', session.user.id)
           .eq('barcode', normalizedBarcode)
           .limit(1)
@@ -325,7 +330,25 @@ export default function App() {
 
       if (batchError) throw batchError
 
-      setMessage('库存批次已保存。')
+      if (form.pendingImageFile) {
+        try {
+          const result = await uploadAndReplaceProductImage({
+            supabaseClient: supabase,
+            userId: session.user.id,
+            productId: product.id,
+            file: form.pendingImageFile,
+          })
+          if (result.cleanupError) {
+            setMessage('库存批次已保存，图片已更新；旧图片清理失败，可稍后重试。')
+          } else {
+            setMessage('库存批次和商品图片已保存。')
+          }
+        } catch {
+          setMessage('库存已保存，图片未上传，可在详情页重试。')
+        }
+      } else {
+        setMessage('库存批次已保存。')
+      }
       setView('home')
       await loadBatches()
       return true
@@ -365,7 +388,7 @@ export default function App() {
       .from('products')
       .update(values)
       .eq('id', productId)
-      .select('id, barcode, name, brand, image_url, category, source')
+      .select('id, barcode, name, brand, image_url, user_image_url, category, source')
       .single()
 
     if (updateError) {
@@ -381,6 +404,50 @@ export default function App() {
     setMessage('商品信息已更新。')
     setBusyBatchId(null)
     return true
+  }
+
+  async function handleUpdateProductImage(batchId, product, file) {
+    setBusyBatchId(batchId)
+    setError('')
+    try {
+      const result = await uploadAndReplaceProductImage({
+        supabaseClient: supabase,
+        userId: session.user.id,
+        productId: product.id,
+        file,
+        previousUserImageUrl: product.user_image_url,
+      })
+      setBatches((current) => applyProductUpdateToBatches(current, result.product))
+      setMessage(result.cleanupError ? '图片已更换，但旧图片清理失败，可稍后重试。' : '商品图片已更新。')
+      await loadBatches()
+      return { ok: true, cleanupError: result.cleanupError }
+    } catch (imageError) {
+      setError(imageError.message)
+      return { ok: false }
+    } finally {
+      setBusyBatchId(null)
+    }
+  }
+
+  async function handleDeleteProductImage(batchId, product) {
+    setBusyBatchId(batchId)
+    setError('')
+    try {
+      const result = await deleteProductUserImage({
+        supabaseClient: supabase,
+        userId: session.user.id,
+        product,
+      })
+      setBatches((current) => applyProductUpdateToBatches(current, result.product))
+      setMessage(result.cleanupError ? '已恢复外部图片，但旧上传图片清理失败，可稍后重试。' : '已删除用户图片。')
+      await loadBatches()
+      return { ok: true, cleanupError: result.cleanupError }
+    } catch (imageError) {
+      setError(imageError.message)
+      return { ok: false }
+    } finally {
+      setBusyBatchId(null)
+    }
   }
 
   function handleUpdateQuantity(batchId, quantity) {
@@ -525,6 +592,8 @@ export default function App() {
             }}
             onDecrement={handleDecrement}
             onUpdateProduct={handleUpdateProduct}
+            onUpdateProductImage={handleUpdateProductImage}
+            onDeleteProductImage={handleDeleteProductImage}
             onUpdateQuantity={handleUpdateQuantity}
           />
         ) : view === 'detail' ? (

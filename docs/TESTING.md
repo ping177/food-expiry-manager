@@ -21,6 +21,12 @@ v0.2.9 的 110 个测试继续通过，新增 Email OTP 测试 7 个。
 - `src/components/AuthPanel.test.jsx`
 - `src/App.test.jsx`
 - `tests/supabase-keepalive.test.js`
+- `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
+
+## v0.2.11 商品图片待验收
+
+- 自动化覆盖图片显示优先级、类型/10 MB 原文件限制、路径隔离、数据库更新失败删除新对象、替换旧图清理和删除用户图后的 API 回退。
+- 远程 Storage migration 已执行；本地真实上传、Production iPhone / Android 拍照相册和双账号隔离尚未验收。
 
 运行命令：
 

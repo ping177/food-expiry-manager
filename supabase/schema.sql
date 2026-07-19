@@ -10,6 +10,7 @@ create table if not exists public.products (
   name text not null check (length(trim(name)) > 0),
   brand text,
   image_url text,
+  user_image_url text,
   category text,
   source text not null default 'manual',
   created_at timestamptz not null default now(),
@@ -162,3 +163,23 @@ on public.inventory_batches for delete
 to authenticated
 using ((select auth.uid()) = user_id);
 
+-- 商品用户图片。Bucket 为 Public，读取链接公开；写入、覆盖和删除按首段 user_id 隔离。
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do update set public = true;
+
+drop policy if exists "Users can upload own product images" on storage.objects;
+create policy "Users can upload own product images"
+on storage.objects for insert to authenticated
+with check (bucket_id = 'product-images' and (storage.foldername(name))[1] = (select auth.uid()::text));
+
+drop policy if exists "Users can update own product images" on storage.objects;
+create policy "Users can update own product images"
+on storage.objects for update to authenticated
+using (bucket_id = 'product-images' and (storage.foldername(name))[1] = (select auth.uid()::text))
+with check (bucket_id = 'product-images' and (storage.foldername(name))[1] = (select auth.uid()::text));
+
+drop policy if exists "Users can delete own product images" on storage.objects;
+create policy "Users can delete own product images"
+on storage.objects for delete to authenticated
+using (bucket_id = 'product-images' and (storage.foldername(name))[1] = (select auth.uid()::text));

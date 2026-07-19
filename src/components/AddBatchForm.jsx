@@ -4,6 +4,8 @@ import DateInput from './DateInput'
 import { calculateExpiryDate, normalizeDateInput } from '../lib/expiry'
 import { PRODUCT_CATEGORIES } from '../lib/categories'
 import { normalizeBarcode } from '../lib/productLookup'
+import ProductImagePicker from './ProductImagePicker'
+import { getProductImageUrl } from '../lib/productImage'
 
 const initialForm = {
   barcode: '',
@@ -48,6 +50,8 @@ export default function AddBatchForm({
   const [scannerOpen, setScannerOpen] = useState(false)
   const [lookupStatus, setLookupStatus] = useState('idle')
   const [lookupMessage, setLookupMessage] = useState('')
+  const [pendingImageFile, setPendingImageFile] = useState(null)
+  const [imagePickerKey, setImagePickerKey] = useState(0)
 
   const calculatedExpiry = useMemo(() => {
     if (
@@ -163,9 +167,11 @@ export default function AddBatchForm({
       return
     }
 
-    const saved = await onSave({ ...form, expiryDate })
+    const saved = await onSave({ ...form, expiryDate, pendingImageFile })
     if (saved) {
       setForm(initialForm)
+      setPendingImageFile(null)
+      setImagePickerKey((current) => current + 1)
     }
   }
 
@@ -288,7 +294,7 @@ export default function AddBatchForm({
               </select>
             </Field>
           </div>
-          <Field label="可选：图片链接">
+          <Field label="外部兜底图片链接（可选）">
             <input
               className={inputClass}
               inputMode="url"
@@ -301,13 +307,18 @@ export default function AddBatchForm({
               通常由扫码自动填入，可留空。
             </span>
           </Field>
-          {form.imageUrl && (
+          {getProductImageUrl({ image_url: form.imageUrl }) && (
             <img
               alt={form.productName || '商品图片预览'}
               className="h-32 w-32 rounded-2xl border border-slate-100 object-cover"
-              src={form.imageUrl}
+              src={getProductImageUrl({ image_url: form.imageUrl })}
             />
           )}
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-700">用户上传主图（可选）</p>
+            <p className="text-xs leading-5 text-slate-500">保存前仅本地预览；保存库存后才上传。</p>
+            <ProductImagePicker key={imagePickerKey} disabled={busy} onChange={setPendingImageFile} />
+          </div>
         </fieldset>
 
         <fieldset className="space-y-4 border-t border-slate-100 pt-5">

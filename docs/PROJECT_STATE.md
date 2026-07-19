@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.10 completed: Email OTP Authentication Flow.
+v0.2.11 implemented locally: Product Image Upload.
 
 ## Current status
 
-v0.2.10 已完成并通过本地、Production Web 与 iPhone 主屏幕 standalone Web App 验收；v0.2.9 保活链路保持已验收状态。
+v0.2.11 图片上传代码、migration、测试和文档已完成本地验证；远程 Supabase migration、Public bucket 与 Storage policy 已执行，Production 手机真机验收尚未完成。
 
 ## Latest completed
 
-v0.2.10 已完成 Email OTP migration：Resend SMTP 与已验证邮件域支持 8 位 OTP 邮件；本地、Production Web 和 iPhone 主屏幕 standalone Web App 均已验证发送、验证、session 恢复、退出清理和同邮箱库存恢复。登录不再依赖 Magic Link 回跳 Safari。未修改 schema、migration、RLS 或业务数据逻辑。
+v0.2.11 新增用户商品主图：`user_image_url → image_url → 无图占位`，支持拍照、相册、本地预览、替换和删除；远程 Storage migration 已执行。
 
 ## Deployment
 
@@ -46,11 +46,11 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Next Action
 
-Next candidate: 手机拍照 / 相册选择 / Supabase Storage 商品图片。先做独立方案设计，暂不指定未经确认的具体版本号。
+在 Production 完成 iPhone、Android 和双账号的真实上传、替换、删除与 Storage RLS 验收。
 
 ## Blockers
 
-None.
+Production 手机真机图片上传验收尚未完成。
 
 ## Important Context
 

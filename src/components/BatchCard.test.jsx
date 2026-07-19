@@ -81,6 +81,17 @@ describe('BatchCard summary UI', () => {
     expect(html).toContain('库存图片占位')
   })
 
+  it('uses the user image before the API image', () => {
+    const html = renderBatchCard({
+      batch: {
+        ...batch,
+        product: { ...batch.product, user_image_url: 'https://example.com/user.jpg' },
+      },
+    })
+    expect(html).toContain('https://example.com/user.jpg')
+    expect(html).not.toContain('https://example.com/old.jpg')
+  })
+
   it('shows the shared expiry window badge instead of the old normal status', () => {
     const html = renderBatchCard({
       batch: {

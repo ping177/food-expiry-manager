@@ -24,4 +24,11 @@ describe('AddBatchForm category field', () => {
       expect(html).toContain(`<option value="${category}">${category}</option>`)
     }
   })
+
+  it('offers camera, album and local-image removal controls', () => {
+    const html = renderAddBatchForm()
+    expect(html).toContain('拍照')
+    expect(html).toContain('从相册选择')
+    expect(html).toContain('capture="environment"')
+  })
 })

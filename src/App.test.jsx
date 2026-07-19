@@ -32,6 +32,11 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain('clearAccountScopedState()')
     expect(appSource).toContain('applySession(null)')
   })
+
+  it('does not clear an existing fallback image when a form image input is empty', () => {
+    expect(appSource).not.toContain('image_url: form.imageUrl.trim() || null')
+    expect(appSource).toContain('if (imageUrl) productValues.image_url = imageUrl')
+  })
 })
 
 describe('App auth session behavior model', () => {

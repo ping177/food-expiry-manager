@@ -222,6 +222,7 @@ export function createInventoryBatchesQuery(supabaseClient) {
           name,
           brand,
           image_url,
+          user_image_url,
           category,
           source
         )

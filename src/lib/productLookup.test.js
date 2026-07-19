@@ -447,6 +447,7 @@ describe('lookupProductLocalFirst', () => {
         name: '本地猫罐头',
         brand: '本地品牌',
         imageUrl: 'https://example.com/local.jpg',
+        userImageUrl: '',
         category: '猫罐头',
         source: 'manual',
       },

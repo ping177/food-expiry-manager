@@ -311,3 +311,15 @@
 - 数据边界：不修改 Auth 用户、`products`、`inventory_batches`、`user_id`、schema、
   migration 或 RLS；不会恢复或创建 anonymous user，也不改变既有 anonymous user
   清理结果。
+
+## D-025：v0.2.11 使用 Public Storage 保存单张用户商品主图
+
+- 状态：已决定
+- 日期：2026-07-19
+- 决策：使用 Public bucket `product-images`，对象路径必须以当前 `auth.uid()` 为首段；
+  每个 product 仅以 `products.user_image_url` 记录一张用户上传主图。
+- 显示优先级：`user_image_url` 优先于保留的 `image_url`；删除用户图后回退 API /
+  历史外部图，均为空时显示既有占位。
+- 安全与隐私：Public URL 获得者可读取图片；Storage INSERT、UPDATE、DELETE policy
+  仅允许 authenticated 用户操作自己 user_id 目录。替换一律上传新随机路径，不 upsert。
+- 非目标：多图、OCR、AI、裁剪、图库和服务端图片处理不纳入本版本。

@@ -38,7 +38,9 @@ function renderBatchDetail(props = {}) {
       onConsume={vi.fn()}
       onDecrement={vi.fn()}
       onUpdateProduct={vi.fn()}
-      onUpdateQuantity={vi.fn()}
+    onUpdateQuantity={vi.fn()}
+      onUpdateProductImage={vi.fn()}
+      onDeleteProductImage={vi.fn()}
       {...props}
     />,
   )
@@ -83,7 +85,7 @@ describe('BatchDetail', () => {
     expect(html).toContain('商品名 *')
     expect(html).toContain('品牌')
     expect(html).toContain('分类')
-    expect(html).toContain('图片链接')
+    expect(html).toContain('外部兜底图片链接（可选）')
     expect(html).toContain('当前批次')
     expect(html).toContain('当前库存')
     expect(html).toContain('value="6"')
@@ -103,5 +105,12 @@ describe('BatchDetail', () => {
 
     expect(html).toContain('条形码：1234567890123')
     expect(html).not.toContain('value="1234567890123"')
+  })
+
+  it('offers camera and album controls in product edit', () => {
+    const html = renderBatchDetail({ defaultProductEditing: true })
+    expect(html).toContain('拍照')
+    expect(html).toContain('从相册选择')
+    expect(html).toContain('capture="environment"')
   })
 })
