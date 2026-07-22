@@ -117,16 +117,28 @@ describe('BatchDetail', () => {
     expect(html).toContain('capture="environment"')
   })
 
-  it('shows current stock and a deferred consumption area in inventory-operation mode', () => {
+  it('shows current stock, current expiry, and inventory operation entries', () => {
     const html = renderBatchDetail({ defaultMode: 'inventory-operation' })
 
     expect(html).toContain('库存操作')
     expect(html).toContain('当前库存')
+    expect(html).toContain('当前批次保质期')
+    expect(html).toContain('2026-12-01')
+    expect(html).toContain('新增库存')
     expect(html).toContain('消耗库存')
-    expect(html).toContain('将在后续版本加入确认流程')
+    expect(html).not.toContain('将在后续版本加入确认流程')
     expect(html).not.toContain('商品名 *')
     expect(html).not.toContain('保存修改')
-    expect(html).not.toContain('消耗 1')
     expect(html).not.toContain('type="number"')
+  })
+
+  it('shows the explicit consumed entry only after the quantity reaches zero', () => {
+    const html = renderBatchDetail({
+      defaultMode: 'inventory-operation',
+      batch: { ...batch, quantity: 0, status: 'active' },
+    })
+
+    expect(html).toContain('标记为已消耗')
+    expect(html).not.toContain('确认标记为已消耗')
   })
 })

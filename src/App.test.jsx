@@ -61,14 +61,19 @@ describe('App auth integration source guards', () => {
     )
   })
 
-  it('does not wire batch quantity or consumption updates into BatchDetail', () => {
+  it('wires inventory operation callbacks into BatchDetail without changing product edits', () => {
     expect(appSource).toContain('onUpdateProduct={handleUpdateProduct}')
+    expect(appSource).toContain('onAddInventory={handleOpenAddInventory}')
+    expect(appSource).toContain('onConsume={handleConsume}')
+    expect(appSource).toContain('onMarkConsumed={handleMarkConsumed}')
+    expect(appSource).toContain('planInventoryAddition')
+    expect(appSource).toContain("view === 'add-inventory'")
+    expect(appSource).toContain(".update({ quantity: plan.quantity })")
+    expect(appSource).toContain(".update({ quantity: normalizeQuantity(nextQuantity) })")
     expect(appSource).not.toContain('onUpdateQuantity={handleUpdateQuantity}')
     expect(appSource).not.toContain('onDecrement={handleDecrement}')
-    expect(appSource).not.toContain('onConsume={async (batchId) =>')
     expect(appSource).not.toContain('function handleUpdateQuantity')
     expect(appSource).not.toContain('function handleDecrement')
-    expect(appSource).not.toContain('function handleConsume')
   })
 })
 

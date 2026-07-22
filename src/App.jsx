@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AddBatchForm from './components/AddBatchForm'
+import AddInventoryForm from './components/AddInventoryForm'
 import AuthPanel from './components/AuthPanel'
 import BatchCard from './components/BatchCard'
 import BatchDetail from './components/BatchDetail'
@@ -19,7 +20,11 @@ import {
 import { PRODUCT_CATEGORIES } from './lib/categories'
 import { EXPIRY_WINDOW_OPTIONS } from './lib/expiryWindows'
 import { filterInventoryBatches } from './lib/inventoryFilters'
-import { normalizeQuantity } from './lib/inventory'
+import {
+  createConsumedStatusUpdate,
+  planInventoryAddition,
+  normalizeQuantity,
+} from './lib/inventory'
 import { applyProductUpdateToBatches } from './lib/productEdit'
 import {
   lookupProductByBarcode,
@@ -242,6 +247,14 @@ export default function App() {
     setView('add')
   }
 
+  function handleOpenAddInventory(batch) {
+    setError('')
+    setMessage('')
+    setActiveTab('inventory')
+    setSelectedBatchId(batch.id)
+    setView('add-inventory')
+  }
+
   async function findOrCreateProduct(form) {
     const barcode = normalizeBarcode(form.barcode) || null
     const name = form.productName.trim()
@@ -380,6 +393,56 @@ export default function App() {
     }
   }
 
+  async function handleAddInventory(form) {
+    const currentBatch = batches.find((batch) => batch.id === selectedBatchId)
+    if (!currentBatch?.product?.id) return false
+
+    setLoading(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const plan = planInventoryAddition({
+        batches,
+        productId: currentBatch.product.id,
+        expiryDate: form.expiryDate,
+        quantity: form.quantity,
+        unit: currentBatch.unit,
+        storageLocation: currentBatch.storage_location,
+      })
+
+      if (plan.action === 'merge') {
+        const { error: updateError } = await supabase
+          .from('inventory_batches')
+          .update({ quantity: plan.quantity })
+          .eq('id', plan.batchId)
+          .eq('status', 'active')
+
+        if (updateError) throw updateError
+        setMessage('新增库存已合并到现有批次。')
+      } else {
+        const { error: createError } = await supabase
+          .from('inventory_batches')
+          .insert({
+            user_id: session.user.id,
+            ...plan.values,
+          })
+
+        if (createError) throw createError
+        setMessage('新增库存批次已保存。')
+      }
+
+      setView('detail')
+      await loadBatches()
+      return true
+    } catch (saveError) {
+      setError(`新增库存失败：${saveError.message}`)
+      return false
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function handleUpdateProduct(batchId, productId, values) {
     setBusyBatchId(batchId)
     setError('')
@@ -405,6 +468,60 @@ export default function App() {
     setMessage('商品信息已更新。')
     setBusyBatchId(null)
     return true
+  }
+
+  async function handleConsume(batchId, nextQuantity) {
+    setBusyBatchId(batchId)
+    setError('')
+    setMessage('')
+
+    try {
+      const { error: updateError } = await supabase
+        .from('inventory_batches')
+        .update({ quantity: normalizeQuantity(nextQuantity) })
+        .eq('id', batchId)
+        .eq('status', 'active')
+
+      if (updateError) throw updateError
+
+      await loadBatches()
+      setMessage('库存已更新。')
+      return true
+    } catch (updateError) {
+      setError(`消耗库存失败：${updateError.message}`)
+      return false
+    } finally {
+      setBusyBatchId(null)
+    }
+  }
+
+  async function handleMarkConsumed(batchId) {
+    setBusyBatchId(batchId)
+    setError('')
+    setMessage('')
+
+    try {
+      const currentBatch = batches.find((batch) => batch.id === batchId)
+      const statusUpdate = createConsumedStatusUpdate(currentBatch?.quantity)
+      const { error: updateError } = await supabase
+        .from('inventory_batches')
+        .update(statusUpdate)
+        .eq('id', batchId)
+        .eq('status', 'active')
+
+      if (updateError) throw updateError
+
+      setSelectedBatchId(null)
+      setView('home')
+      await loadBatches()
+      setMessage('批次已标记为已消耗。')
+      return true
+    } catch (updateError) {
+      setError(`标记已消耗失败：${updateError.message}`)
+      return false
+    } finally {
+      setBusyBatchId(null)
+    }
   }
 
   async function handleUpdateProductImage(batchId, product, file) {
@@ -511,6 +628,11 @@ export default function App() {
               添加一批库存
             </h1>
           )}
+          {view === 'add-inventory' && (
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+              新增库存
+            </h1>
+          )}
           {view === 'detail' && (
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
               库存详情
@@ -591,6 +713,14 @@ export default function App() {
             onLookupBarcode={lookupBarcodeProduct}
             onSave={handleSave}
           />
+        ) : view === 'add-inventory' && selectedBatch ? (
+          <AddInventoryForm
+            busy={loading}
+            onCancel={() => setView('detail')}
+            onSave={handleAddInventory}
+            product={selectedBatch.product}
+            unit={selectedBatch.unit}
+          />
         ) : view === 'detail' && selectedBatch ? (
           <BatchDetail
             batch={selectedBatch}
@@ -602,6 +732,9 @@ export default function App() {
             onUpdateProduct={handleUpdateProduct}
             onUpdateProductImage={handleUpdateProductImage}
             onDeleteProductImage={handleDeleteProductImage}
+            onAddInventory={handleOpenAddInventory}
+            onConsume={handleConsume}
+            onMarkConsumed={handleMarkConsumed}
           />
         ) : view === 'detail' ? (
           <section className="rounded-3xl bg-white p-6 text-center shadow-card">

@@ -109,10 +109,17 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 - 商品详情拆分为 `view`、`product-edit` 和 `inventory-operation` 三个状态
 - 默认查看模式只展示商品和批次信息，并提供“编辑商品”和“库存操作”入口
 - 商品编辑只更新 `products`，不再修改 `inventory_batches.quantity`
-- 库存操作模式本阶段只建立当前库存展示与后续消耗确认位置
+- 库存操作模式展示当前批次库存与保质期，但本阶段不执行库存写入
 - 不重构新增库存，不实现消耗确认，不修改 Supabase schema、migration、Auth、RLS 或数据模型
 
-下一步 B2 将在库存操作模式中设计并接入带二次确认的消耗流程。
+## v0.2.12-B2：库存操作
+
+- 状态：已完成本地实现；自动化测试和生产构建通过，移动端视觉验收待完成
+- `inventory-operation` 展示当前库存数量、当前批次保质期，并提供新增库存与消耗库存入口
+- 新增库存沿用当前 `product_id`；同日期 active 批次合并数量，不同日期创建新批次
+- 消耗库存先显示当前数量与默认 1 的确认状态；取消不写入，确认只更新 quantity，并防止负库存、超量和重复提交
+- quantity 降为 0 后保持原 status；显式确认“标记为已消耗”后才更新 `status='consumed'`
+- 不修改 `products` 数据结构、Supabase schema、migration、Auth、RLS、Storage 或环境变量
 
 ## 后续候选：商品图片上传体验
 

@@ -7,6 +7,7 @@ import {
 } from '../lib/productEdit'
 import ProductImagePicker from './ProductImagePicker'
 import { getProductImageUrl } from '../lib/productImage'
+import InventoryOperationPanel from './InventoryOperationPanel'
 
 const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger',
@@ -42,6 +43,9 @@ export default function BatchDetail({
   onUpdateProduct,
   onUpdateProductImage,
   onDeleteProductImage,
+  onAddInventory = () => {},
+  onConsume = async () => true,
+  onMarkConsumed = async () => true,
   defaultMode = 'view',
 }) {
   const [mode, setMode] = useState(defaultMode)
@@ -73,6 +77,11 @@ export default function BatchDetail({
     setPendingImageFile(null)
     setImagePickerKey((current) => current + 1)
     setMode('view')
+  }
+
+  function openInventoryOperation() {
+    setDetailError('')
+    setMode('inventory-operation')
   }
 
   async function handleProductEditSubmit(event) {
@@ -296,10 +305,7 @@ export default function BatchDetail({
             className="rounded-2xl bg-leaf px-4 py-3 font-semibold text-white disabled:opacity-50"
             disabled={busy}
             type="button"
-            onClick={() => {
-              setDetailError('')
-              setMode('inventory-operation')
-            }}
+            onClick={openInventoryOperation}
           >
             库存操作
           </button>
@@ -307,22 +313,13 @@ export default function BatchDetail({
       )}
 
       {mode === 'inventory-operation' && (
-        <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-card">
-          <h3 className="font-bold text-ink">库存操作</h3>
-          <p className="mt-3 text-sm text-slate-500">当前库存</p>
-          <p className="mt-1 text-2xl font-bold text-ink">
-            {batch.quantity}
-            <span className="ml-1 text-sm font-medium text-slate-500">
-              {batch.unit}
-            </span>
-          </p>
-          <div className="mt-5 border-t border-slate-100 pt-4">
-            <h4 className="font-semibold text-ink">消耗库存</h4>
-            <p className="mt-1 text-sm leading-6 text-slate-500">
-              将在后续版本加入确认流程。
-            </p>
-          </div>
-        </section>
+        <InventoryOperationPanel
+          batch={batch}
+          busy={busy}
+          onAddInventory={onAddInventory}
+          onConsume={onConsume}
+          onMarkConsumed={onMarkConsumed}
+        />
       )}
 
       {detailError && (

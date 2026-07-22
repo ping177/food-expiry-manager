@@ -2,6 +2,15 @@
 
 ## 2026-07-22
 
+### v0.2.12-B2 库存操作
+
+- 在 `inventory-operation` 状态展示当前库存数量和当前批次保质期，增加“新增库存”和“消耗库存”入口。
+- 新增库存自动带入当前商品与既有 `product_id`；同商品、同到期日的 active 批次直接累加 quantity，不同到期日创建新的 `inventory_batches`，不重复创建 product。
+- 消耗库存先进入确认状态，默认消耗数量为 1；取消不产生写入，确认只更新选中批次 quantity，并阻止负库存、超量和重复提交。
+- quantity 降为 0 时不自动更新 status；只有显式确认“标记为已消耗”才写入 `status='consumed'`。
+- 未修改 products 数据结构、Supabase schema、migration、Auth、RLS、Storage 或环境变量。
+- 新增库存、消耗边界、取消空 payload、数量归零和 inventory-operation 展示测试；`npm test` 通过 16 个测试文件 / 148 个测试，`npm run build` 成功，`git diff --check` 通过。
+
 ### v0.2.12-B1 商品详情操作重构
 
 - `BatchDetail` 从单一商品编辑状态拆分为默认查看、商品编辑和库存操作三个显式状态。

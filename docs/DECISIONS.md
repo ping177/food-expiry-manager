@@ -343,3 +343,13 @@
 - B1 范围：库存操作模式仅展示当前库存和后续消耗确认位置，不执行 quantity、status 或新增库存写入。
 - 后续：B2 在库存操作模式中加入带二次确认的消耗操作，继续只影响选中的 `inventory_batches`，并保持零库存后显式确认 `consumed` 的既有规则。
 - 数据与安全边界：不修改 schema、migration、Auth、RLS 或 `products` / `inventory_batches` 数据模型。
+
+## D-028：v0.2.12-B2 在详情页完成家庭库存操作
+
+- 状态：已决定并完成本地实现
+- 日期：2026-07-22
+- 决策：库存操作只在 `inventory-operation` 状态执行。新增库存自动沿用当前商品的 `product_id`；同 `product_id`、同 `expiry_date`、`active` 的批次直接累加 quantity，不同日期创建新的 `inventory_batches`。
+- 决策：消耗库存先进入本地确认状态，默认数量为 1；取消不写入，确认后只更新选中批次的 quantity。数量不得小于 0，也不得超过确认前当前库存；提交期间禁用重复提交。
+- 决策：quantity 降为 0 不自动改变 status。只有用户显式点击并确认“标记为已消耗”后，才更新 `status='consumed'`。
+- 原因：家庭食品库存需要快速补货和日常消耗，但仍要保留批次到期日，降低误操作和重复商品的风险。
+- 边界：不修改 products 数据结构、Supabase schema、migration、Auth、RLS、Storage 或环境变量；商品信息不重新扫码、不重新填写。

@@ -10,8 +10,8 @@
 
 ## 自动化测试
 
-使用 Vitest。v0.2.10 本地实现验收结果为 13 个测试文件、117 个测试通过；其中
-v0.2.9 的 110 个测试继续通过，新增 Email OTP 测试 7 个。
+使用 Vitest。v0.2.12-B2 本地实现验收结果为 16 个测试文件、148 个测试通过；其中
+包含 B1 三态详情展示、库存新增合并/新批次和库存消耗确认边界。
 核心测试文件包括：
 
 - `src/lib/expiry.test.js`
@@ -22,6 +22,12 @@ v0.2.9 的 110 个测试继续通过，新增 Email OTP 测试 7 个。
 - `src/App.test.jsx`
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
+
+## v0.2.12-B2 自动化覆盖
+
+- `src/components/BatchDetail.test.jsx`：inventory-operation 展示当前数量、当前批次保质期、新增/消耗入口，以及数量为 0 时的显式 consumed 入口。
+- `src/components/AddInventoryForm.test.jsx`：当前商品只读带入，表单只提供数量与保质期，不重复显示扫码或商品字段。
+- `src/lib/inventory.test.js`：同商品同日期合并、不同日期创建新 batch、消耗默认 1、不能超过当前库存、数量归零不附带 status、取消不产生写入 payload、显式 consumed 只允许 quantity=0。
 
 ## v0.2.11 商品图片待验收
 
