@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.12-B2 implemented locally: Inventory Operations.
+v0.2.12-C implemented locally: Delete Inventory Batch.
 
 ## Current status
 
-v0.2.12-B2 库存操作已完成本地实现：`inventory-operation` 现在支持带入当前商品新增库存、同商品同日期 active 批次合并、不同日期创建新批次，以及带二次确认的消耗和显式标记 consumed。自动化测试和生产构建通过，移动端视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
+v0.2.12-C 已完成本地实现：`inventory-operation` 现在支持删除当前库存批次的二次确认。确认后仅删除当前 owner 的 `inventory_batches` 记录，保留商品档案、用户商品图片、Storage 对象和其他 batch；0 行删除或 Supabase 错误不会报成功。自动化测试和生产构建通过，移动端视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
 
 ## Latest completed
 
-v0.2.12-B2 在 B1 三态详情基础上完成库存操作：新增库存只复用当前 `product_id`，按 active + expiry date 合并或创建批次；消耗确认取消不写入，确认只更新 quantity；数量归零后由用户确认才更新为 `consumed`。
+v0.2.12-C 在 B2 库存操作基础上增加危险操作区：删除当前 batch 必须二次确认，取消不写入；确认按 batch id 和当前 user id 删除。成功后本地移除该 batch、返回库存列表并刷新数据。
 
 ## Deployment
 
@@ -42,14 +42,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.12-A｜首页 Mobile UX Polish
 - v0.2.12-B1｜商品详情操作重构
 - v0.2.12-B2｜库存操作
+- v0.2.12-C｜删除库存批次
 
 ## Last verified
 
-2026-07-22: v0.2.12-B2 automated tests (16 files / 148 tests) and production build passed locally; mobile visual acceptance needs verification.
+2026-07-22: v0.2.12-C automated tests (17 files / 152 tests) and production build passed locally; mobile visual acceptance needs verification.
 
 ## Next Action
 
-在 iPhone / Android PWA 完成 v0.2.12-A、B1、B2 的移动端 smoke：确认新增库存同日期合并、不同日期新批次、消耗取消不写入、确认扣减和数量归零后的 consumed 确认。
+在 iPhone / Android PWA 完成 v0.2.12-A、B1、B2、C 的移动端 smoke：确认新增库存同日期合并、不同日期新批次、消耗取消不写入、确认扣减、数量归零后的 consumed 确认，以及删除确认 / 取消、保留商品与图片、保留其他 batch、刷新后删除持久化。
 
 ## Blockers
 
@@ -84,6 +85,7 @@ Production 手机真机图片上传验收尚未完成。
 - Saved product information is reused locally by barcode; users can edit saved product display fields from the inventory batch detail view.
 - v0.2.12-B1 的 `BatchDetail` 有 `view`、`product-edit`、`inventory-operation` 三个状态；B2 已在 inventory-operation 接入新增库存和消耗确认。
 - B2 新增库存只影响既有 `product_id` 对应的 `inventory_batches`：同日期 active 批次只更新 quantity，不同日期插入新 batch；消耗只更新选中 batch 的 quantity 或显式 status。
+- C 删除只作用当前 `inventory_batches`；确认请求按 batch id 与当前 user id 限定，成功后返回首页并刷新 active batches。不得删除 `products`、`user_image_url`、Storage 图片或其他 batch。
 - Home filtering operates on active batches and combines expiry time window, category, and product/brand search while preserving the existing expiry-date ordering.
 - v0.2.12-A 顶层页面只有“库存”和“我的”两个 Tab；居中的 `+` 是新增商品操作而非第三个 Tab。三个入口使用内置 SVG 图标，默认灰色、选中 Tab 使用现有绿色；新增商品、库存详情和编辑任务流不显示底部导航；固定导航和内容底部均保留 iPhone PWA 安全区。
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
@@ -92,4 +94,4 @@ Production 手机真机图片上传验收尚未完成。
 
 ## Handoff Prompt
 
-Verify v0.2.12-A, B1, and B2 on iPhone and Android PWA: the bottom navigation must clear the Home Indicator, the center `+` must open the existing add flow, product detail must preserve the three modes, and inventory operations must pass add/merge, new-batch, cancel, consume, zero-inventory, and consumed-confirmation smoke checks.
+Verify v0.2.12-A, B1, B2, and C on iPhone and Android PWA: the bottom navigation must clear the Home Indicator, the center `+` must open the existing add flow, product detail must preserve the three modes, and inventory operations must pass add/merge, new-batch, cancel, consume, zero-inventory, consumed-confirmation, delete-cancel, delete-confirmation, retained product/image/other batches, and post-refresh deletion smoke checks.

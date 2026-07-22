@@ -101,5 +101,12 @@ export function prepareInventoryOperationUpdate(
     return createConsumedStatusUpdate(batch.quantity)
   }
 
+  if (operation === 'delete-batch') {
+    if (!batch?.id) {
+      throw new Error('找不到要删除的库存批次')
+    }
+    return { id: batch.id }
+  }
+
   throw new Error('不支持的库存操作')
 }

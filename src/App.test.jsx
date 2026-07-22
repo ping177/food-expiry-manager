@@ -66,6 +66,7 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain('onAddInventory={handleOpenAddInventory}')
     expect(appSource).toContain('onConsume={handleConsume}')
     expect(appSource).toContain('onMarkConsumed={handleMarkConsumed}')
+    expect(appSource).toContain('onDeleteBatch={handleDeleteBatch}')
     expect(appSource).toContain('planInventoryAddition')
     expect(appSource).toContain("view === 'add-inventory'")
     expect(appSource).toContain(".update({ quantity: plan.quantity })")
@@ -74,6 +75,20 @@ describe('App auth integration source guards', () => {
     expect(appSource).not.toContain('onDecrement={handleDecrement}')
     expect(appSource).not.toContain('function handleUpdateQuantity')
     expect(appSource).not.toContain('function handleDecrement')
+  })
+
+  it('deletes only the current owned inventory batch and treats zero rows as a failure', () => {
+    expect(appSource).toContain('function handleDeleteBatch(batchId)')
+    expect(appSource).toContain(".from('inventory_batches')")
+    expect(appSource).toContain('.delete()')
+    expect(appSource).toContain(".eq('id', batchId)")
+    expect(appSource).toContain(".eq('user_id', session.user.id)")
+    expect(appSource).toContain(".select('id')")
+    expect(appSource).toContain('.maybeSingle()')
+    expect(appSource).toContain('批次已不存在或无权删除')
+    expect(appSource).toContain('删除库存批次失败：${deleteError.message}')
+    expect(appSource).toContain('setSelectedBatchId(null)')
+    expect(appSource).toContain("setView('home')")
   })
 })
 

@@ -7,6 +7,7 @@ export default function InventoryOperationPanel({
   onAddInventory = () => {},
   onConsume = async () => true,
   onMarkConsumed = async () => true,
+  onDeleteBatch = async () => true,
 }) {
   const [pendingOperation, setPendingOperation] = useState(null)
   const [consumptionAmount, setConsumptionAmount] = useState('1')
@@ -75,6 +76,32 @@ export default function InventoryOperationPanel({
     }
   }
 
+  async function confirmDeleteBatch() {
+    setOperationError('')
+
+    let deletion
+    try {
+      deletion = prepareInventoryOperationUpdate(batch, 'delete-batch')
+    } catch (deleteError) {
+      setOperationError(deleteError.message)
+      return
+    }
+
+    setOperationSubmitting(true)
+    try {
+      const saved = await onDeleteBatch(deletion.id)
+      if (!saved) {
+        setOperationError('删除库存批次失败，请稍后重试。')
+        return
+      }
+      setPendingOperation(null)
+    } catch {
+      setOperationError('删除库存批次失败，请稍后重试。')
+    } finally {
+      setOperationSubmitting(false)
+    }
+  }
+
   return (
     <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-card">
       <h3 className="font-bold text-ink">库存操作</h3>
@@ -97,7 +124,7 @@ export default function InventoryOperationPanel({
       <div className="mt-5 grid grid-cols-2 gap-3">
         <button
           className="rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 disabled:opacity-50"
-          disabled={operationSubmitting || busy}
+          disabled={operationSubmitting || busy || pendingOperation !== null}
           type="button"
           onClick={() => onAddInventory(batch)}
         >
@@ -105,7 +132,12 @@ export default function InventoryOperationPanel({
         </button>
         <button
           className="rounded-2xl bg-leaf px-4 py-3 font-semibold text-white disabled:opacity-50"
-          disabled={operationSubmitting || busy || batch.quantity <= 0}
+          disabled={
+            operationSubmitting ||
+            busy ||
+            pendingOperation !== null ||
+            batch.quantity <= 0
+          }
           type="button"
           onClick={() => {
             setOperationError('')
@@ -167,7 +199,7 @@ export default function InventoryOperationPanel({
           {pendingOperation !== 'mark-consumed' && (
             <button
               className="mt-3 w-full rounded-xl border border-danger px-4 py-3 font-semibold text-danger disabled:opacity-50"
-              disabled={operationSubmitting || busy}
+              disabled={operationSubmitting || busy || pendingOperation !== null}
               type="button"
               onClick={() => {
                 setOperationError('')
@@ -208,6 +240,50 @@ export default function InventoryOperationPanel({
       {batch.quantity <= 0 && (
         <p className="mt-4 text-xs text-slate-500">当前库存为 0，不能继续消耗。</p>
       )}
+
+      <div className="mt-5 border-t border-slate-100 pt-4">
+        <h4 className="font-semibold text-ink">危险操作</h4>
+        {pendingOperation !== 'delete-batch' && (
+          <button
+            className="mt-3 w-full rounded-xl border border-danger px-4 py-3 font-semibold text-danger disabled:opacity-50"
+            disabled={operationSubmitting || busy || pendingOperation !== null}
+            type="button"
+            onClick={() => {
+              setOperationError('')
+              setPendingOperation('delete-batch')
+            }}
+          >
+            删除当前库存批次
+          </button>
+        )}
+        {pendingOperation === 'delete-batch' && (
+          <div className="mt-3 space-y-3 rounded-2xl bg-red-50 p-4">
+            <h5 className="font-semibold text-danger">确认删除当前库存批次？</h5>
+            <p className="text-sm leading-6 text-slate-600">
+              将删除当前库存批次；商品信息、商品图片和其他库存批次都会保留。
+            </p>
+            <p className="text-sm font-semibold text-danger">此操作不可恢复。</p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700"
+                disabled={operationSubmitting}
+                type="button"
+                onClick={cancelPendingOperation}
+              >
+                取消
+              </button>
+              <button
+                className="rounded-xl bg-danger px-4 py-3 font-semibold text-white disabled:opacity-50"
+                disabled={operationSubmitting}
+                type="button"
+                onClick={confirmDeleteBatch}
+              >
+                {operationSubmitting ? '删除中…' : '确认删除当前库存批次'}
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
 
       {operationError && (
         <p

@@ -46,6 +46,7 @@ export default function BatchDetail({
   onAddInventory = () => {},
   onConsume = async () => true,
   onMarkConsumed = async () => true,
+  onDeleteBatch = async () => true,
   defaultMode = 'view',
 }) {
   const [mode, setMode] = useState(defaultMode)
@@ -319,6 +320,7 @@ export default function BatchDetail({
           onAddInventory={onAddInventory}
           onConsume={onConsume}
           onMarkConsumed={onMarkConsumed}
+          onDeleteBatch={onDeleteBatch}
         />
       )}
 

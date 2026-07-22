@@ -524,6 +524,41 @@ export default function App() {
     }
   }
 
+  async function handleDeleteBatch(batchId) {
+    setBusyBatchId(batchId)
+    setError('')
+    setMessage('')
+
+    try {
+      const { data: deletedBatch, error: deleteError } = await supabase
+        .from('inventory_batches')
+        .delete()
+        .eq('id', batchId)
+        .eq('user_id', session.user.id)
+        .select('id')
+        .maybeSingle()
+
+      if (deleteError) throw deleteError
+      if (!deletedBatch) {
+        throw new Error('批次已不存在或无权删除')
+      }
+
+      setBatches((currentBatches) =>
+        currentBatches.filter((batch) => batch.id !== batchId),
+      )
+      setSelectedBatchId(null)
+      setView('home')
+      setMessage('库存批次已删除；商品信息和图片已保留。')
+      await loadBatches()
+      return true
+    } catch (deleteError) {
+      setError(`删除库存批次失败：${deleteError.message}`)
+      return false
+    } finally {
+      setBusyBatchId(null)
+    }
+  }
+
   async function handleUpdateProductImage(batchId, product, file) {
     setBusyBatchId(batchId)
     setError('')
@@ -735,6 +770,7 @@ export default function App() {
             onAddInventory={handleOpenAddInventory}
             onConsume={handleConsume}
             onMarkConsumed={handleMarkConsumed}
+            onDeleteBatch={handleDeleteBatch}
           />
         ) : view === 'detail' ? (
           <section className="rounded-3xl bg-white p-6 text-center shadow-card">

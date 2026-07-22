@@ -353,3 +353,13 @@
 - 决策：quantity 降为 0 不自动改变 status。只有用户显式点击并确认“标记为已消耗”后，才更新 `status='consumed'`。
 - 原因：家庭食品库存需要快速补货和日常消耗，但仍要保留批次到期日，降低误操作和重复商品的风险。
 - 边界：不修改 products 数据结构、Supabase schema、migration、Auth、RLS、Storage 或环境变量；商品信息不重新扫码、不重新填写。
+
+## D-029：v0.2.12-C 允许物理删除错误库存批次
+
+- 状态：已决定并完成本地实现
+- 日期：2026-07-22
+- 决策：在 `inventory-operation` 的危险操作区允许用户删除当前 `inventory_batches` 记录；删除前必须二次确认，取消不写入，确认期间禁止重复提交。
+- 数据边界：删除请求按当前 batch id 与 `auth.uid()` 对应的 user id 限定。删除不触及 `products`、`user_image_url`、Storage 图片或其他 batch；0 行删除视为失败，不能报成功。
+- 状态：成功后从本地 active batches 移除当前记录、清除选择、返回库存列表并刷新；失败保留详情并显示错误。
+- 原因：错误录入和测试库存需要可清理，同时必须保留可复用商品档案和图片，避免影响同商品的独立库存批次。
+- 边界：不修改 schema、migration、Auth、RLS、Storage、环境变量或依赖。

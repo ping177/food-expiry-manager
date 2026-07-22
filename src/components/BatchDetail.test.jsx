@@ -62,6 +62,7 @@ describe('BatchDetail', () => {
     expect(html).not.toContain('保存修改')
     expect(html).not.toContain('消耗 1')
     expect(html).not.toContain('标记为已消耗')
+    expect(html).not.toContain('删除当前库存批次')
     expect(html).not.toContain('<input')
   })
 
@@ -126,6 +127,7 @@ describe('BatchDetail', () => {
     expect(html).toContain('2026-12-01')
     expect(html).toContain('新增库存')
     expect(html).toContain('消耗库存')
+    expect(html).toContain('删除当前库存批次')
     expect(html).not.toContain('将在后续版本加入确认流程')
     expect(html).not.toContain('商品名 *')
     expect(html).not.toContain('保存修改')

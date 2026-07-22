@@ -140,6 +140,12 @@ describe('prepareInventoryOperationUpdate', () => {
     ).toBeNull()
   })
 
+  it('returns the current batch id only after delete confirmation', () => {
+    expect(
+      prepareInventoryOperationUpdate({ id: 'batch-1', quantity: 6 }, 'delete-batch'),
+    ).toEqual({ id: 'batch-1' })
+  })
+
   it('returns a quantity-only payload after consumption confirmation', () => {
     expect(
       prepareInventoryOperationUpdate({ quantity: 6 }, 'consume', 2),

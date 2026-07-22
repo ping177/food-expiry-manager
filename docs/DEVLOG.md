@@ -2,6 +2,15 @@
 
 ## 2026-07-22
 
+### v0.2.12-C 删除库存批次
+
+- 在 `inventory-operation` 增加危险操作区和“删除当前库存批次”二次确认；确认文案明确说明仅删除当前 batch，商品信息、商品图片和其他 batch 保留，操作不可恢复。
+- 确认期间禁用其他库存操作与重复提交；取消不调用删除 handler。
+- `App` 仅对 `inventory_batches` 执行 delete，按 batch id 与当前 user id 限定，并以 `select('id').maybeSingle()` 将 0 行删除视为失败。
+- 删除成功后本地移除当前 batch、清除选择、返回库存列表并刷新 active batches；失败显示错误，不误报成功。
+- 未修改 products、Schema、migration、Auth、RLS、Storage、环境变量或依赖。
+- 新增删除确认、取消空 payload、当前 batch id、入口范围、App 删除范围及 0 行失败接线测试；`npm test` 通过 17 个测试文件 / 152 个测试，`npm run build` 成功，`git diff --check` 通过。
+
 ### v0.2.12-B2 库存操作
 
 - 在 `inventory-operation` 状态展示当前库存数量和当前批次保质期，增加“新增库存”和“消耗库存”入口。

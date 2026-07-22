@@ -10,8 +10,8 @@
 
 ## 自动化测试
 
-使用 Vitest。v0.2.12-B2 本地实现验收结果为 16 个测试文件、148 个测试通过；其中
-包含 B1 三态详情展示、库存新增合并/新批次和库存消耗确认边界。
+使用 Vitest。v0.2.12-C 本地实现验收结果为 17 个测试文件、152 个测试通过；其中
+包含 B1 三态详情展示、库存新增合并/新批次、库存消耗确认和当前 batch 删除确认边界。
 核心测试文件包括：
 
 - `src/lib/expiry.test.js`
@@ -22,6 +22,14 @@
 - `src/App.test.jsx`
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
+
+## v0.2.12-C 自动化覆盖
+
+- `src/components/BatchDetail.test.jsx`：删除入口只在 `inventory-operation`，不出现在默认详情查看模式。
+- `src/components/InventoryOperationPanel.test.jsx`：删除必须进入独立确认状态，确认回调仅接收当前 batch id，取消路径保留为无写入状态。
+- `src/lib/inventory.test.js`：取消操作返回空 payload；删除确认只产生当前 batch id。
+- `src/App.test.jsx`：删除仅针对 `inventory_batches`，按 batch id 和当前 user id 限定，使用返回行识别 0 行删除，并在成功后清除选择、返回列表。
+- 真实 Supabase smoke 待执行：确认删除当前 batch 后 product、用户图片、Storage 对象和其他 batch 均保留；另一账号不能删除该 batch。
 
 ## v0.2.12-B2 自动化覆盖
 
