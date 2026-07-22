@@ -39,18 +39,12 @@ export default function BatchDetail({
   batch,
   busy,
   onBack,
-  onConsume,
-  onDecrement,
   onUpdateProduct,
-  onUpdateQuantity,
   onUpdateProductImage,
   onDeleteProductImage,
-  defaultProductEditing = false,
+  defaultMode = 'view',
 }) {
-  const [isProductEditing, setIsProductEditing] = useState(
-    defaultProductEditing,
-  )
-  const [quantity, setQuantity] = useState(String(batch.quantity))
+  const [mode, setMode] = useState(defaultMode)
   const [productForm, setProductForm] = useState(() =>
     createProductEditForm(batch.product),
   )
@@ -65,7 +59,23 @@ export default function BatchDetail({
     setProductForm((current) => ({ ...current, [field]: value }))
   }
 
-  async function handleEditSubmit(event) {
+  function openProductEdit() {
+    setDetailError('')
+    setProductForm(createProductEditForm(product))
+    setPendingImageFile(null)
+    setImagePickerKey((current) => current + 1)
+    setMode('product-edit')
+  }
+
+  function closeCurrentMode() {
+    setDetailError('')
+    setProductForm(createProductEditForm(product))
+    setPendingImageFile(null)
+    setImagePickerKey((current) => current + 1)
+    setMode('view')
+  }
+
+  async function handleProductEditSubmit(event) {
     event.preventDefault()
     setDetailError('')
 
@@ -90,20 +100,13 @@ export default function BatchDetail({
       setPendingImageFile(null)
       setImagePickerKey((current) => current + 1)
     }
-    const quantitySaved = await onUpdateQuantity(batch.id, quantity)
-    if (quantitySaved) {
-      setProductForm({
-        name: productValues.name,
-        brand: productValues.brand || '',
-        category: productValues.category || '',
-        imageUrl: productValues.image_url || '',
-      })
-      setIsProductEditing(false)
-      return
-    }
-
-    setQuantity(String(batch.quantity))
-    setDetailError('库存数量保存失败，请稍后重试。')
+    setProductForm({
+      name: productValues.name,
+      brand: productValues.brand || '',
+      category: productValues.category || '',
+      imageUrl: productValues.image_url || '',
+    })
+    setMode('view')
   }
 
   return (
@@ -112,22 +115,9 @@ export default function BatchDetail({
         <button
           className="rounded-xl px-1 py-2 text-sm font-semibold text-slate-500"
           type="button"
-          onClick={onBack}
+          onClick={mode === 'view' ? onBack : closeCurrentMode}
         >
-          返回首页
-        </button>
-        <button
-          className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
-          disabled={busy}
-          type="button"
-          onClick={() => {
-            setDetailError('')
-            setProductForm(createProductEditForm(product))
-            setQuantity(String(batch.quantity))
-            setIsProductEditing(true)
-          }}
-        >
-          编辑
+          {mode === 'view' ? '返回首页' : '返回详情'}
         </button>
       </div>
 
@@ -163,10 +153,10 @@ export default function BatchDetail({
         </div>
       </article>
 
-      {isProductEditing && (
+      {mode === 'product-edit' && (
         <form
           className="space-y-3 rounded-3xl border border-slate-100 bg-white p-5 shadow-card"
-          onSubmit={handleEditSubmit}
+          onSubmit={handleProductEditSubmit}
         >
           <h3 className="font-bold text-ink">商品信息</h3>
           {product?.barcode && (
@@ -243,41 +233,19 @@ export default function BatchDetail({
               </button>
             )}
           </div>
-          <div className="border-t border-slate-100 pt-3">
-            <h3 className="font-bold text-ink">当前批次</h3>
-            <label className="mt-3 block">
-              <span className="mb-1.5 block text-sm font-semibold text-slate-700">
-                当前库存
-              </span>
-              <input
-                aria-label="当前库存"
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
-                min="0"
-                step="1"
-                type="number"
-                value={quantity}
-                onChange={(event) => setQuantity(event.target.value)}
-              />
-            </label>
-          </div>
           <div className="grid grid-cols-2 gap-2">
             <button
               className="rounded-xl bg-leaf px-4 py-3 font-semibold text-white disabled:opacity-50"
               disabled={busy}
               type="submit"
             >
-              保存
+              保存修改
             </button>
             <button
               className="rounded-xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
               disabled={busy}
               type="button"
-              onClick={() => {
-                setDetailError('')
-                setProductForm(createProductEditForm(product))
-                setQuantity(String(batch.quantity))
-                setIsProductEditing(false)
-              }}
+              onClick={closeCurrentMode}
             >
               取消
             </button>
@@ -314,27 +282,47 @@ export default function BatchDetail({
         </div>
       </div>
 
-      <button
-        className="w-full rounded-2xl bg-leaf px-5 py-4 font-bold text-white shadow-card disabled:cursor-not-allowed disabled:opacity-40"
-        disabled={busy || Number(batch.quantity) === 0}
-        type="button"
-        onClick={() => {
-          setDetailError('')
-          onDecrement(batch)
-        }}
-      >
-        消耗 1
-      </button>
+      {mode === 'view' && (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 disabled:opacity-50"
+            disabled={busy}
+            type="button"
+            onClick={openProductEdit}
+          >
+            编辑商品
+          </button>
+          <button
+            className="rounded-2xl bg-leaf px-4 py-3 font-semibold text-white disabled:opacity-50"
+            disabled={busy}
+            type="button"
+            onClick={() => {
+              setDetailError('')
+              setMode('inventory-operation')
+            }}
+          >
+            库存操作
+          </button>
+        </div>
+      )}
 
-      {Number(batch.quantity) === 0 && (
-        <button
-          className="w-full rounded-2xl bg-slate-800 px-5 py-3 font-semibold text-white disabled:opacity-50"
-          disabled={busy}
-          type="button"
-          onClick={() => onConsume(batch.id)}
-        >
-          标记为已消耗
-        </button>
+      {mode === 'inventory-operation' && (
+        <section className="rounded-3xl border border-slate-100 bg-white p-5 shadow-card">
+          <h3 className="font-bold text-ink">库存操作</h3>
+          <p className="mt-3 text-sm text-slate-500">当前库存</p>
+          <p className="mt-1 text-2xl font-bold text-ink">
+            {batch.quantity}
+            <span className="ml-1 text-sm font-medium text-slate-500">
+              {batch.unit}
+            </span>
+          </p>
+          <div className="mt-5 border-t border-slate-100 pt-4">
+            <h4 className="font-semibold text-ink">消耗库存</h4>
+            <p className="mt-1 text-sm leading-6 text-slate-500">
+              将在后续版本加入确认流程。
+            </p>
+          </div>
+        </section>
       )}
 
       {detailError && (

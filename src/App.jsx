@@ -19,7 +19,7 @@ import {
 import { PRODUCT_CATEGORIES } from './lib/categories'
 import { EXPIRY_WINDOW_OPTIONS } from './lib/expiryWindows'
 import { filterInventoryBatches } from './lib/inventoryFilters'
-import { decrementQuantity, normalizeQuantity } from './lib/inventory'
+import { normalizeQuantity } from './lib/inventory'
 import { applyProductUpdateToBatches } from './lib/productEdit'
 import {
   lookupProductByBarcode,
@@ -380,25 +380,6 @@ export default function App() {
     }
   }
 
-  async function updateBatch(batchId, values) {
-    setBusyBatchId(batchId)
-    setError('')
-    const { error: updateError } = await supabase
-      .from('inventory_batches')
-      .update(values)
-      .eq('id', batchId)
-
-    if (updateError) {
-      setError(`更新库存失败：${updateError.message}`)
-      setBusyBatchId(null)
-      return false
-    }
-
-    await loadBatches()
-    setBusyBatchId(null)
-    return true
-  }
-
   async function handleUpdateProduct(batchId, productId, values) {
     setBusyBatchId(batchId)
     setError('')
@@ -468,27 +449,6 @@ export default function App() {
     } finally {
       setBusyBatchId(null)
     }
-  }
-
-  function handleUpdateQuantity(batchId, quantity) {
-    try {
-      return updateBatch(batchId, {
-        quantity: normalizeQuantity(quantity),
-      })
-    } catch (quantityError) {
-      setError(quantityError.message)
-      return false
-    }
-  }
-
-  function handleConsume(batchId) {
-    return updateBatch(batchId, { status: 'consumed' })
-  }
-
-  function handleDecrement(batch) {
-    return updateBatch(batch.id, {
-      quantity: decrementQuantity(batch.quantity),
-    })
   }
 
   const filteredBatches = filterInventoryBatches(batches, {
@@ -639,19 +599,9 @@ export default function App() {
               setSelectedBatchId(null)
               setView('home')
             }}
-            onConsume={async (batchId) => {
-              const saved = await handleConsume(batchId)
-              if (saved) {
-                setSelectedBatchId(null)
-                setView('home')
-              }
-              return saved
-            }}
-            onDecrement={handleDecrement}
             onUpdateProduct={handleUpdateProduct}
             onUpdateProductImage={handleUpdateProductImage}
             onDeleteProductImage={handleDeleteProductImage}
-            onUpdateQuantity={handleUpdateQuantity}
           />
         ) : view === 'detail' ? (
           <section className="rounded-3xl bg-white p-6 text-center shadow-card">

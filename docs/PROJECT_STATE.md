@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.12-A implemented locally: Home Mobile UX Polish.
+v0.2.12-B1 implemented locally: Product Detail Action Refactor.
 
 ## Current status
 
-v0.2.12-A 首页 Mobile Navigation Polish 已完成本地实现：底栏为带内置 SVG 图标的“库存 / + / 我的”，使用轻量页面融合样式和 iPhone PWA 安全区；库存首页已精简为“库存”标题。PWA 真机视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
+v0.2.12-B1 商品详情操作重构已完成本地实现：详情页现在有查看、商品编辑和库存操作三个状态。商品编辑只更新 `products`；库存操作目前只展示当前库存与后续消耗确认位置。B1 自动化测试和生产构建通过，移动端视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
 
 ## Latest completed
 
-v0.2.12-A 将登录信息迁移到“我的”页面，新增带 SVG 图标的“库存 / + / 我的”固定底栏；`+` 复用新增商品流程，库存页不再保留重复入口或冗余 Header 文案。
+v0.2.12-B1 将 `BatchDetail` 拆分为 `view`、`product-edit` 和 `inventory-operation`。查看模式不再显示保存、消耗或输入控件；商品保存不再触及批次数量；库存操作暂不执行写入。
 
 ## Deployment
 
@@ -40,14 +40,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.9｜Supabase 轻度保活与运维策略
 - v0.2.10｜Email OTP Authentication Flow
 - v0.2.12-A｜首页 Mobile UX Polish
+- v0.2.12-B1｜商品详情操作重构
 
 ## Last verified
 
-2026-07-22: v0.2.12-A automated tests (15 files / 134 tests) and production build passed locally; PWA real-device visual acceptance needs verification.
+2026-07-22: v0.2.12-B1 automated tests (15 files / 136 tests) and production build passed locally; mobile visual acceptance needs verification.
 
 ## Next Action
 
-先完成 v0.2.12-A 的 iPhone / Android PWA 真机视觉 smoke，确认底部导航安全区和添加入口位置；不要进入 v0.2.12-B。
+在 iPhone / Android PWA 完成 v0.2.12-A 底部导航和 v0.2.12-B1 商品详情三态 smoke；确认查看模式没有输入或消耗按钮、商品编辑不会触发库存更新。之后再设计 v0.2.12-B2 的消耗二次确认。
 
 ## Blockers
 
@@ -79,8 +80,9 @@ Production 手机真机图片上传验收尚未完成。
 - Barcode Lookup is a possible future fallback, not implemented.
 - EAN-Search / EAN-Suche is a possible future `suggested_match` fallback, not implemented.
 - Go-UPC category can be too generic for pet food, e.g. `Snack Foods`; third-party category is ignored by the frontend and is not saved or prefilled into the category selector.
-- Saved product information is reused locally by barcode; users can now edit saved product display fields from the inventory batch detail view.
-- Product editing updates `products` only. Quantity correction and “消耗 1” in detail update the selected `inventory_batches` row only. `inventory_batches` remain separate and keep their own expiry date and status.
+- Saved product information is reused locally by barcode; users can edit saved product display fields from the inventory batch detail view.
+- v0.2.12-B1 的 `BatchDetail` 有 `view`、`product-edit`、`inventory-operation` 三个状态。商品编辑只更新 `products`；当前库存操作模式不执行 quantity、status 或新增库存写入。
+- B2 才会在库存操作模式接入带二次确认的批次消耗；届时只影响选中的 `inventory_batches`，并继续保持批次独立的 expiry date 和 status。
 - Home filtering operates on active batches and combines expiry time window, category, and product/brand search while preserving the existing expiry-date ordering.
 - v0.2.12-A 顶层页面只有“库存”和“我的”两个 Tab；居中的 `+` 是新增商品操作而非第三个 Tab。三个入口使用内置 SVG 图标，默认灰色、选中 Tab 使用现有绿色；新增商品、库存详情和编辑任务流不显示底部导航；固定导航和内容底部均保留 iPhone PWA 安全区。
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
@@ -89,4 +91,4 @@ Production 手机真机图片上传验收尚未完成。
 
 ## Handoff Prompt
 
-Verify v0.2.12-A on iPhone and Android PWA first: the full bottom navigation must clear the Home Indicator, the center `+` must open the existing add flow, and the inventory page must have no duplicate add button. Do not start v0.2.12-B.
+Verify v0.2.12-A and B1 on iPhone and Android PWA: the bottom navigation must clear the Home Indicator, the center `+` must open the existing add flow, and the inventory page must have no duplicate add button. In product detail, view mode must show only “编辑商品” and “库存操作”; product-edit must not expose quantity; inventory-operation must not write inventory. Then plan B2 consumption confirmation.

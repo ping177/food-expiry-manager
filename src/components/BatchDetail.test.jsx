@@ -35,10 +35,7 @@ function renderBatchDetail(props = {}) {
       batch={batch}
       busy={false}
       onBack={vi.fn()}
-      onConsume={vi.fn()}
-      onDecrement={vi.fn()}
       onUpdateProduct={vi.fn()}
-    onUpdateQuantity={vi.fn()}
       onUpdateProductImage={vi.fn()}
       onDeleteProductImage={vi.fn()}
       {...props}
@@ -47,7 +44,7 @@ function renderBatchDetail(props = {}) {
 }
 
 describe('BatchDetail', () => {
-  it('shows complete product, expiry, and inventory information', () => {
+  it('shows read-only product, expiry, and inventory information in view mode', () => {
     const html = renderBatchDetail()
 
     expect(html).toContain('返回首页')
@@ -60,8 +57,12 @@ describe('BatchDetail', () => {
     expect(html).toContain('当前库存')
     expect(html).toContain('6')
     expect(html).toContain('罐')
-    expect(html).toContain('消耗 1')
-    expect(html).not.toContain('更新')
+    expect(html).toContain('编辑商品')
+    expect(html).toContain('库存操作')
+    expect(html).not.toContain('保存修改')
+    expect(html).not.toContain('消耗 1')
+    expect(html).not.toContain('标记为已消耗')
+    expect(html).not.toContain('<input')
   })
 
   it('shows the shared expiry window badge in the detail view', () => {
@@ -77,8 +78,8 @@ describe('BatchDetail', () => {
     expect(html).not.toContain('临期')
   })
 
-  it('shows product fields and current batch quantity in the edit form', () => {
-    const html = renderBatchDetail({ defaultProductEditing: true })
+  it('shows only product fields in product-edit mode', () => {
+    const html = renderBatchDetail({ defaultMode: 'product-edit' })
 
     expect(html).toContain('商品信息')
     expect(html).toContain('条形码：1234567890123')
@@ -86,13 +87,15 @@ describe('BatchDetail', () => {
     expect(html).toContain('品牌')
     expect(html).toContain('分类')
     expect(html).toContain('外部兜底图片链接（可选）')
-    expect(html).toContain('当前批次')
-    expect(html).toContain('当前库存')
-    expect(html).toContain('value="6"')
+    expect(html).toContain('保存修改')
+    expect(html).not.toContain('当前批次')
+    expect(html).not.toContain('value="6"')
+    expect(html).not.toContain('type="number"')
+    expect(html).not.toContain('消耗 1')
   })
 
   it('uses the shared built-in category list in the edit form', () => {
-    const html = renderBatchDetail({ defaultProductEditing: true })
+    const html = renderBatchDetail({ defaultMode: 'product-edit' })
 
     expect(html).toContain('<option value="">未选择分类</option>')
     for (const category of PRODUCT_CATEGORIES) {
@@ -101,16 +104,29 @@ describe('BatchDetail', () => {
   })
 
   it('keeps barcode read-only in the product edit form', () => {
-    const html = renderBatchDetail({ defaultProductEditing: true })
+    const html = renderBatchDetail({ defaultMode: 'product-edit' })
 
     expect(html).toContain('条形码：1234567890123')
     expect(html).not.toContain('value="1234567890123"')
   })
 
   it('offers camera and album controls in product edit', () => {
-    const html = renderBatchDetail({ defaultProductEditing: true })
+    const html = renderBatchDetail({ defaultMode: 'product-edit' })
     expect(html).toContain('拍照')
     expect(html).toContain('从相册选择')
     expect(html).toContain('capture="environment"')
+  })
+
+  it('shows current stock and a deferred consumption area in inventory-operation mode', () => {
+    const html = renderBatchDetail({ defaultMode: 'inventory-operation' })
+
+    expect(html).toContain('库存操作')
+    expect(html).toContain('当前库存')
+    expect(html).toContain('消耗库存')
+    expect(html).toContain('将在后续版本加入确认流程')
+    expect(html).not.toContain('商品名 *')
+    expect(html).not.toContain('保存修改')
+    expect(html).not.toContain('消耗 1')
+    expect(html).not.toContain('type="number"')
   })
 })

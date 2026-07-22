@@ -60,6 +60,16 @@ describe('App auth integration source guards', () => {
       '每张卡片都是一个独立库存批次，按到期日从近到远排列。',
     )
   })
+
+  it('does not wire batch quantity or consumption updates into BatchDetail', () => {
+    expect(appSource).toContain('onUpdateProduct={handleUpdateProduct}')
+    expect(appSource).not.toContain('onUpdateQuantity={handleUpdateQuantity}')
+    expect(appSource).not.toContain('onDecrement={handleDecrement}')
+    expect(appSource).not.toContain('onConsume={async (batchId) =>')
+    expect(appSource).not.toContain('function handleUpdateQuantity')
+    expect(appSource).not.toContain('function handleDecrement')
+    expect(appSource).not.toContain('function handleConsume')
+  })
 })
 
 describe('App auth session behavior model', () => {
