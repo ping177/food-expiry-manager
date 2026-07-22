@@ -48,6 +48,18 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain('数据导出')
     expect(appSource).toContain('偏好设置')
   })
+
+  it('uses the bottom navigation as the only inventory add entry', () => {
+    expect(appSource).toContain('onAdd={handleOpenAdd}')
+    expect(appSource).not.toContain('+ 添加商品')
+  })
+
+  it('keeps the inventory header focused on its page title', () => {
+    expect(appSource).toContain("view !== 'home' &&")
+    expect(appSource).not.toContain(
+      '每张卡片都是一个独立库存批次，按到期日从近到远排列。',
+    )
+  })
 })
 
 describe('App auth session behavior model', () => {

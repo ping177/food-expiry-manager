@@ -234,6 +234,14 @@ export default function App() {
     setView(nextTab === 'account' ? 'account' : 'home')
   }
 
+  function handleOpenAdd() {
+    setError('')
+    setMessage('')
+    setSelectedBatchId(null)
+    setActiveTab('inventory')
+    setView('add')
+  }
+
   async function findOrCreateProduct(form) {
     const barcode = normalizeBarcode(form.barcode) || null
     const name = form.productName.trim()
@@ -527,12 +535,14 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen bg-cream pb-28">
+    <main className="min-h-screen bg-cream pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6">
         <header className="mb-5">
-          <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>
+          {view !== 'home' && (
+            <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>
+          )}
           {view === 'home' && (
-            <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+            <h1 className="text-2xl font-bold tracking-tight text-ink">
               库存
             </h1>
           )}
@@ -550,11 +560,6 @@ export default function App() {
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
               我的
             </h1>
-          )}
-          {view === 'home' && (
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              每张卡片都是一个独立库存批次，按到期日从近到远排列。
-            </p>
           )}
           {view === 'account' && (
             <p className="mt-2 text-sm leading-6 text-slate-500">
@@ -762,19 +767,6 @@ export default function App() {
                 />
               ))
             )}
-            <div className="pt-1">
-              <button
-                className="mx-auto block w-full rounded-2xl bg-leaf px-5 py-4 text-center font-bold text-white shadow-card transition active:scale-[0.99]"
-                type="button"
-                onClick={() => {
-                  setError('')
-                  setMessage('')
-                  setView('add')
-                }}
-              >
-                + 添加商品
-              </button>
-            </div>
           </section>
         )}
       </div>
@@ -782,6 +774,7 @@ export default function App() {
       {(view === 'home' || view === 'account') && (
         <BottomTabNav
           activeTab={activeTab}
+          onAdd={handleOpenAdd}
           onChange={handleTabChange}
         />
       )}

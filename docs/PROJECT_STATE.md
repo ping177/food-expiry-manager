@@ -12,11 +12,11 @@ v0.2.12-A implemented locally: Home Mobile UX Polish.
 
 ## Current status
 
-v0.2.12-A 首页双 Tab 导航、库存/我的页面拆分、移动端底部安全区和自动化测试已完成本地实现；PWA 真机视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
+v0.2.12-A 首页 Mobile Navigation Polish 已完成本地实现：底栏为带内置 SVG 图标的“库存 / + / 我的”，使用轻量页面融合样式和 iPhone PWA 安全区；库存首页已精简为“库存”标题。PWA 真机视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
 
 ## Latest completed
 
-v0.2.12-A 将登录信息迁移到“我的”页面，新增仅含“库存 / 我的”的固定底部导航；不改变 Auth、库存逻辑、数据模型或 Supabase 配置。
+v0.2.12-A 将登录信息迁移到“我的”页面，新增带 SVG 图标的“库存 / + / 我的”固定底栏；`+` 复用新增商品流程，库存页不再保留重复入口或冗余 Header 文案。
 
 ## Deployment
 
@@ -43,7 +43,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Last verified
 
-2026-07-22: v0.2.12-A automated tests and production build passed locally; PWA real-device visual acceptance needs verification.
+2026-07-22: v0.2.12-A automated tests (15 files / 134 tests) and production build passed locally; PWA real-device visual acceptance needs verification.
 
 ## Next Action
 
@@ -82,11 +82,11 @@ Production 手机真机图片上传验收尚未完成。
 - Saved product information is reused locally by barcode; users can now edit saved product display fields from the inventory batch detail view.
 - Product editing updates `products` only. Quantity correction and “消耗 1” in detail update the selected `inventory_batches` row only. `inventory_batches` remain separate and keep their own expiry date and status.
 - Home filtering operates on active batches and combines expiry time window, category, and product/brand search while preserving the existing expiry-date ordering.
-- v0.2.12-A 顶层页面只有“库存”和“我的”两个 Tab；新增商品、库存详情和编辑任务流不显示底部 Tab。固定导航占用底部安全区，库存页添加入口位于内容区末尾。
+- v0.2.12-A 顶层页面只有“库存”和“我的”两个 Tab；居中的 `+` 是新增商品操作而非第三个 Tab。三个入口使用内置 SVG 图标，默认灰色、选中 Tab 使用现有绿色；新增商品、库存详情和编辑任务流不显示底部导航；固定导航和内容底部均保留 iPhone PWA 安全区。
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
 - Product data APIs must not infer shelf life.
 - Direct phone photo or album image upload is the next candidate; it likely needs Supabase Storage, compression, Storage RLS, upload / replace / delete, and orphan-file cleanup design.
 
 ## Handoff Prompt
 
-Start only with planning for the next candidate: 手机拍照 / 相册选择 / Supabase Storage 商品图片. Do not implement it until the scope, Storage RLS, compression, upload / replace / delete behavior, and orphan-file cleanup plan are confirmed.
+Verify v0.2.12-A on iPhone and Android PWA first: the full bottom navigation must clear the Home Indicator, the center `+` must open the existing add flow, and the inventory page must have no duplicate add button. Do not start v0.2.12-B.
