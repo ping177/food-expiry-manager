@@ -1,7 +1,11 @@
+import { normalizeProductSize } from './productSize'
+
 export function createProductEditForm(product = {}) {
   return {
     name: product.name || '',
     brand: product.brand || '',
+    sizeValue: product.size_value ?? '',
+    sizeUnit: product.size_unit || 'g',
     category: product.category || '',
     imageUrl: product.image_url || '',
   }
@@ -17,6 +21,7 @@ export function normalizeProductEditForm(form) {
   return {
     name,
     brand: String(form.brand ?? '').trim() || null,
+    ...normalizeProductSize(form),
     category: String(form.category ?? '').trim() || null,
     image_url: String(form.imageUrl ?? '').trim() || null,
   }

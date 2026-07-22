@@ -363,3 +363,12 @@
 - 状态：成功后从本地 active batches 移除当前记录、清除选择、返回库存列表并刷新；失败保留详情并显示错误。
 - 原因：错误录入和测试库存需要可清理，同时必须保留可复用商品档案和图片，避免影响同商品的独立库存批次。
 - 边界：不修改 schema、migration、Auth、RLS、Storage、环境变量或依赖。
+
+## D-030：v0.2.12-D 将容量/规格建模为结构化 product 属性
+
+- 状态：已决定
+- 日期：2026-07-22
+- 决策：以 nullable `products.size_value numeric` 和 `products.size_unit text` 保存包装容量/规格；不向 `inventory_batches` 增加该字段。
+- 商品唯一性：无 barcode 时，名称、品牌、容量数值和容量单位均相同才复用 product；数值或单位不同（如 `1g` 与 `1kg`）必须保存为不同 product。
+- 兼容性：远程已执行的 legacy `products.size` text 列保留，应用不再读写它，不删除、不回填，也不从旧值拆分结构化字段。
+- 自动填充：只接受用户手动输入或外部 API 的明确容量字段；不从商品名称正则拆分或猜测容量。

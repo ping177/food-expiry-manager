@@ -1,3 +1,5 @@
+import { parseExternalProductSize } from './productSize'
+
 const OPEN_FOOD_FACTS_API = 'https://world.openfoodfacts.org/api/v2/product'
 const OPEN_PET_FOOD_FACTS_API =
   'https://world.openpetfoodfacts.org/api/v2/product'
@@ -7,6 +9,7 @@ const PRODUCT_FIELDS = [
   'product_name',
   'product_name_zh',
   'brands',
+  'quantity',
   'image_front_url',
   'image_url',
   'categories',
@@ -56,10 +59,12 @@ function isLookupStatus(status) {
 }
 
 function productResult(barcode, product, source) {
+  const size = parseExternalProductSize(product.quantity)
   const normalizedProduct = {
     barcode,
     name: product.product_name_zh || product.product_name || '',
     brand: firstValue(product.brands),
+    ...size,
     imageUrl: product.image_front_url || product.image_url || '',
     category: '',
     source,
@@ -77,6 +82,8 @@ export function storedProductResult(barcode, product) {
     barcode,
     name: product.name || '',
     brand: product.brand || '',
+    sizeValue: product.size_value ?? '',
+    sizeUnit: product.size_unit || '',
     imageUrl: product.image_url || '',
     userImageUrl: product.user_image_url || '',
     category: product.category || '',
@@ -96,6 +103,8 @@ function normalizedExternalProduct(barcode, product, fallbackSource) {
     barcode,
     name: product?.name || '',
     brand: product?.brand || '',
+    sizeValue: product?.sizeValue ?? '',
+    sizeUnit: product?.sizeUnit || '',
     imageUrl: product?.imageUrl || '',
     category: '',
     source: product?.source || fallbackSource,

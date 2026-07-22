@@ -2,6 +2,7 @@ import { useState } from 'react'
 import DateInput from './DateInput'
 import { normalizeDateInput } from '../lib/expiry'
 import { normalizeQuantity } from '../lib/inventory'
+import { formatProductSize } from '../lib/productSize'
 
 const initialForm = {
   quantity: '1',
@@ -18,6 +19,7 @@ export default function AddInventoryForm({
   product,
   unit,
 }) {
+  const size = formatProductSize(product)
   const [form, setForm] = useState(initialForm)
   const [error, setError] = useState('')
 
@@ -68,6 +70,9 @@ export default function AddInventoryForm({
         <p className="mt-1 font-bold text-ink">{product?.name}</p>
         {product?.brand && (
           <p className="mt-1 text-sm text-slate-500">{product.brand}</p>
+        )}
+        {size && (
+          <p className="mt-1 text-sm text-slate-500">{size}</p>
         )}
         <p className="mt-2 text-xs text-slate-500">单位：{unit}</p>
       </div>

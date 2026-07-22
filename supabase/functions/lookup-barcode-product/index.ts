@@ -66,11 +66,19 @@ function categoryValue(product: Record<string, unknown>) {
   return firstValue(category ?? product.categories ?? product.category_name)
 }
 
+function sizeValue(product: Record<string, unknown>) {
+  const match = firstValue(product.size ?? product.quantity).match(/^(\d+(?:\.\d+)?)\s*(g|kg|ml|l)$/i)
+  if (!match) return { sizeValue: '', sizeUnit: '' }
+  return { sizeValue: Number(match[1]), sizeUnit: match[2].toLowerCase() === 'l' ? 'L' : match[2].toLowerCase() }
+}
+
 function productResult(barcode: string, product: Record<string, unknown>) {
+  const size = sizeValue(product)
   const normalizedProduct = {
     barcode,
     name: firstValue(product.name ?? product.product_name),
     brand: firstValue(product.brand ?? product.brands),
+    ...size,
     imageUrl: imageUrl(product),
     category: categoryValue(product),
     source: 'go_upc',

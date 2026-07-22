@@ -5,6 +5,8 @@ import AddInventoryForm from './AddInventoryForm'
 const product = {
   name: '猫罐头 A',
   brand: '示例品牌',
+  size_value: 170,
+  size_unit: 'g',
 }
 
 function renderAddInventoryForm(props = {}) {
@@ -27,6 +29,7 @@ describe('AddInventoryForm', () => {
     expect(html).toContain('新增库存')
     expect(html).toContain('猫罐头 A')
     expect(html).toContain('示例品牌')
+    expect(html).toContain('170g')
     expect(html).toContain('数量 *')
     expect(html).toContain('保质期至 *')
     expect(html).toContain('返回库存操作')
@@ -43,5 +46,13 @@ describe('AddInventoryForm', () => {
     expect(html).not.toContain('>品牌</p>')
     expect(html).not.toContain('图片')
     expect(html.match(/type="number"/g)).toHaveLength(1)
+  })
+
+  it('does not render an empty capacity value', () => {
+    const html = renderAddInventoryForm({
+      product: { ...product, size_value: null, size_unit: null },
+    })
+
+    expect(html).not.toContain('170g')
   })
 })

@@ -12,14 +12,25 @@ describe('createProductEditForm', () => {
         barcode: '1234567890123',
         name: '旧商品名',
         brand: '旧品牌',
+        size_value: 170,
+        size_unit: 'g',
         category: '旧分类',
         image_url: 'https://example.com/old.jpg',
       }),
     ).toEqual({
       name: '旧商品名',
       brand: '旧品牌',
+      sizeValue: 170,
+      sizeUnit: 'g',
       category: '旧分类',
       imageUrl: 'https://example.com/old.jpg',
+    })
+  })
+
+  it('defaults the size unit to g for products without a saved size', () => {
+    expect(createProductEditForm({ name: '未标规格商品' })).toMatchObject({
+      sizeValue: '',
+      sizeUnit: 'g',
     })
   })
 })
@@ -30,6 +41,8 @@ describe('normalizeProductEditForm', () => {
       normalizeProductEditForm({
         name: '  新商品名  ',
         brand: '  新品牌  ',
+        sizeValue: '  170 ',
+        sizeUnit: ' g ',
         category: '  猫罐头  ',
         imageUrl: '  https://example.com/new.jpg  ',
         barcode: 'should-not-be-saved',
@@ -37,6 +50,8 @@ describe('normalizeProductEditForm', () => {
     ).toEqual({
       name: '新商品名',
       brand: '新品牌',
+      size_value: 170,
+      size_unit: 'g',
       category: '猫罐头',
       image_url: 'https://example.com/new.jpg',
     })
@@ -47,14 +62,34 @@ describe('normalizeProductEditForm', () => {
       normalizeProductEditForm({
         name: '新商品名',
         brand: ' ',
+        sizeValue: '',
+        sizeUnit: '',
         category: '',
         imageUrl: '',
       }),
     ).toEqual({
       name: '新商品名',
       brand: null,
+      size_value: null,
+      size_unit: null,
       category: null,
       image_url: null,
+    })
+  })
+
+  it('preserves a changed size unit in the product update payload', () => {
+    expect(
+      normalizeProductEditForm({
+        name: '新商品名',
+        brand: '',
+        sizeValue: '1.5',
+        sizeUnit: 'kg',
+        category: '',
+        imageUrl: '',
+      }),
+    ).toMatchObject({
+      size_value: 1.5,
+      size_unit: 'kg',
     })
   })
 

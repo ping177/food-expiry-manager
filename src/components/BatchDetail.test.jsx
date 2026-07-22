@@ -14,6 +14,8 @@ const batch = {
     barcode: '1234567890123',
     name: '旧商品名',
     brand: '旧品牌',
+    size_value: 170,
+    size_unit: 'g',
     category: '旧分类',
     image_url: 'https://example.com/old.jpg',
   },
@@ -50,6 +52,7 @@ describe('BatchDetail', () => {
     expect(html).toContain('返回首页')
     expect(html).toContain('旧商品名')
     expect(html).toContain('旧品牌')
+    expect(html).toContain('170g')
     expect(html).toContain('旧分类')
     expect(html).toContain('条形码：1234567890123')
     expect(html).toContain('保质期至')
@@ -79,6 +82,17 @@ describe('BatchDetail', () => {
     expect(html).not.toContain('临期')
   })
 
+  it('does not render a capacity value when the product has none', () => {
+    const html = renderBatchDetail({
+      batch: {
+        ...batch,
+        product: { ...batch.product, size_value: null, size_unit: null },
+      },
+    })
+
+    expect(html).not.toContain('170g')
+  })
+
   it('shows only product fields in product-edit mode', () => {
     const html = renderBatchDetail({ defaultMode: 'product-edit' })
 
@@ -86,13 +100,32 @@ describe('BatchDetail', () => {
     expect(html).toContain('条形码：1234567890123')
     expect(html).toContain('商品名 *')
     expect(html).toContain('品牌')
+    expect(html).toContain('容量/规格（可选）')
+    expect(html).toContain('aria-label="容量数值"')
+    expect(html).toContain('aria-label="容量单位"')
+    expect(html).toContain('w-auto shrink-0')
+    expect(html).toContain('grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]')
+    expect(html).not.toContain('>单位</span>')
+    expect(html).not.toContain('选择单位')
     expect(html).toContain('分类')
     expect(html).toContain('外部兜底图片链接（可选）')
     expect(html).toContain('保存修改')
     expect(html).not.toContain('当前批次')
     expect(html).not.toContain('value="6"')
-    expect(html).not.toContain('type="number"')
+    expect(html).toContain('type="number"')
     expect(html).not.toContain('消耗 1')
+  })
+
+  it('defaults the edit unit to g when the product has no saved size', () => {
+    const html = renderBatchDetail({
+      defaultMode: 'product-edit',
+      batch: {
+        ...batch,
+        product: { ...batch.product, size_value: null, size_unit: null },
+      },
+    })
+
+    expect(html).toMatch(/<option value="g" selected="">g<\/option>/)
   })
 
   it('uses the shared built-in category list in the edit form', () => {

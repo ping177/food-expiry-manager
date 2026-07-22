@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.12-C implemented locally: Delete Inventory Batch.
+v0.2.12-D structured size correction implemented locally.
 
 ## Current status
 
-v0.2.12-C 已完成本地实现：`inventory-operation` 现在支持删除当前库存批次的二次确认。确认后仅删除当前 owner 的 `inventory_batches` 记录，保留商品档案、用户商品图片、Storage 对象和其他 batch；0 行删除或 Supabase 错误不会报成功。自动化测试和生产构建通过，移动端视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
+v0.2.12-D 已完成本地结构化修正：应用使用可选 `size_value` + `size_unit`；新增和编辑页将品牌/规格、分类/图片链接整理为两行两列，规格数值与单位保持单行，默认单位为 `g`。远程已部署的 legacy `size` text 列保留但不再读写。无 barcode 商品仅在名称、品牌、容量数值和单位均相同时复用；`inventory_batches`、Auth、RLS、Storage、环境变量和依赖均未修改。远程兼容 migration 与移动端真实录入验收尚未完成。
 
 ## Latest completed
 
-v0.2.12-C 在 B2 库存操作基础上增加危险操作区：删除当前 batch 必须二次确认，取消不写入；确认按 batch id 和当前 user id 删除。成功后本地移除该 batch、返回库存列表并刷新数据。
+v0.2.12-D 改为结构化容量：数值加单位输入，空值保存为两个 `null`，展示组合为 `170g`；新增和编辑页使用紧凑的两行两列布局，单位默认 `g`。条码流程只解析 API 明确字段，不从名称猜测。
 
 ## Deployment
 
@@ -43,14 +43,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.12-B1｜商品详情操作重构
 - v0.2.12-B2｜库存操作
 - v0.2.12-C｜删除库存批次
+- v0.2.12-D｜商品容量 / 规格
 
 ## Last verified
 
-2026-07-22: v0.2.12-C automated tests (17 files / 152 tests) and production build passed locally; mobile visual acceptance needs verification.
+2026-07-22: v0.2.12-D structured-size automated tests (18 files / 167 tests), production build and `git diff --check` passed locally; remote compatibility migration and mobile smoke (including two-column product fields) need verification.
 
 ## Next Action
 
-在 iPhone / Android PWA 完成 v0.2.12-A、B1、B2、C 的移动端 smoke：确认新增库存同日期合并、不同日期新批次、消耗取消不写入、确认扣减、数量归零后的 consumed 确认，以及删除确认 / 取消、保留商品与图片、保留其他 batch、刷新后删除持久化。
+先在 Supabase SQL Editor 执行结构化兼容 migration，确认 legacy `size` 未删除且新列存在；随后完成新增、编辑、同名不同数值/单位不复用、API 明确容量回填与展示 smoke。
 
 ## Blockers
 
@@ -89,6 +90,7 @@ Production 手机真机图片上传验收尚未完成。
 - Home filtering operates on active batches and combines expiry time window, category, and product/brand search while preserving the existing expiry-date ordering.
 - v0.2.12-A 顶层页面只有“库存”和“我的”两个 Tab；居中的 `+` 是新增商品操作而非第三个 Tab。三个入口使用内置 SVG 图标，默认灰色、选中 Tab 使用现有绿色；新增商品、库存详情和编辑任务流不显示底部导航；固定导航和内容底部均保留 iPhone PWA 安全区。
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
+- v0.2.12-D 在首页摘要中为有值商品增加规格标签；规格属于 product，不属于 batch。无 barcode 复用必须同时匹配名称、品牌和规格。
 - Product data APIs must not infer shelf life.
 - Direct phone photo or album image upload is the next candidate; it likely needs Supabase Storage, compression, Storage RLS, upload / replace / delete, and orphan-file cleanup design.
 

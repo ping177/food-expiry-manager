@@ -13,6 +13,8 @@ const batch = {
     barcode: '1234567890123',
     name: '旧商品名',
     brand: '旧品牌',
+    size_value: 170,
+    size_unit: 'g',
     category: '旧分类',
     image_url: 'https://example.com/old.jpg',
   },
@@ -40,6 +42,7 @@ describe('BatchCard summary UI', () => {
 
     expect(html).toContain('旧商品名')
     expect(html).toContain('旧分类')
+    expect(html).toContain('170g')
     expect(html).toContain('剩余 6 件')
     expect(html).not.toContain('剩余 6 罐')
     expect(html).toContain('保质期至')
@@ -64,6 +67,17 @@ describe('BatchCard summary UI', () => {
 
     expect(html).not.toContain('旧品牌')
     expect(html).not.toContain('1234567890123')
+  })
+
+  it('does not render an empty capacity tag', () => {
+    const html = renderBatchCard({
+      batch: {
+        ...batch,
+        product: { ...batch.product, size_value: null, size_unit: null },
+      },
+    })
+
+    expect(html).not.toContain('170g')
   })
 
   it('renders a stable placeholder when the product image is missing', () => {

@@ -9,6 +9,8 @@ create table if not exists public.products (
   barcode text,
   name text not null check (length(trim(name)) > 0),
   brand text,
+  size_value numeric,
+  size_unit text,
   image_url text,
   user_image_url text,
   category text,

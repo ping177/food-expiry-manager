@@ -38,6 +38,11 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain('if (imageUrl) productValues.image_url = imageUrl')
   })
 
+  it('uses size as part of the no-barcode product reuse key', () => {
+    expect(appSource).toContain('const size = normalizeProductSize(form)')
+    expect(appSource).toContain(".eq('size_value', size.size_value).eq('size_unit', size.size_unit)")
+  })
+
   it('keeps authenticated navigation limited to inventory and account tabs', () => {
     expect(appSource).toContain(
       "import BottomTabNav from './components/BottomTabNav'",

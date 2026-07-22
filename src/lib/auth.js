@@ -221,6 +221,8 @@ export function createInventoryBatchesQuery(supabaseClient) {
           barcode,
           name,
           brand,
+          size_value,
+          size_unit,
           image_url,
           user_image_url,
           category,

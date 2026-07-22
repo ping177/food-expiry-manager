@@ -106,7 +106,7 @@ export async function uploadAndReplaceProductImage({
     .from('products')
     .update({ user_image_url: userImageUrl })
     .eq('id', productId)
-    .select('id, barcode, name, brand, image_url, user_image_url, category, source')
+    .select('id, barcode, name, brand, size_value, size_unit, image_url, user_image_url, category, source')
     .single()
   if (updateError) {
     await removePath(storage, path)
@@ -124,7 +124,7 @@ export async function deleteProductUserImage({ supabaseClient, userId, product }
     .from('products')
     .update({ user_image_url: null })
     .eq('id', product.id)
-    .select('id, barcode, name, brand, image_url, user_image_url, category, source')
+    .select('id, barcode, name, brand, size_value, size_unit, image_url, user_image_url, category, source')
     .single()
   if (updateError) throw new Error('图片资料保存失败，请稍后重试。')
   const cleanupError = await removePath(

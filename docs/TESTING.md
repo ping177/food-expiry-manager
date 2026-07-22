@@ -10,7 +10,7 @@
 
 ## 自动化测试
 
-使用 Vitest。v0.2.12-C 本地实现验收结果为 17 个测试文件、152 个测试通过；其中
+使用 Vitest。v0.2.12-D 结构化修正验收结果为 18 个测试文件、167 个测试通过；其中
 包含 B1 三态详情展示、库存新增合并/新批次、库存消耗确认和当前 batch 删除确认边界。
 核心测试文件包括：
 
@@ -22,6 +22,14 @@
 - `src/App.test.jsx`
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
+
+## v0.2.12-D 商品容量 / 规格自动化覆盖
+
+- `src/lib/productSize.test.js`：数值 trim/转换、单位保存、空容量、单位差异与组合展示，以及默认 `g` 下的空值归一化。
+- `src/lib/productEdit.test.js`：结构化规格与空值转两个 `null`、默认 `g`、单位修改保存，并保持商品名必填。
+- `src/App.test.jsx`：无 barcode 商品复用查询同时匹配容量数值和单位。
+- `src/lib/productLookup.test.js`：本地 product 与 Open Food Facts / Go-UPC 明确返回的容量会进入统一结构化商品结果。
+- `src/components/AddBatchForm.test.jsx`、`BatchCard.test.jsx`、`BatchDetail.test.jsx` 与 `AddInventoryForm.test.jsx`：新增和编辑字段、移动端两列分组、数值与单位的单行组合布局，以及首页、详情、新增库存摘要的有/无规格展示。
 
 ## v0.2.12-C 自动化覆盖
 

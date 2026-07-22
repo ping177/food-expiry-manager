@@ -29,6 +29,8 @@ products (1) ──────< inventory_batches (N)
 | `barcode` | `text` | 否 | 条形码；有值时建议建立唯一索引 |
 | `name` | `text` | 是 | 商品名称 |
 | `brand` | `text` | 否 | 品牌 |
+| `size_value` | `numeric` | 否 | 容量数值，如 `170`、`1.5` |
+| `size_unit` | `text` | 否 | 容量单位：`g`、`kg`、`ml`、`L` |
 | `image_url` | `text` | 否 | 商品图片地址 |
 | `user_image_url` | `text` | 否 | 用户上传的 Storage 主图公开 URL；优先于 `image_url` |
 | `category` | `text` | 否 | 分类，如猫罐头、猫条、食品 |
@@ -41,7 +43,7 @@ products (1) ──────< inventory_batches (N)
 - `name` 去除首尾空格后不能为空。
 - `source` 默认值为 `manual`。
 - `barcode` 允许为空；非空时应规范化并避免重复商品记录。
-- 无条形码时，前端在同一用户下按“完全相同的商品名 + 品牌”查找可复用商品。
+- 无条形码时，前端在同一用户下按“完全相同的商品名 + 品牌 + 容量数值 + 容量单位”查找可复用商品；数值或单位不同均视为不同 product。
 - 有条形码时，前端优先按同一用户的 `barcode` 查找和复用商品，并可用用户
   确认后的预填内容更新商品展示字段。
 - 扫码或手输 barcode 的预填查询同样遵循本地优先：先查询当前用户的
@@ -57,6 +59,7 @@ products (1) ──────< inventory_batches (N)
 - 商品数据库字段缺失时允许用户补充，不会自动推断保质期。
 - `image_url` 保留 API 图片和历史外部链接；不得由用户上传流程覆盖或删除。
 - `user_image_url` 只属于 product，不属于 batch；为空时自动回退到 `image_url`。
+- `size_value` / `size_unit` 只属于 product，不属于 batch；两者空输入均保存为 `null`，不从商品名称推断。
 
 ## inventory_batches
 
@@ -160,3 +163,9 @@ products (1) ──────< inventory_batches (N)
 - 当前 `supabase/schema.sql` 无需修改；`products` 和 `inventory_batches`
   继续保持分离。
 - 同一 barcode 的每次保存仍然创建独立 `inventory_batches`，不得合并批次。
+
+## v0.2.12-D 数据模型检查
+
+- `products.size_value` 为 nullable `numeric`，`products.size_unit` 为 nullable `text`；没有默认值、索引或格式约束。
+- 已部署的 legacy `products.size` text 列保留，不由应用读写、删除或回填；本版本不从旧商品名或 legacy 值拆分容量。
+- 外部 API 仅在返回明确容量字段时预填结构化字段，不通过正则猜测商品名称中的容量。

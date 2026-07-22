@@ -6,11 +6,14 @@ import { PRODUCT_CATEGORIES } from '../lib/categories'
 import { normalizeBarcode } from '../lib/productLookup'
 import ProductImagePicker from './ProductImagePicker'
 import { getProductImageUrl } from '../lib/productImage'
+import { PRODUCT_SIZE_UNITS } from '../lib/productSize'
 
 const initialForm = {
   barcode: '',
   productName: '',
   brand: '',
+  sizeValue: '',
+  sizeUnit: 'g',
   imageUrl: '',
   category: '',
   source: 'manual',
@@ -111,6 +114,8 @@ export default function AddBatchForm({
         barcode: result.product.barcode,
         productName: result.product.name,
         brand: result.product.brand,
+        sizeValue: result.product.sizeValue,
+        sizeUnit: result.product.sizeUnit || 'g',
         imageUrl: result.product.imageUrl,
         category: result.product.category,
         source: result.product.source,
@@ -271,7 +276,7 @@ export default function AddBatchForm({
               onChange={(event) => update('productName', event.target.value)}
             />
           </Field>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3">
             <Field label="品牌">
               <input
                 className={inputClass}
@@ -279,6 +284,16 @@ export default function AddBatchForm({
                 onChange={(event) => update('brand', event.target.value)}
               />
             </Field>
+            <Field label="容量/规格（可选）">
+              <div className="flex gap-2">
+                <input aria-label="容量数值" className={`${inputClass} min-w-0 flex-1`} inputMode="decimal" min="0" placeholder="170" step="any" type="number" value={form.sizeValue} onChange={(event) => update('sizeValue', event.target.value)} />
+                <select aria-label="容量单位" className={`${inputClass} w-auto shrink-0`} value={form.sizeUnit} onChange={(event) => update('sizeUnit', event.target.value)}>
+                  {PRODUCT_SIZE_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+                </select>
+              </div>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
             <Field label="分类">
               <select
                 className={inputClass}
@@ -293,20 +308,17 @@ export default function AddBatchForm({
                 ))}
               </select>
             </Field>
+            <Field label="外部兜底图片链接（可选）">
+              <input
+                className={inputClass}
+                inputMode="url"
+                placeholder="可留空"
+                type="url"
+                value={form.imageUrl}
+                onChange={(event) => update('imageUrl', event.target.value)}
+              />
+            </Field>
           </div>
-          <Field label="外部兜底图片链接（可选）">
-            <input
-              className={inputClass}
-              inputMode="url"
-              placeholder="通常由扫码自动填入，可留空"
-              type="url"
-              value={form.imageUrl}
-              onChange={(event) => update('imageUrl', event.target.value)}
-            />
-            <span className="mt-1.5 block text-xs leading-5 text-slate-500">
-              通常由扫码自动填入，可留空。
-            </span>
-          </Field>
           {getProductImageUrl({ image_url: form.imageUrl }) && (
             <img
               alt={form.productName || '商品图片预览'}

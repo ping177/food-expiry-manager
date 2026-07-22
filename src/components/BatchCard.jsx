@@ -1,5 +1,6 @@
 import { getExpiryWindow } from '../lib/expiryWindows'
 import { getProductImageUrl } from '../lib/productImage'
+import { formatProductSize } from '../lib/productSize'
 
 const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger ring-red-200',
@@ -14,6 +15,7 @@ export default function BatchCard({ batch, onSelect }) {
   const expiryWindow = getExpiryWindow(batch.expiry_date)
   const product = batch.product
   const category = product?.category || '未分类'
+  const size = formatProductSize(product)
   const quantityLabel = `剩余 ${batch.quantity} 件`
   const imageUrl = getProductImageUrl(product)
 
@@ -52,6 +54,11 @@ export default function BatchCard({ batch, onSelect }) {
                 <span className="rounded-full bg-cream px-2.5 py-1 text-xs font-semibold text-leaf">
                   {category}
                 </span>
+                {size && (
+                  <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                    {size}
+                  </span>
+                )}
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">
                   {quantityLabel}
                 </span>

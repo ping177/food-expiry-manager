@@ -121,6 +121,15 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 - quantity 降为 0 后保持原 status；显式确认“标记为已消耗”后才更新 `status='consumed'`
 - 不修改 `products` 数据结构、Supabase schema、migration、Auth、RLS、Storage 或环境变量
 
+## v0.2.12-D：商品容量 / 规格
+
+- 状态：已完成本地结构化修正；远程 Supabase compatibility migration 与真实录入 smoke 待执行
+- `products` 新增 nullable `size_value` + `size_unit`，不修改 `inventory_batches`；已部署的 legacy `size` text 保留但不再使用
+- 新增与编辑商品均支持数值与单位选择；空容量保存为两个 `null`
+- 无 barcode 商品以名称、品牌、容量数值和单位共同判断复用；数值或单位不同不复用 product
+- 条码流程仅解析外部 API 明确返回的容量，不从商品名称猜测
+- 首页卡片、详情页和新增库存摘要在有规格时显示；无规格不显示占位
+
 ## 后续候选：商品图片上传体验
 
 - 支持手机直接拍照或从相册选择商品图片

@@ -26,6 +26,7 @@ import {
   normalizeQuantity,
 } from './lib/inventory'
 import { applyProductUpdateToBatches } from './lib/productEdit'
+import { normalizeProductSize } from './lib/productSize'
 import {
   lookupProductByBarcode,
   lookupProductLocalFirst,
@@ -259,9 +260,11 @@ export default function App() {
     const barcode = normalizeBarcode(form.barcode) || null
     const name = form.productName.trim()
     const brand = form.brand.trim()
+    const size = normalizeProductSize(form)
     const productValues = {
       name,
       brand: brand || null,
+      ...size,
       category: form.category.trim() || null,
       source: form.source || 'manual',
     }
@@ -293,6 +296,9 @@ export default function App() {
         .eq('name', name)
 
       query = brand ? query.eq('brand', brand) : query.is('brand', null)
+      query = size.size_value === null
+        ? query.is('size_value', null).is('size_unit', null)
+        : query.eq('size_value', size.size_value).eq('size_unit', size.size_unit)
 
       const { data: existingProducts, error: lookupError } =
         await query.limit(1)
@@ -320,7 +326,7 @@ export default function App() {
       async (normalizedBarcode) => {
         const { data: existingProducts, error: lookupError } = await supabase
           .from('products')
-          .select('barcode, name, brand, image_url, user_image_url, category, source')
+          .select('barcode, name, brand, size_value, size_unit, image_url, user_image_url, category, source')
           .eq('user_id', session.user.id)
           .eq('barcode', normalizedBarcode)
           .limit(1)
@@ -452,7 +458,7 @@ export default function App() {
       .from('products')
       .update(values)
       .eq('id', productId)
-      .select('id, barcode, name, brand, image_url, user_image_url, category, source')
+      .select('id, barcode, name, brand, size_value, size_unit, image_url, user_image_url, category, source')
       .single()
 
     if (updateError) {
