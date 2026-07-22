@@ -3,11 +3,13 @@ import AddBatchForm from './components/AddBatchForm'
 import AuthPanel from './components/AuthPanel'
 import BatchCard from './components/BatchCard'
 import BatchDetail from './components/BatchDetail'
+import BottomTabNav from './components/BottomTabNav'
 import ConfigNotice from './components/ConfigNotice'
 import {
   getAccountStatus,
   getSessionTransition,
   loadInventoryBatchesForSession,
+  maskEmail,
   restoreExistingSession,
   sendEmailOtp,
   signOutCurrentUser,
@@ -42,6 +44,7 @@ export default function App() {
   const cooldownCleanupRef = useRef(null)
   const [batches, setBatches] = useState([])
   const [view, setView] = useState('home')
+  const [activeTab, setActiveTab] = useState('inventory')
   const [selectedBatchId, setSelectedBatchId] = useState(null)
   const [expiryWindowFilter, setExpiryWindowFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
@@ -58,6 +61,7 @@ export default function App() {
   const clearAccountScopedState = useCallback(() => {
     setBatches([])
     setView('home')
+    setActiveTab('inventory')
     setSelectedBatchId(null)
     setExpiryWindowFilter('all')
     setCategoryFilter('all')
@@ -220,6 +224,14 @@ export default function App() {
 
     applySession(null)
     return true
+  }
+
+  function handleTabChange(nextTab) {
+    setError('')
+    setMessage('')
+    setSelectedBatchId(null)
+    setActiveTab(nextTab)
+    setView(nextTab === 'account' ? 'account' : 'home')
   }
 
   async function findOrCreateProduct(form) {
@@ -483,6 +495,10 @@ export default function App() {
     searchQuery.trim() !== ''
   const selectedBatch = batches.find((batch) => batch.id === selectedBatchId)
   const accountStatus = getAccountStatus(session)
+  const accountEmailLabel =
+    accountStatus.type === 'email' && session.user.email
+      ? maskEmail(session.user.email)
+      : accountStatus.label
 
   if (missingSupabaseVariables.length > 0) {
     return <ConfigNotice missingVariables={missingSupabaseVariables} />
@@ -515,6 +531,11 @@ export default function App() {
       <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6">
         <header className="mb-5">
           <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>
+          {view === 'home' && (
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+              库存
+            </h1>
+          )}
           {view === 'add' && (
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
               添加一批库存
@@ -525,36 +546,22 @@ export default function App() {
               库存详情
             </h1>
           )}
+          {view === 'account' && (
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+              我的
+            </h1>
+          )}
           {view === 'home' && (
             <p className="mt-2 text-sm leading-6 text-slate-500">
               每张卡片都是一个独立库存批次，按到期日从近到远排列。
             </p>
           )}
+          {view === 'account' && (
+            <p className="mt-2 text-sm leading-6 text-slate-500">
+              管理当前账号，并查看后续设置入口。
+            </p>
+          )}
         </header>
-
-        <section className="mb-4 rounded-3xl border border-white/70 bg-white p-4 shadow-card">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-bold text-ink">
-                {accountStatus.label}
-              </p>
-              {accountStatus.type === 'anonymous' && (
-                <p className="mt-1 text-xs leading-5 text-slate-500">
-                  访客数据可能因清浏览器数据、换浏览器或换设备而无法恢复。退出访客不会自动迁移数据。
-                </p>
-              )}
-            </div>
-            <button
-              className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700"
-              type="button"
-              onClick={handleSignOut}
-            >
-              {accountStatus.type === 'anonymous'
-                ? '退出访客并使用邮箱登录'
-                : '退出登录'}
-            </button>
-          </div>
-        </section>
 
         {error && (
           <div className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm leading-6 text-danger">
@@ -567,7 +574,52 @@ export default function App() {
           </div>
         )}
 
-        {view === 'add' ? (
+        {view === 'account' ? (
+          <section className="space-y-4">
+            <section className="rounded-3xl border border-white/70 bg-white p-5 shadow-card">
+              <p className="text-sm font-semibold text-leaf">账号</p>
+              <p className="mt-4 text-xs font-semibold text-slate-500">
+                当前登录邮箱
+              </p>
+              <p className="mt-1 break-all text-lg font-bold text-ink">
+                {accountEmailLabel}
+              </p>
+              {accountStatus.type === 'anonymous' && (
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  访客数据可能因清浏览器数据、换浏览器或换设备而无法恢复。退出访客不会自动迁移数据。
+                </p>
+              )}
+              <button
+                className="mt-5 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700"
+                type="button"
+                onClick={handleSignOut}
+              >
+                {accountStatus.type === 'anonymous'
+                  ? '退出访客并使用邮箱登录'
+                  : '退出登录'}
+              </button>
+            </section>
+
+            <section className="rounded-3xl border border-white/70 bg-white p-5 shadow-card">
+              <h2 className="font-bold text-ink">更多设置</h2>
+              <div className="mt-3 divide-y divide-slate-100">
+                {['提醒设置', '数据导出', '偏好设置'].map((item) => (
+                  <button
+                    key={item}
+                    className="flex w-full items-center justify-between gap-3 py-3 text-left text-sm font-semibold text-slate-400 disabled:cursor-not-allowed"
+                    disabled
+                    type="button"
+                  >
+                    <span>{item}</span>
+                    <span className="text-xs font-medium text-slate-400">
+                      开发中
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </section>
+          </section>
+        ) : view === 'add' ? (
           <AddBatchForm
             busy={loading}
             onCancel={() => setView('home')}
@@ -710,24 +762,28 @@ export default function App() {
                 />
               ))
             )}
+            <div className="pt-1">
+              <button
+                className="mx-auto block w-full rounded-2xl bg-leaf px-5 py-4 text-center font-bold text-white shadow-card transition active:scale-[0.99]"
+                type="button"
+                onClick={() => {
+                  setError('')
+                  setMessage('')
+                  setView('add')
+                }}
+              >
+                + 添加商品
+              </button>
+            </div>
           </section>
         )}
       </div>
 
-      {view === 'home' && (
-        <div className="fixed inset-x-0 bottom-0 border-t border-white/80 bg-cream/90 px-4 py-4 backdrop-blur">
-          <button
-            className="mx-auto block w-full max-w-xl rounded-2xl bg-leaf px-5 py-4 text-center font-bold text-white shadow-card"
-            type="button"
-            onClick={() => {
-              setError('')
-              setMessage('')
-              setView('add')
-            }}
-          >
-            + 添加商品和库存批次
-          </button>
-        </div>
+      {(view === 'home' || view === 'account') && (
+        <BottomTabNav
+          activeTab={activeTab}
+          onChange={handleTabChange}
+        />
       )}
     </main>
   )

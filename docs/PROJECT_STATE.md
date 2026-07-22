@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.11 implemented locally: Product Image Upload.
+v0.2.12-A implemented locally: Home Mobile UX Polish.
 
 ## Current status
 
-v0.2.11 图片上传代码、migration、测试和文档已完成本地验证；远程 Supabase migration、Public bucket 与 Storage policy 已执行，Production 手机真机验收尚未完成。
+v0.2.12-A 首页双 Tab 导航、库存/我的页面拆分、移动端底部安全区和自动化测试已完成本地实现；PWA 真机视觉验收尚未完成。v0.2.11 图片上传的 Production 手机真机验收仍未完成。
 
 ## Latest completed
 
-v0.2.11 新增用户商品主图：`user_image_url → image_url → 无图占位`，支持拍照、相册、本地预览、替换和删除；远程 Storage migration 已执行。
+v0.2.12-A 将登录信息迁移到“我的”页面，新增仅含“库存 / 我的”的固定底部导航；不改变 Auth、库存逻辑、数据模型或 Supabase 配置。
 
 ## Deployment
 
@@ -39,14 +39,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.8｜Vercel 公网部署与手机验收
 - v0.2.9｜Supabase 轻度保活与运维策略
 - v0.2.10｜Email OTP Authentication Flow
+- v0.2.12-A｜首页 Mobile UX Polish
 
 ## Last verified
 
-2026-07-14: v0.2.10 Email OTP acceptance completed locally, on Production Web, and in the iPhone standalone Web App.
+2026-07-22: v0.2.12-A automated tests and production build passed locally; PWA real-device visual acceptance needs verification.
 
 ## Next Action
 
-在 Production 完成 iPhone、Android 和双账号的真实上传、替换、删除与 Storage RLS 验收。
+先完成 v0.2.12-A 的 iPhone / Android PWA 真机视觉 smoke，确认底部导航安全区和添加入口位置；不要进入 v0.2.12-B。
 
 ## Blockers
 
@@ -81,6 +82,7 @@ Production 手机真机图片上传验收尚未完成。
 - Saved product information is reused locally by barcode; users can now edit saved product display fields from the inventory batch detail view.
 - Product editing updates `products` only. Quantity correction and “消耗 1” in detail update the selected `inventory_batches` row only. `inventory_batches` remain separate and keep their own expiry date and status.
 - Home filtering operates on active batches and combines expiry time window, category, and product/brand search while preserving the existing expiry-date ordering.
+- v0.2.12-A 顶层页面只有“库存”和“我的”两个 Tab；新增商品、库存详情和编辑任务流不显示底部 Tab。固定导航占用底部安全区，库存页添加入口位于内容区末尾。
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
 - Product data APIs must not infer shelf life.
 - Direct phone photo or album image upload is the next candidate; it likely needs Supabase Storage, compression, Storage RLS, upload / replace / delete, and orphan-file cleanup design.

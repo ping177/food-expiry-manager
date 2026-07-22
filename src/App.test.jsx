@@ -37,6 +37,17 @@ describe('App auth integration source guards', () => {
     expect(appSource).not.toContain('image_url: form.imageUrl.trim() || null')
     expect(appSource).toContain('if (imageUrl) productValues.image_url = imageUrl')
   })
+
+  it('keeps authenticated navigation limited to inventory and account tabs', () => {
+    expect(appSource).toContain(
+      "import BottomTabNav from './components/BottomTabNav'",
+    )
+    expect(appSource).toContain("const [activeTab, setActiveTab] = useState('inventory')")
+    expect(appSource).toContain("view === 'account'")
+    expect(appSource).toContain('提醒设置')
+    expect(appSource).toContain('数据导出')
+    expect(appSource).toContain('偏好设置')
+  })
 })
 
 describe('App auth session behavior model', () => {
