@@ -94,6 +94,8 @@ Do not put commercial API keys in frontend code. Do not commit `node_modules`, `
    - Latest completed
    - Next Action
    - Blockers
+   - Version Index
+   - Deployment
    - Important Context
    - Handoff Prompt
 5. Git branch、latest commit、working tree 由 project-command-center 实时 Git 扫描读取，`PROJECT_STATE.md` 不应作为这些字段的权威来源。
@@ -103,6 +105,24 @@ Do not put commercial API keys in frontend code. Do not commit `node_modules`, `
 ## Git workflow
 
 Do not commit or push unless the user explicitly asks.
+
+Before every `git push`, review `docs/PROJECT_STATE.md`: `Current version`,
+`Current status`, `Next Action`, `Blockers`, `Version Index` and, when affected,
+`Deployment`. Correct expired facts in the project's own development context,
+replace completed Next Action entries, and remove resolved blockers. When there
+is no clear blocker, use exactly `暂无明确阻塞。`. Add a Version Index entry only
+for a new version or formal milestone. When that review needs no PROJECT_STATE
+change, do not create a meaningless edit; use `Project-State-Review:
+verified-current`. The gate does not replace the user's explicit authorization
+to commit or push.
+
+When the Project State Push Gate is installed, the final commit of every pushed
+branch must contain exactly one `Project-State-Review: updated` or
+`Project-State-Review: verified-current` trailer. The trailer states whether
+the final branch tree differs from the remote branch tree at
+`docs/PROJECT_STATE.md`; it does not validate the document's content. A pushed
+tag only needs to peel to a commit with one legal trailer and is not classified
+by tree diff.
 
 Before finishing a task, run or request the appropriate status checks:
 

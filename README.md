@@ -76,6 +76,38 @@ npm run build
 npm test
 ```
 
+## Project State Push Gate
+
+本仓库提供可选的本地 `pre-push` gate：每次 branch push 前，人工复核
+`docs/PROJECT_STATE.md` 的 `Current version`、`Current status`、`Next Action`、
+`Blockers`、`Version Index`，以及受影响时的 `Deployment`。最终 commit 必须只有一个
+trailer：当最终 tree 与远端 branch tree 的 `docs/PROJECT_STATE.md` 有净差异时使用
+`Project-State-Review: updated`；无净差异时使用
+`Project-State-Review: verified-current`。
+
+安装（只在需要启用本地 hook 时执行）：
+
+```bash
+sh scripts/install-git-hooks.sh
+```
+
+可在 Git work tree 中把 Git 传入的 ref 行交给检查脚本手动检查：
+
+```bash
+printf '%s\n' "refs/heads/main <local-commit> refs/heads/main <remote-commit>" | sh scripts/check-project-state-push.sh
+```
+
+Tag 不做远端 tree 分类：轻量或 annotated tag 都只要求最终指向的 commit 有一个合法
+trailer。`git push --no-verify` 可绕过客户端 hook，hook 也可被本地修改或删除；这是
+本地治理 gate，不是不可绕过的安全边界。它不验证 PROJECT_STATE 内容真实性，也不会
+自动 commit 或 push。
+
+Gate 集成测试使用临时本地 Git 仓库和 bare remote，不访问网络：
+
+```bash
+npm test -- tests/project-state-push-gate.test.js
+```
+
 ## 认证方式
 
 - 页面首次打开时会先恢复已有 Supabase session。

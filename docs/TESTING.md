@@ -23,6 +23,33 @@
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
 
+## Project State Push Gate 自动化测试
+
+运行 gate 集成测试：
+
+```bash
+npm test -- tests/project-state-push-gate.test.js
+```
+
+该测试使用临时 Git repository、bare remote、临时 Git identity 与临时
+`GIT_CONFIG_GLOBAL`（并设置 `GIT_CONFIG_NOSYSTEM=1`），只使用本地文件路径，不访问
+网络。覆盖 branch 的 `updated` / `verified-current` 分类、首次 push、force push、
+branch / tag 删除、lightweight / annotated / non-commit tag、多 ref、tip 冲突、
+remote OID 缺失、真实 bare remote 的 pre-push 接线、安装脚本首次安装/幂等/冲突拒绝，
+以及含空格或非 ASCII 路径。
+
+Gate 语法检查：
+
+```bash
+sh -n .githooks/pre-push
+sh -n scripts/check-project-state-push.sh
+sh -n scripts/install-git-hooks.sh
+```
+
+Gate 只检查最终 commit 的合法 trailer 是否与 branch 的 PROJECT_STATE tree diff 一致；
+tag 只验证其 commit 的 trailer。`git push --no-verify` 能绕过本地 hook；gate 不验证
+PROJECT_STATE 内容真实性，也不会自动 commit 或 push。
+
 ## v0.2.12-D 商品容量 / 规格自动化覆盖
 
 - `src/lib/productSize.test.js`：数值 trim/转换、单位保存、空容量、单位差异与组合展示，以及默认 `g` 下的空值归一化。
