@@ -20,7 +20,7 @@ v0.2.12-D 改为结构化容量：数值加单位输入，空值保存为两个 
 
 ## Deployment
 
-Status: deployed
+Status: public_deployed
 Public URL: https://food-expiry-manager-two.vercel.app/
 Provider: Vercel
 Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`.
