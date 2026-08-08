@@ -55,7 +55,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Blockers
 
-Production 手机真机图片上传验收尚未完成。
+暂无明确阻塞。
 
 ## Important Context
 
@@ -92,7 +92,7 @@ Production 手机真机图片上传验收尚未完成。
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
 - v0.2.12-D 在首页摘要中为有值商品增加规格标签；规格属于 product，不属于 batch。无 barcode 复用必须同时匹配名称、品牌和规格。
 - Product data APIs must not infer shelf life.
-- Direct phone photo or album image upload is the next candidate; it likely needs Supabase Storage, compression, Storage RLS, upload / replace / delete, and orphan-file cleanup design.
+- v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照上传验收；Android、相册上传、替换、删除和双账号隔离仍未确认。
 
 ## Handoff Prompt
 

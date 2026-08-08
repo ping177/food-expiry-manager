@@ -72,10 +72,23 @@ PROJECT_STATE 内容真实性，也不会自动 commit 或 push。
 - `src/components/AddInventoryForm.test.jsx`：当前商品只读带入，表单只提供数量与保质期，不重复显示扫码或商品字段。
 - `src/lib/inventory.test.js`：同商品同日期合并、不同日期创建新 batch、消耗默认 1、不能超过当前库存、数量归零不附带 status、取消不产生写入 payload、显式 consumed 只允许 quantity=0。
 
-## v0.2.11 商品图片待验收
+## v0.2.11 商品图片验收
 
 - 自动化覆盖图片显示优先级、类型/10 MB 原文件限制、路径隔离、数据库更新失败删除新对象、替换旧图清理和删除用户图后的 API 回退。
-- 远程 Storage migration 已执行；本地真实上传、Production iPhone / Android 拍照相册和双账号隔离尚未验收。
+- 远程 Storage migration 已执行；Production iPhone PWA 拍照上传已验收通过。
+- Android、相册上传、替换、删除和双账号隔离未在本次验收中确认。
+
+### Production Manual Validation Status
+
+已完成：
+
+- iPhone PWA 商品拍照上传成功。
+
+待验证（不作为 blocker）：
+
+- iPhone PWA 相册选择上传。
+- iPhone PWA 商品图片替换。
+- iPhone PWA 删除用户图片。
 
 运行命令：
 

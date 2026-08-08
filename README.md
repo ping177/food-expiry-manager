@@ -140,7 +140,7 @@ https://food-expiry-manager-two.vercel.app/
 - 商品查询失败或字段缺失时仍可手动填写并保存。
 - 同一条形码可复用商品主数据，但每次添加都会创建独立库存批次。
 - 保质期继续由用户手动填写，不从商品数据库推断。
-- 图片链接为可选字段，通常由扫码自动填入；v0.2 不包含图片上传或拍照。
+- 图片链接为可选字段，通常由扫码自动填入；商品图片上传和拍照能力在 v0.2.11 增加。
 
 同 barcode 本地 product 复用、两个独立批次保存及刷新后持久化已通过真实
 Supabase 手动验收。开放商品库对真实猫罐头覆盖不足的问题留到 v0.2.1，通过
@@ -195,7 +195,8 @@ supabase secrets set GO_UPC_API_KEY=你的本地或线上密钥 --project-ref <p
 `.env.local`、源码、文档或前端构建产物。
 
 商品图片显示优先级为 `user_image_url → image_url → 无图占位`。v0.2.11 migration
-已在远程 Supabase 执行；Production 手机真机拍照、相册与双账号权限验收仍待完成。
+已在远程 Supabase 执行；Production iPhone PWA 拍照上传已验收通过。Android、相册上传、
+替换、删除和双账号隔离未在本次验收中确认。
 
 ## 项目文档
 
