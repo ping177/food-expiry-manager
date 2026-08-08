@@ -2,6 +2,13 @@
 
 ## 2026-08-08
 
+### Project Command Center 本地数据治理确认
+
+- 完成 filesystem-level persistent data audit；未发现需要迁移的长期本机业务文件数据。
+- 确认 Supabase Postgres / Storage 是本项目 canonical business persistence；浏览器认证 session、图片选择临时对象、测试临时 fixtures 和 `supabase/.temp` 均不属于项目级长期 filesystem data。
+- 未创建 `/Users/wp/Projects/_project-data/food-expiry-manager/`，无 migration required。
+- 未访问 Supabase、公网或 secrets；未修改业务代码、数据库、部署或 RLS。
+
 ### v0.2.11 商品图片上传 Production 验收补充
 
 - 已在 Production iPhone PWA 完成拍照上传商品图片验收。

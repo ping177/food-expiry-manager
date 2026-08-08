@@ -372,3 +372,11 @@
 - 商品唯一性：无 barcode 时，名称、品牌、容量数值和容量单位均相同才复用 product；数值或单位不同（如 `1g` 与 `1kg`）必须保存为不同 product。
 - 兼容性：远程已执行的 legacy `products.size` text 列保留，应用不再读写它，不删除、不回填，也不从旧值拆分结构化字段。
 - 自动填充：只接受用户手动输入或外部 API 的明确容量字段；不从商品名称正则拆分或猜测容量。
+
+## D-031：当前不启用项目级 filesystem data root
+
+- 状态：已决定
+- 日期：2026-08-08
+- 决策：食品过期管理的 canonical business persistence 继续由 Supabase Postgres / Storage 承担；当前不创建 `/Users/wp/Projects/_project-data/food-expiry-manager/`，也不迁移本机数据。
+- 数据边界：Supabase Auth、RLS、Storage 和相关服务继续按云端数据治理管理；PCC 的 filesystem governance 不替代 Supabase backup、deployment 或 data governance，也不为 `_project-data` 下载本地镜像。
+- 启用条件：未来只有出现真正的 filesystem-level persistent runtime/user data 时，才按统一合同启用该本地数据根。
