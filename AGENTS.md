@@ -41,6 +41,16 @@
 3. 涉及数据模型、字段、约束或关系变化时，必须更新 `docs/DATA_MODEL.md`。
 4. 数据模型变更应考虑已有数据的兼容性，禁止直接丢弃用户数据。
 
+## Local persistent data governance
+
+- 本项目稳定 `projectId` 为：`food-expiry-manager`。
+- 当前业务持久数据由 Supabase Postgres / Storage 承担；目前没有 filesystem-level persistent local project data，不要为了统一形式创建空的 `_project-data` 目录。
+- 如果未来新增 filesystem-level persistent runtime/user data，canonical root 必须使用：`/Users/wp/Projects/_project-data/food-expiry-manager/`。
+- 未经明确的数据治理审查，不得把长期运行数据默认新增到 repo 内的 `output/`、`data/`、`uploads/`、`storage/` 等目录。
+- tests 必须使用 temp / injected path，不得写入真实 `/Users/wp/Projects/_project-data/food-expiry-manager/`。
+- Supabase cloud business data 不因本地 filesystem governance 而复制或镜像到 `_project-data`。
+- 项目自身仍拥有业务数据 schema 和语义；Project Command Center 统一的只是 filesystem-level data location/governance。
+
 ## Documentation mapping
 
 When relevant, update the right documentation:
