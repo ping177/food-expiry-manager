@@ -439,7 +439,7 @@
 
 ## D-036：v0.3.3 使用 discarded 逻辑删除并并入现有 Archive
 
-- 状态：已决定并完成本地实现；自动化验证与生产构建已通过，Production / iPhone PWA 人工验收待执行
+- 状态：已决定并完成；自动化验证、生产构建与 Production / iPhone PWA 最小人工验收均已通过，v0.3.3 已关闭
 - 日期：2026-08-20
 - 决策：当前库存的“删除当前库存批次”只允许按当前用户、batch id 和 `status='active'`
   执行 `UPDATE status='discarded'`，不执行数据库 DELETE；成功后从 active inventory 消失。
@@ -449,3 +449,5 @@
   Product、图片和其他 batch 不受当前批次逻辑删除影响。
 - 数据边界：复用现有 status 约束与 v0.3.2 Product deletion / Storage cleanup contract，
   不新增 migration、回收站、恢复、批量删除、独立导航或 Category Navigation。
+- Production / iPhone PWA closeout：active batch 删除后进入 Archive 并显示“已删除” PASS；
+  Archive 中真正删除该历史 batch PASS。

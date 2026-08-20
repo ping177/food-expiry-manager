@@ -2,7 +2,7 @@
 
 ## 2026-08-20
 
-### v0.3.3 Discarded Batch Archive Flow（本地实现完成，待人工验收）
+### v0.3.3 Discarded Batch Archive Flow（已完成并关闭）
 
 - 当前库存“删除当前库存批次”已拆为独立的 `discardBatch` 操作：按 batch id、当前
   user id 和 `status='active'` 执行 `UPDATE { status: 'discarded' }`，检查返回行后从
@@ -19,6 +19,8 @@
 - 定向验证 8 个测试文件 / 95 个测试通过；完整 `npm test` 通过 26 个测试文件 / 234 个测试，
   `npm run build` 与 `git diff --check` 均通过。未连接 Supabase、未读取 secrets、未执行
   Production 数据操作。
+- Production / iPhone PWA 最小人工复验已完成并 PASS：active batch 删除后进入 Archive 并显示“已删除”；
+  Archive 中真正删除该历史 batch。v0.3.3 至此完成并关闭，Category Navigation 作为当前下一功能候选。
 
 ### v0.3.2 Product Deletion & Storage Cleanup 本地实现与 Production migration 部署（已完成并关闭）
 

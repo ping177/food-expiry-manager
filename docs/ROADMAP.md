@@ -155,7 +155,7 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 
 ## v0.3.3：Discarded Batch Archive Flow
 
-- 状态：本地实现、自动化验证与生产构建已完成；Production / iPhone PWA 人工验收待执行
+- 状态：已完成并关闭；本地实现、自动化验证、生产构建和 Production / iPhone PWA 最小人工验收均已通过
 - 当前 active batch 的“删除当前库存批次”只更新 `status='discarded'`，不执行数据库 DELETE，
   不删除 Product、图片或其他 batch
 - Archive 同时查询 `consumed` 与 `discarded`；分别显示“已消耗”和“已删除”，继续支持搜索、
@@ -163,10 +163,11 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 - Archive 中的“删除历史批次”继续对 `consumed / discarded` 执行真正 hard delete
 - Product deletion 继续使用 v0.3.2 RPC、active guard 和 Storage cleanup contract
 - 复用现有 status 约束，无需新增 migration、数据表、恢复流程、回收站或批量删除
+- 人工 PASS：active batch 删除后进入 Archive 并显示“已删除”；Archive 中真正删除该历史 batch
 
-## 后续候选：Category Navigation
+## 当前下一功能候选：Category Navigation
 
-- Category Navigation 顺延到后续版本，具体版本号尚未冻结
+- v0.3.3 closeout 后，Category Navigation 是当前下一功能候选，具体版本号尚未冻结
 - 未来再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏
 - 不预设左侧分类树或新的数据模型；先依据真实使用反馈决定最小导航形态
 

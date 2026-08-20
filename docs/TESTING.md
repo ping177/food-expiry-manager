@@ -200,9 +200,14 @@ order by tablename, policyname;
   测试通过；`npm run build` 与 `git diff --check` 通过。测试仅使用本地 fixtures 与 source
   contracts，不访问 Supabase 或 Production data。
 
-### v0.3.3 Production / iPhone PWA 人工验收
+### v0.3.3 Production / iPhone PWA 人工验收（已完成）
 
-完成发布后按以下顺序验收：
+用户已完成发布后的最小人工复验并 PASS：
+
+- active batch 删除后进入 Archive，并显示“已删除”。
+- Archive 中真正删除该历史 batch。
+
+以下保留本版本的完整验收范围记录：
 
 1. 在库存详情确认“删除当前库存批次”，检查确认文案说明会进入 Archive 并标记“已删除”。
 2. 刷新库存，确认该 batch 不再出现；同商品其他 active batch 与 Product、图片均保留。

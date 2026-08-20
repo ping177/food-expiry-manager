@@ -61,20 +61,33 @@ v0.3.2 已完成并关闭；初始 RPC migration 与 Storage cleanup corrective 
   standalone 用户图片删除、整个 Product 删除后的 Storage object 清理，以及 active guard
   均已完成 Production / iPhone PWA 人工验收并 PASS。
 
-### Backlog 3：Discarded Batch Archive Flow
+### Backlog 3：Discarded Batch Archive Flow（已完成并关闭）
 
-v0.3.3 为当前正式版本，范围已冻结；本地实现、自动化验证和生产构建已完成，待 Production
-发布后的人工验收：
+v0.3.3 为已完成并关闭的正式版本，范围已冻结；本地实现、自动化验证、生产构建和 Production /
+iPhone PWA 最小人工验收均已完成：
 
 - 当前库存“删除当前库存批次”改为 owner-scoped `active → discarded` UPDATE，不执行数据库 DELETE。
 - discarded 从 active inventory 消失，并与 consumed 一起进入 Archive。
 - Archive 卡片和详情分别显示“已删除 / 已消耗”；搜索、分类和 `updated_at DESC` 排序继续保持一致。
 - Archive “删除历史批次”对 consumed / discarded 保留真正 hard delete。
 - 不新增 migration、回收站、独立“已删除”导航、恢复、批量删除或 Category Navigation。
+- 人工 PASS：active batch 删除后进入 Archive 并显示“已删除”；Archive 中真正删除该历史 batch。
 
-### 顺延候选：Category Navigation
+### 当前下一功能候选：Category Navigation
 
-- Category Navigation 顺延到后续版本，具体版本号尚未冻结；不在 v0.3.2 混入分类侧栏迁移。
+- v0.3.3 closeout 后，Category Navigation 是当前下一功能候选；具体版本号尚未冻结。
+- 先评估最小导航形态，再决定是否将分类迁入侧边栏；不在本次 closeout 实现。
+
+### 未来正式 Backlog：Barcode API Coverage Expansion
+
+- 扩展当前 Go-UPC → Open Food Facts fallback 链路的条码覆盖率，优先评估 Barcode Lookup、
+  EAN-Search / EAN-Suche 等候选服务。
+- 实施前继续通过服务端代理保护 API key，并以真实进口商品样本评估命中率、字段完整性和成本边界。
+
+### 未来正式 Backlog：Product Image Sourcing & Polish
+
+- 在现有用户图片 / 外部图片 fallback 基础上，继续优化图片来源选择、拍照 / 相册录入和展示 polish。
+- 实施前评估图片压缩、Storage RLS、上传 / 替换 / 删除和孤立对象清理；不与 Category Navigation 混做。
 
 ### v0.2.12-B2：库存操作（已完成本地实现）
 
@@ -391,7 +404,7 @@ EAN-Search / EAN-Suche 可作为后续 fallback 增强。
 Supabase Edge Function 完成；Barcode Lookup、EAN-Search / EAN-Suche 和
 `suggested_match` 仍留待后续。
 
-### 历史候选：商品图片上传 / 拍照（已由 v0.2.11 实现）
+### 历史候选：商品图片上传 / 拍照（已由 v0.2.11 实现；后续 polish 归入 Product Image Sourcing & Polish）
 
 手动填写图片 URL 不符合主要使用习惯；该候选已在 v0.2.11 实现为用户商品主图流程：
 
