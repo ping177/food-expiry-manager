@@ -12,11 +12,11 @@ v0.2.12-D structured product size with narrow-screen form polish.
 
 ## Current status
 
-v0.2.12-D 的结构化容量保持 `size_value` + `size_unit`；新增与编辑表单已完成 iPhone 窄屏布局修正，容量数值占主要宽度、单位列保持紧凑，分类与外部图片链接两列对齐且不再因旧 label 产生不必要换行。本轮未修改字段含义、保存逻辑、图片 fallback、`inventory_batches`、Auth、RLS、Storage、环境变量或依赖。
+v0.2.12-D 的结构化容量保持 `size_value` + `size_unit`；新增与编辑表单已完成 iPhone 窄屏布局修正，容量数值占主要宽度、单位列保持紧凑，分类与外部图片链接两列对齐且不再因旧 label 产生不必要换行。v0.2.11 图片 Production Manual Validation 已确认 iPhone PWA 拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持均 PASS；双账号图片隔离和 Android 流程未手动覆盖，均 deferred / not manually covered，不作为 blocker。本轮未修改字段含义、保存逻辑、图片 fallback、`inventory_batches`、Auth、RLS、Storage、环境变量或依赖。
 
 ## Latest completed
 
-新增与编辑商品的窄屏表单 UI polish：容量数值与单位使用可收缩的主列加 `4rem` 单位列；分类与“外部图片链接（可选）”保持对齐的两列布局。新增商品、扫码/手动填写、规格保存、分类和图片 URL 业务行为不变。
+新增与编辑商品的窄屏表单 UI polish：容量数值与单位使用可收缩的主列加 `4rem` 单位列；分类与“外部图片链接（可选）”保持对齐的两列布局。新增商品、扫码/手动填写、规格保存、分类和图片 URL 业务行为不变。另完成 v0.2.11 图片 Production Manual Validation：iPhone PWA 图片主流程及 fallback / 刷新保持均 PASS。
 
 ## Deployment
 
@@ -47,7 +47,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Last verified
 
-2026-08-20: narrow-screen product-form tests and full automated suite (19 files / 187 tests), production build and `git diff --check` passed locally. The local browser had no authenticated session, so a logged-in iPhone PWA visual smoke remains recommended but is not a blocker.
+2026-08-20: narrow-screen product-form tests and full automated suite (19 files / 187 tests), production build and `git diff --check` passed locally; Production iPhone PWA image validation for camera upload, album selection, replacement, deletion/fallback, and refresh/reopen persistence passed. Dual-account image isolation and Android image flow remain deferred / not manually covered, not blockers.
 
 ## Next Action
 
@@ -92,7 +92,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - Home cards intentionally stay summary-only: product image/name, category, remaining quantity, expiry date, and expiry-window badge. Brand and barcode remain detail-level information.
 - v0.2.12-D 在首页摘要中为有值商品增加规格标签；规格属于 product，不属于 batch。无 barcode 复用必须同时匹配名称、品牌和规格。
 - Product data APIs must not infer shelf life.
-- v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照上传验收；Android、相册上传、替换、删除和双账号隔离仍未确认。
+- v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持验收；双账号图片隔离和 Android 图片流程未手动覆盖，均为 deferred / not manually covered，不作为 blocker。
 
 ## Handoff Prompt
 

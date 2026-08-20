@@ -9,6 +9,13 @@
 - 同步修正新增商品与批次详情编辑表单；未修改字段含义、保存逻辑、图片 fallback、Supabase、数据模型或业务逻辑。
 - `npm test` 通过 19 个测试文件 / 187 个测试，`npm run build` 成功，`git diff --check` 通过。
 
+### 商品图片 Production Manual Validation 状态同步
+
+- 确认 iPhone PWA 拍照上传、相册选择上传、商品图片替换、删除用户图片及 fallback 均 PASS。
+- 删除 `user_image_url` 后，有外部图片时正确回退到 `image_url`，无外部图片时回到无图占位；刷新 / 重开后状态保持正确。
+- 双账号图片隔离 smoke 本次未执行，未额外创建测试账号；Android 图片流程也未执行。两项均记录为 deferred / not manually covered，不作为 blocker。
+- 本轮仅同步验收文档，未修改业务代码、Supabase、Auth、RLS、Storage policy、schema 或 secrets。
+
 ## 2026-08-08
 
 ### Project Command Center 本地数据治理确认
@@ -21,7 +28,7 @@
 ### v0.2.11 商品图片上传 Production 验收补充
 
 - 已在 Production iPhone PWA 完成拍照上传商品图片验收。
-- Android、相册上传、替换、删除和双账号隔离未在本次验收中确认。
+- 截至该次记录，Android、相册上传、替换、删除和双账号隔离未确认；后续 Production Manual Validation 结果见 2026-08-20 记录。
 
 ## 2026-08-01
 
@@ -85,7 +92,7 @@
 - 新增前端 JPEG 压缩、1600 px 长边、10 MB 原文件和 1.5 MB 输出限制；支持拍照、相册、本地预览、上传、替换和删除。
 - 用户图优先于 API / 历史外链 `image_url`；上传失败不会回滚已保存商品和库存批次。
 - Supabase migration、Public bucket 与 Storage policy 已由用户在远程成功执行；Production
-  iPhone PWA 拍照上传已验收通过，Android、相册上传、替换、删除和双账号隔离未确认。未读取 secrets。
+  iPhone PWA 拍照上传已验收通过；截至该次记录，Android、相册上传、替换、删除和双账号隔离未确认。后续 Production Manual Validation 结果见 2026-08-20 记录。未读取 secrets。
 
 记录已完成的项目工作，按日期倒序维护。
 

@@ -46,10 +46,10 @@ v0.2.12-B1 已将商品编辑与库存操作拆开；B2 已完成新增库存和
 - 不重新扫码或重新填写商品信息。
 - 不修改 `products` / `inventory_batches` 数据模型、Supabase schema、migration、Auth 或 RLS。
 
-### 下一候选：手机拍照 / 相册选择 / Supabase Storage 商品图片
+### v0.2.11：手机拍照 / 相册选择 / Supabase Storage 商品图片（已完成）
 
-v0.2.9 Supabase 轻度保活已完成。下一候选是改善商品图片录入体验，但实施前需要
-先做独立方案设计，不强行指定未经确认的具体版本号。
+v0.2.11 已完成图片录入与用户主图管理；具体 Production Manual Validation 状态见
+`docs/TESTING.md`。
 
 候选目标：
 
@@ -57,11 +57,11 @@ v0.2.9 Supabase 轻度保活已完成。下一候选是改善商品图片录入�
 - 替代目前只能手工填写图片 URL 的体验。
 - 评估 Supabase Storage、图片压缩、Storage RLS、上传 / 替换 / 删除和孤立文件清理。
 
-当前非目标：
+当前边界：
 
-- 不在本轮实现图片上传。
-- 不把 PWA、通知、导出或其他库存产品功能混入图片方案。
-- 不读取或提交任何本地图片、备份或 secret。
+- Android 图片流程和双账号图片隔离本次未手动覆盖，均为 deferred / not manually covered，
+  不作为 blocker。
+- 不把 PWA、通知、导出或其他库存产品功能混入后续 Archive 工作。
 
 ### v0.2.9：Supabase 轻度保活与运维策略
 
@@ -344,9 +344,9 @@ EAN-Search / EAN-Suche 可作为后续 fallback 增强。
 Supabase Edge Function 完成；Barcode Lookup、EAN-Search / EAN-Suche 和
 `suggested_match` 仍留待后续。
 
-### 商品图片上传 / 拍照
+### 历史候选：商品图片上传 / 拍照（已由 v0.2.11 实现）
 
-手动填写图片 URL 不符合主要使用习惯。后续版本可实现：
+手动填写图片 URL 不符合主要使用习惯；该候选已在 v0.2.11 实现为用户商品主图流程：
 
 ```text
 用户拍照或选择图片
@@ -355,14 +355,14 @@ Supabase Edge Function 完成；Barcode Lookup、EAN-Search / EAN-Suche 和
 ↓
 上传到 Supabase Storage
 ↓
-保存图片 URL 到 products.image_url
+保存用户图片 URL 到 products.user_image_url
 ↓
 下次同 barcode 本地命中时复用图片
 ```
 
-该能力需要设计 Storage bucket、上传权限、图片压缩、Storage RLS、上传 /
-替换 / 删除和孤立文件清理，不属于 v0.2.8；建议在 Supabase 运维 / 保活策略
-之后再排期。
+Storage bucket、上传权限、图片压缩、Storage RLS、上传 / 替换 / 删除和回退行为已由
+v0.2.11 实现；剩余 Android 与双账号图片隔离仅记录为 deferred / not manually covered，
+不作为 blocker。
 
 ## 说明
 

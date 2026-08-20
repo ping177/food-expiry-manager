@@ -11,7 +11,7 @@
 
 ## 自动化测试
 
-使用 Vitest。v0.2.12-D 结构化修正验收结果为 18 个测试文件、167 个测试通过；其中
+使用 Vitest。当前完整自动化验收结果为 19 个测试文件、187 个测试通过；其中
 包含 B1 三态详情展示、库存新增合并/新批次、库存消耗确认和当前 batch 删除确认边界。
 核心测试文件包括：
 
@@ -76,20 +76,27 @@ PROJECT_STATE 内容真实性，也不会自动 commit 或 push。
 ## v0.2.11 商品图片验收
 
 - 自动化覆盖图片显示优先级、类型/10 MB 原文件限制、路径隔离、数据库更新失败删除新对象、替换旧图清理和删除用户图后的 API 回退。
-- 远程 Storage migration 已执行；Production iPhone PWA 拍照上传已验收通过。
-- Android、相册上传、替换、删除和双账号隔离未在本次验收中确认。
+- 远程 Storage migration 已执行；本次 Production Manual Validation 记录如下：
+  - PASS：iPhone PWA 拍照上传。
+  - PASS：iPhone PWA 从相册选择上传。
+  - PASS：iPhone PWA 商品图片替换。
+  - PASS：iPhone PWA 删除用户图片及 fallback。
+  - PASS：删除 `user_image_url` 后，有外部图片时回退到 `image_url`；无外部图片时回到无图占位。
+  - PASS：刷新 / 重开后图片状态保持正确。
 
 ### Production Manual Validation Status
 
-已完成：
+已完成（PASS）：
 
-- iPhone PWA 商品拍照上传成功。
-
-待验证（不作为 blocker）：
-
-- iPhone PWA 相册选择上传。
+- iPhone PWA 拍照上传。
+- iPhone PWA 从相册选择上传。
 - iPhone PWA 商品图片替换。
-- iPhone PWA 删除用户图片。
+- iPhone PWA 删除用户图片、回退外部图片或无图占位，以及刷新 / 重开状态保持。
+
+Deferred / not manually covered（不作为 blocker）：
+
+- 双账号图片隔离 smoke：本次未执行；不额外创建测试账号。现有 owner-only / RLS 模型未发生变化。
+- Android 图片流程：本次未执行；当前不是主要产品目标。
 
 运行命令：
 

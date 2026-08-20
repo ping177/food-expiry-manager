@@ -195,8 +195,9 @@ supabase secrets set GO_UPC_API_KEY=你的本地或线上密钥 --project-ref <p
 `.env.local`、源码、文档或前端构建产物。
 
 商品图片显示优先级为 `user_image_url → image_url → 无图占位`。v0.2.11 migration
-已在远程 Supabase 执行；Production iPhone PWA 拍照上传已验收通过。Android、相册上传、
-替换、删除和双账号隔离未在本次验收中确认。
+已在远程 Supabase 执行；Production iPhone PWA 已通过拍照上传、相册选择上传、图片替换、
+删除用户图片及 fallback、刷新 / 重开状态保持验收。Android 图片流程和双账号图片隔离
+本次未手动覆盖，记录为 deferred / not manually covered，不作为 blocker。
 
 ## 项目文档
 
