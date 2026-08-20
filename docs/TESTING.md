@@ -11,7 +11,7 @@
 
 ## 自动化测试
 
-使用 Vitest。当前完整自动化验收结果为 23 个测试文件、201 个测试通过；其中
+使用 Vitest。当前完整自动化验收结果为 26 个测试文件、228 个测试通过；其中
 包含 v0.3.1 Archive / drawer、consumed 详情只读、历史 batch 删除边界、状态更新
 0-row 防误报，以及既有 B1 三态详情、库存新增合并/新批次、库存消耗确认和当前
 batch 删除确认边界。
@@ -29,7 +29,8 @@ batch 删除确认边界。
 - `src/components/ArchiveBatchActions.test.jsx`
 - `src/components/BatchDetail.test.jsx`：active / consumed 详情模式边界。
 - `tests/supabase-keepalive.test.js`
-- `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
+- `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚、共享
+  Storage remove primitive 和删除清理。
 
 ## v0.3.2 Product Deletion & Storage Cleanup 自动化覆盖
 
@@ -43,11 +44,13 @@ batch 删除确认边界。
   owner + `status='active'` 预检查和 fail-closed 行为。
 - `src/lib/productImage.test.js`：项目 origin、bucket marker、`user_id/product_id`
   路径校验，以及替换 / 删除 helper 只能识别自有对象。
+- `tests/product-image-storage-policy.test.js`：tracked Storage owner-scoped `SELECT`
+  policy migration / schema 合同，不授予 `anon` / `public` 读取权限。
 - `src/components/ArchiveBatchActions.test.jsx`、`src/components/BatchDetail.test.jsx`
   和 `src/App.test.jsx`：保留历史 batch 删除、增加更危险的 Product 删除、active / loading /
   error 禁用提示、二次确认、RPC 接线、数据库和 active/archive 两路刷新。
 
-本地定向验证：
+v0.3.2 初始实现定向验证：
 
 ```bash
 npm test -- --run src/components/ArchiveBatchActions.test.jsx \
@@ -55,7 +58,7 @@ npm test -- --run src/components/ArchiveBatchActions.test.jsx \
   src/lib/productDeletion.test.js src/lib/productImage.test.js
 ```
 
-结果：6 个测试文件 / 51 个测试通过（仅本地 fixtures 与 source contract，不访问
+初始结果：6 个测试文件 / 51 个测试通过（仅本地 fixtures 与 source contract，不访问
 Supabase）。随后完整 `npm test` 通过 25 个测试文件 / 219 个测试，`npm run build` 与
 `git diff --check` 也通过；这些本地检查不能替代远程 DB integration 或 Production 验收。
 
@@ -134,6 +137,23 @@ order by tablename, policyname;
 - PASS：`postgres` / `service_role` 后台权限保留，无需调整。
 - Pending：Production / iPhone PWA manual acceptance；尚未执行 Product 删除业务数据操作。
 
+### v0.3.2 Storage cleanup corrective regression（2026-08-20）
+
+- 共享 cleanup primitive 已覆盖三态：没有 `user_image_url` 时不调用 Storage；真实
+  Production public URL 严格解析为当前 `user_id/product_id/path` 后必须调用
+  `remove([path])`；非空但无法安全验证的 URL 进入 `cleanup_pending` / warning，不静默成功。
+- standalone “删除用户图片”、替换旧用户图片和 whole Product deletion 均复用同一
+  resolver / `removeProductImagePath`；DB/UI pointer 已清除但 Storage error 时返回 partial
+  success，并仅对已验证路径提供当前会话 retry；外部 `image_url` 不触发 Storage remove。
+- 新增 `supabase/migrations/20260820130000_add_product_image_select_policy.sql`，补充
+  authenticated owner-scoped `storage.objects` SELECT policy；用户已在 Production 验证
+  `product-images` 的 owner-scoped INSERT / UPDATE / DELETE / SELECT policies，未修改 Product
+  deletion RPC。前端 Production 发布确认与两条图片 cleanup 复验仍待执行。
+- 定向验证：`src/lib/productImage.test.js`、`src/lib/productDeletion.test.js`、
+  `src/App.test.jsx`、`tests/product-image-storage-policy.test.js` 共 4 个测试文件 / 43 个
+  测试通过；完整 `npm test` 26 个测试文件 / 228 个测试通过，`npm run build` 与
+  `git diff --check` 通过。未访问 Supabase 或 Production data。
+
 ### Production / iPhone PWA 最小人工验收
 
 使用用户已有测试 Product；先确认它只有历史批次，若仍有 active batch，先按正常流程
@@ -149,8 +169,10 @@ order by tablename, policyname;
    再次打开后确认数据仍在。
 5. 再确认删除；等待返回 Archive，测试 Product 的所有历史 cards 消失，其他 Product
    cards 不受影响，首页 active 列表仍正常。
-6. 若测试 Product 有用户上传图，验证图片对象清理；若 Storage remove 失败，确认页面
-   明确显示已删除但图片待清理，并可用“重试清理用户图片”完成当前会话重试。外部图片
+6. 先对一个仍保留的测试 Product 单独执行“删除用户图片”：确认 DB/UI 的
+   `user_image_url` 清除并正确回退后，直接在 Storage 确认同一对象已不存在；若
+   Storage remove 失败，页面必须明确显示 cleanup pending 并可重试。再对无 active 的
+   测试 Product 执行 whole Product deletion，重复确认其用户图片对象已清理；外部图片
    链接只验证回退显示，不应被当作 Storage 删除对象。
 7. 刷新 / 关闭后重开 Archive 与库存，确认删除结果保持；再次点击已删除 Product 不得
    显示成功。

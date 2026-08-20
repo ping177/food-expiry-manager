@@ -141,7 +141,8 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 
 ## v0.3.2：Product Deletion & Storage Cleanup
 
-- 状态：Production migration 已部署并验证；Production / iPhone PWA 验收尚未执行
+- 状态：初始 RPC 与 Storage cleanup corrective migration 已部署并验证；Production / iPhone
+  PWA 两条图片流程复验尚未执行
 - Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留
 - Product 仍有 active batch 时，禁止删除整个 Product
 - 没有 active batch 时，允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象

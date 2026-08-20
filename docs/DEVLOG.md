@@ -23,6 +23,26 @@
   `postgres` / `service_role` 后台权限保持不变。Production / iPhone PWA manual acceptance
   仍待执行，v0.3.2 尚未标记 completed / closed。
 
+### v0.3.2 Storage cleanup corrective fix（已部署，待 Production 复验）
+
+- 真实验收发现 standalone “删除用户图片”和 whole Product deletion 都可能先清除
+  `user_image_url` / Product，再把无法解析的非空 URL 当成“无需清理”，因此共享的
+  Storage `remove()` 实际未被调用且没有 warning / retry；两条流程共同根因是旧 helper
+  把 `none` 与 invalid path 合并为空字符串。另确认 Storage `remove()` 需要 owner-scoped
+  authenticated `SELECT` policy，新增 tracked corrective migration
+  `20260820130000_add_product_image_select_policy.sql`；未修改已验收的 Product deletion RPC。
+- `resolveOwnProductImagePath` 现在返回 `none / valid / invalid` 三态；valid 的 Production
+  public URL 必须进入共享 `removeProductImagePath`，invalid 非空 URL 进入明确的
+  cleanup pending / warning，不尝试不安全路径；Storage error 显示 partial success 并只
+  提供同一路径 retry。standalone 图片删除、替换旧图和 Product deletion 均复用该链路，
+  外部 `image_url` 不参与 cleanup。
+- 新增 Production public URL、standalone remove、whole Product remove、无图、invalid path、
+  Storage failure / retry 与 SELECT policy 合同测试；定向验证 4 个测试文件 / 43 个测试，
+  完整 `npm test` 通过 26 个测试文件 / 228 个测试，`npm run build` 与 `git diff --check`
+  通过。用户已部署并验证 corrective migration，Production `product-images` 现有
+  authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policies；前端 Production
+  发布确认及两条真实图片 cleanup manual acceptance 待执行。
+
 ### v0.3.1 Archive & Navigation Foundation
 
 - 在库存标题区新增移动端 hamburger 与左侧 drawer；drawer 只包含“库存 / 已归档”，支持 selected state、遮罩 / Escape 关闭、焦点恢复、横向溢出保护和 iPhone safe-area。底部导航仍保持“库存 | + | 我的”。

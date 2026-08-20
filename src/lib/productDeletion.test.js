@@ -19,8 +19,9 @@ function createClient({
   }],
   rpcError = null,
   removeError = null,
+  removeData = [],
 } = {}) {
-  const remove = vi.fn().mockResolvedValue({ error: removeError })
+  const remove = vi.fn().mockResolvedValue({ data: removeData, error: removeError })
   return {
     supabaseUrl: 'https://project.supabase.co',
     rpc: vi.fn().mockResolvedValue({ data: rpcData, error: rpcError }),
@@ -41,6 +42,26 @@ function product(overrides = {}) {
 }
 
 describe('deleteProductWithHistory', () => {
+  it('treats an absent user image as cleanup not needed', async () => {
+    const client = createClient({
+      rpcData: [{
+        outcome: 'deleted',
+        deleted_product_id: productId,
+        deleted_batch_count: 1,
+        user_image_url: null,
+      }],
+    })
+
+    const result = await deleteProductWithHistory({
+      supabaseClient: client,
+      userId,
+      product: product({ user_image_url: null }),
+    })
+
+    expect(result).toMatchObject({ outcome: 'deleted', cleanupStatus: 'not_needed' })
+    expect(client.remove).not.toHaveBeenCalled()
+  })
+
   it('does not remove storage when the database reports an active guard', async () => {
     const client = createClient({
       rpcData: [{
@@ -147,7 +168,12 @@ describe('deleteProductWithHistory', () => {
         product: product(overrides),
       })
 
-      expect(result.outcome).toBe('deleted')
+      expect(result.outcome).toBe(
+        overrides.user_image_url ? 'cleanup_pending' : 'deleted',
+      )
+      if (overrides.user_image_url) {
+        expect(result.cleanupReason).toBe('invalid_path')
+      }
       expect(client.remove).not.toHaveBeenCalled()
     }
   })
@@ -214,6 +240,57 @@ describe('deleteProductWithHistory', () => {
     expect(result.imagePath).toBe('user-1/product-1/image.jpg')
     expect(result.cleanupError).toMatchObject({ message: 'storage failed' })
   })
+
+  it('reports cleanup_pending when a returned user image cannot be safely resolved', async () => {
+    const client = createClient({
+      rpcData: [{
+        outcome: 'deleted',
+        deleted_product_id: productId,
+        deleted_batch_count: 1,
+        user_image_url: 'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1',
+      }],
+    })
+
+    const result = await deleteProductWithHistory({
+      supabaseClient: client,
+      userId,
+      product: product(),
+    })
+
+    expect(result).toMatchObject({
+      outcome: 'cleanup_pending',
+      cleanupStatus: 'pending',
+      cleanupReason: 'invalid_path',
+    })
+    expect(result.cleanupError).toBeInstanceOf(Error)
+    expect(client.remove).not.toHaveBeenCalled()
+  })
+
+  it('removes a real Production public URL even when Storage returns an empty data array', async () => {
+    const productionUserId = '11111111-1111-4111-8111-111111111111'
+    const productionProductId = '22222222-2222-4222-8222-222222222222'
+    const productionPath = `${productionUserId}/${productionProductId}/33333333-3333-4333-8333-333333333333.jpg`
+    const productionUrl = `https://abcdefghijklmnop.supabase.co/storage/v1/object/public/product-images/${productionPath}?download=1`
+    const client = createClient({
+      removeData: [],
+      rpcData: [{
+        outcome: 'deleted',
+        deleted_product_id: productionProductId,
+        deleted_batch_count: 1,
+        user_image_url: productionUrl,
+      }],
+    })
+    client.supabaseUrl = 'https://abcdefghijklmnop.supabase.co'
+
+    const result = await deleteProductWithHistory({
+      supabaseClient: client,
+      userId: productionUserId,
+      product: product({ id: productionProductId }),
+    })
+
+    expect(result).toMatchObject({ outcome: 'deleted', cleanupStatus: 'completed' })
+    expect(client.remove).toHaveBeenCalledWith([productionPath])
+  })
 })
 
 describe('checkProductActiveStatus', () => {
@@ -270,7 +347,7 @@ describe('retryProductImageCleanup', () => {
       imagePath: 'user-1/product-1/image.jpg',
     })
 
-    expect(result).toEqual({ ok: true, error: null })
+    expect(result).toEqual({ ok: true, error: null, data: [] })
     expect(client.remove).toHaveBeenCalledWith(['user-1/product-1/image.jpg'])
     expect(client.rpc).not.toHaveBeenCalled()
   })

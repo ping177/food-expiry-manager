@@ -246,6 +246,14 @@ insert into storage.buckets (id, name, public)
 values ('product-images', 'product-images', true)
 on conflict (id) do update set public = true;
 
+drop policy if exists "Users can read own product images" on storage.objects;
+create policy "Users can read own product images"
+on storage.objects for select to authenticated
+using (
+  bucket_id = 'product-images'
+  and (storage.foldername(name))[1] = (select auth.uid()::text)
+);
+
 drop policy if exists "Users can upload own product images" on storage.objects;
 create policy "Users can upload own product images"
 on storage.objects for insert to authenticated

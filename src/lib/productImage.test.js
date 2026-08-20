@@ -4,6 +4,7 @@ import {
   deleteProductUserImage,
   getOwnProductImagePath,
   getProductImageUrl,
+  resolveOwnProductImagePath,
   uploadAndReplaceProductImage,
   validateProductImageFile,
 } from './productImage'
@@ -11,16 +12,16 @@ import {
 const userId = 'user-1'
 const productId = 'product-1'
 
-function storageMock({ uploadError = null, removeError = null } = {}) {
+function storageMock({ uploadError = null, removeError = null, removeData = [] } = {}) {
   const upload = vi.fn().mockResolvedValue({ error: uploadError })
-  const remove = vi.fn().mockResolvedValue({ error: removeError })
+  const remove = vi.fn().mockResolvedValue({ data: removeData, error: removeError })
   const bucket = { upload, remove, getPublicUrl: vi.fn(() => ({ data: { publicUrl: 'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1/new.jpg' } })) }
   return { from: vi.fn(() => bucket), upload, remove }
 }
 
-function clientMock({ updateError = null, removeError = null } = {}) {
+function clientMock({ updateError = null, removeError = null, updatedUserImageUrl = 'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1/new.jpg' } = {}) {
   const storage = storageMock({ removeError })
-  const single = vi.fn().mockResolvedValue({ data: updateError ? null : { id: productId, user_image_url: 'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1/new.jpg' }, error: updateError })
+  const single = vi.fn().mockResolvedValue({ data: updateError ? null : { id: productId, user_image_url: updatedUserImageUrl }, error: updateError })
   const select = vi.fn(() => ({ single }))
   const eq = vi.fn(() => ({ select }))
   const update = vi.fn(() => ({ eq }))
@@ -73,6 +74,20 @@ describe('product image helpers', () => {
     )).toBe('')
   })
 
+  it('accepts the Supabase Production public URL shape with UUID path segments', () => {
+    const productionUserId = '11111111-1111-4111-8111-111111111111'
+    const productionProductId = '22222222-2222-4222-8222-222222222222'
+    const productionPath = `${productionUserId}/${productionProductId}/33333333-3333-4333-8333-333333333333.jpg`
+    const result = resolveOwnProductImagePath(
+      `https://abcdefghijklmnop.supabase.co/storage/v1/object/public/product-images/${productionPath}?download=1`,
+      productionUserId,
+      productionProductId,
+      'https://abcdefghijklmnop.supabase.co',
+    )
+
+    expect(result).toMatchObject({ status: 'valid', path: productionPath })
+  })
+
   it('cleans a newly uploaded object when database pointer update fails', async () => {
     const client = clientMock({ updateError: { message: 'db failed' } })
     await expect(uploadAndReplaceProductImage({ supabaseClient: client, userId, productId, file: {}, compress: vi.fn().mockResolvedValue({}) })).rejects.toThrow('图片资料保存失败')
@@ -90,13 +105,52 @@ describe('product image helpers', () => {
   })
 
   it('clears database pointer before reporting a storage cleanup failure', async () => {
-    const client = clientMock({ removeError: { message: 'cleanup failed' } })
+    const client = clientMock({ removeError: { message: 'cleanup failed' }, updatedUserImageUrl: null })
     const result = await deleteProductUserImage({
       supabaseClient: client, userId,
       product: { id: productId, user_image_url: 'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1/old.jpg' },
     })
-    expect(result.product.user_image_url).toBeTruthy()
+    expect(result.product.user_image_url).toBeNull()
+    expect(result.cleanupStatus).toBe('pending')
+    expect(result.cleanupReason).toBe('storage_error')
     expect(result.cleanupError).toEqual({ message: 'cleanup failed' })
     expect(client.storage.remove).toHaveBeenCalledWith(['user-1/product-1/old.jpg'])
+  })
+
+  it('reports an unverifiable user image instead of treating it as no cleanup', async () => {
+    const client = clientMock()
+    const result = await deleteProductUserImage({
+      supabaseClient: client,
+      userId,
+      product: {
+        id: productId,
+        user_image_url: 'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1',
+      },
+    })
+
+    expect(result.cleanupStatus).toBe('pending')
+    expect(result.cleanupReason).toBe('invalid_path')
+    expect(result.cleanupError).toBeInstanceOf(Error)
+    expect(client.storage.remove).not.toHaveBeenCalled()
+  })
+
+  it('clears a real Production public URL and invokes Storage remove', async () => {
+    const productionUserId = '11111111-1111-4111-8111-111111111111'
+    const productionProductId = '22222222-2222-4222-8222-222222222222'
+    const productionPath = `${productionUserId}/${productionProductId}/33333333-3333-4333-8333-333333333333.jpg`
+    const client = clientMock()
+    client.supabaseUrl = 'https://abcdefghijklmnop.supabase.co'
+    const result = await deleteProductUserImage({
+      supabaseClient: client,
+      userId: productionUserId,
+      product: {
+        id: productionProductId,
+        user_image_url: `https://abcdefghijklmnop.supabase.co/storage/v1/object/public/product-images/${productionPath}?download=1`,
+      },
+    })
+
+    expect(result.cleanupStatus).toBe('completed')
+    expect(result.cleanupError).toBeNull()
+    expect(client.storage.remove).toHaveBeenCalledWith([productionPath])
   })
 })

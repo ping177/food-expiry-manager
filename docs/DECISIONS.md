@@ -420,3 +420,19 @@
   删除、discarded UI、Category Navigation 或 cross-account 新账号 smoke。
 - 验收边界：Production migration 已验证，但 Production / iPhone PWA manual acceptance
   完成前，不声称 v0.3.2 已完成。
+
+## D-035：v0.3.2 standalone 与 Product deletion 共用 Storage cleanup primitive
+
+- 状态：已决定并完成本地修复；corrective migration 已部署并验证，Production manual acceptance 待执行
+- 日期：2026-08-20
+- 决策：将 `user_image_url` cleanup 统一为 tri-state owned-path resolver 与共享
+  `removeProductImagePath` primitive。无图片时不调用 Storage；可严格验证为当前用户 / Product
+  的 Production public URL 时必须调用 `remove([path])`；非空但无法安全验证的 URL 不得静默
+  当作成功，而是进入 cleanup pending / warning。
+- 失败语义：Product DB deletion 已提交后 Storage failure 保持 partial success，并在当前
+  会话仅对已验证的同一路径提供 retry；standalone 删除 / 换图先清除 DB pointer，但 cleanup
+  failure 同样必须可见并可重试。外部 `image_url` 永不传入 Storage remove。
+- 权限边界：Storage `remove()` 链路补充 authenticated owner-scoped `SELECT` policy，配合
+  既有 owner-scoped insert / update / delete policy；`20260820130000_add_product_image_select_policy.sql`
+  已由用户部署并验证，不修改已验收的 Product deletion RPC、FK、Product / batch RLS 或数据库
+  deletion contract。

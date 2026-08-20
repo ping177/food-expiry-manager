@@ -185,9 +185,16 @@ products (1) ──────< inventory_batches (N)
 - Product 与 batch 的 owner DELETE policy 保持不变；RPC 只授予 `authenticated` 执行，
   撤销 `public` / `anon` 执行。没有新增 CASCADE、没有改变 RLS 隔离。
 - 用户上传图片对象路径为
-  `{user_id}/{product_id}/{random_uuid}.jpg`，只有 URL origin、bucket marker、首段
-  `user_id` 和第二段 `product_id` 均严格匹配当前 Supabase 项目与待删 Product 时才
-  允许 Storage remove。`image_url` 始终视为外部回退图，不参与删除。
-- 当前代码与 migration 已部署到 Production；用户已完成 RPC 存在性、SECURITY INVOKER、
-  空 `search_path` 和 EXECUTE 权限验证。未执行 Product 删除业务数据操作；版本在
-  Production / iPhone PWA manual acceptance 完成前不标记 closed。
+  `{user_id}/{product_id}/{random_uuid}.jpg`。共享 resolver 将非空 `user_image_url`
+  分为 `none / valid / invalid`：只有 URL origin、bucket marker、首段 `user_id` 和第二段
+  `product_id` 均严格匹配当前 Supabase 项目与待删 Product 时才允许 Storage remove；
+  invalid 路径进入 cleanup pending / warning，不静默视为成功。`image_url` 始终视为外部
+  回退图，不参与删除。
+- `storage.objects` 需要 authenticated owner-scoped `SELECT` policy 才能让 Storage
+  remove 链路可靠工作；tracked corrective migration
+  `20260820130000_add_product_image_select_policy.sql` 已由用户部署并验证，与既有 owner-scoped
+  `INSERT` / `UPDATE` / `DELETE` policy 一并生效。
+- 初始 Product deletion RPC migration 已由用户部署并完成 RPC 存在性、SECURITY INVOKER、
+  空 `search_path` 和 EXECUTE 权限验证；当前 corrective fix 未修改 RPC、FK 或 Product / batch
+  RLS。未执行 Product 删除业务数据操作；版本在两条图片 cleanup 的 Production / iPhone
+  PWA manual acceptance 完成前不标记 closed。

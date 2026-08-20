@@ -820,9 +820,14 @@ export default function App() {
         setPendingProductCleanup({
           userId,
           productId: product.id,
-          imagePath: result.imagePath,
+          imagePath: result.imagePath ?? null,
+          cleanupReason: result.cleanupReason ?? 'storage_error',
         })
-        setMessage('商品及历史批次已删除，但用户图片清理失败；可在本次会话中重试。')
+        setMessage(
+          result.cleanupReason === 'invalid_path'
+            ? '商品及历史批次已删除，但无法安全定位用户图片；未尝试删除，请检查 Storage。'
+            : '商品及历史批次已删除，但用户图片清理失败；可在本次会话中重试。',
+        )
       } else {
         setPendingProductCleanup(null)
         setMessage('整个商品及历史批次已删除。')
@@ -839,7 +844,7 @@ export default function App() {
   }
 
   async function handleRetryProductCleanup() {
-    if (!pendingProductCleanup || productCleanupBusy) return false
+    if (!pendingProductCleanup?.imagePath || productCleanupBusy) return false
 
     const retryUserId = pendingProductCleanup.userId
     setProductCleanupBusy(true)
@@ -876,9 +881,28 @@ export default function App() {
         previousUserImageUrl: product.user_image_url,
       })
       setBatches((current) => applyProductUpdateToBatches(current, result.product))
-      setMessage(result.cleanupError ? '图片已更换，但旧图片清理失败，可稍后重试。' : '商品图片已更新。')
+      if (result.cleanupError) {
+        setPendingProductCleanup({
+          userId: session.user.id,
+          productId: product.id,
+          imagePath: result.cleanupPath ?? null,
+          cleanupReason: result.cleanupReason ?? 'storage_error',
+        })
+        setMessage(
+          result.cleanupReason === 'invalid_path'
+            ? '图片已更换，但无法安全定位旧图片；未尝试删除，请检查 Storage。'
+            : '图片已更换，但旧图片清理失败；可在本次会话中重试。',
+        )
+      } else {
+        setPendingProductCleanup(null)
+        setMessage('商品图片已更新。')
+      }
       await loadBatches()
-      return { ok: true, cleanupError: result.cleanupError }
+      return {
+        ok: true,
+        cleanupError: result.cleanupError,
+        cleanupStatus: result.cleanupStatus,
+      }
     } catch (imageError) {
       setError(imageError.message)
       return { ok: false }
@@ -897,9 +921,28 @@ export default function App() {
         product,
       })
       setBatches((current) => applyProductUpdateToBatches(current, result.product))
-      setMessage(result.cleanupError ? '已恢复外部图片，但旧上传图片清理失败，可稍后重试。' : '已删除用户图片。')
+      if (result.cleanupError) {
+        setPendingProductCleanup({
+          userId: session.user.id,
+          productId: product.id,
+          imagePath: result.cleanupPath ?? null,
+          cleanupReason: result.cleanupReason ?? 'storage_error',
+        })
+        setMessage(
+          result.cleanupReason === 'invalid_path'
+            ? '已恢复外部图片，但无法安全定位旧上传图片；未尝试删除，请检查 Storage。'
+            : '已恢复外部图片，但旧上传图片清理失败；可在本次会话中重试。',
+        )
+      } else {
+        setPendingProductCleanup(null)
+        setMessage('已删除用户图片。')
+      }
       await loadBatches()
-      return { ok: true, cleanupError: result.cleanupError }
+      return {
+        ok: true,
+        cleanupError: result.cleanupError,
+        cleanupStatus: result.cleanupStatus,
+      }
     } catch (imageError) {
       setError(imageError.message)
       return { ok: false }
@@ -1016,7 +1059,7 @@ export default function App() {
         {message && (
           <div className="mb-4 rounded-2xl bg-mint px-4 py-3 text-sm text-leaf">
             <p>{message}</p>
-            {pendingProductCleanup && (
+            {pendingProductCleanup?.imagePath && (
               <button
                 className="mt-3 rounded-xl border border-leaf px-3 py-2 font-semibold text-leaf disabled:opacity-50"
                 disabled={productCleanupBusy}

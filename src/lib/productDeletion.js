@@ -1,6 +1,6 @@
 import {
-  PRODUCT_IMAGE_BUCKET,
-  getOwnProductImagePath,
+  removeOwnProductImage,
+  removeProductImagePath,
 } from './productImage'
 
 const PRODUCT_DELETE_OUTCOMES = new Set([
@@ -88,17 +88,6 @@ function isVerifiedProductImagePath(path, userId, productId) {
   )
 }
 
-async function removeProductImagePath(supabaseClient, imagePath) {
-  try {
-    const { error } = await supabaseClient.storage
-      .from(PRODUCT_IMAGE_BUCKET)
-      .remove([imagePath])
-    return error || null
-  } catch (error) {
-    return error
-  }
-}
-
 export async function deleteProductWithHistory({
   supabaseClient,
   userId,
@@ -132,24 +121,26 @@ export async function deleteProductWithHistory({
     return { ...row, outcome: row.outcome }
   }
 
-  const imagePath = getOwnProductImagePath(
-    row.user_image_url,
+  const cleanup = await removeOwnProductImage({
+    storage: supabaseClient.storage,
+    url: row.user_image_url,
     userId,
-    product.id,
-    supabaseClient.supabaseUrl,
-  )
+    productId: product.id,
+    expectedSupabaseUrl: supabaseClient.supabaseUrl,
+  })
 
-  if (!imagePath) {
+  if (cleanup.cleanupStatus === 'not_needed') {
     return { ...row, outcome: 'deleted', cleanupStatus: 'not_needed' }
   }
 
-  const cleanupError = await removeProductImagePath(supabaseClient, imagePath)
-  if (cleanupError) {
+  if (cleanup.cleanupStatus === 'pending') {
     return {
       ...row,
       outcome: 'cleanup_pending',
-      imagePath,
-      cleanupError,
+      cleanupStatus: 'pending',
+      cleanupReason: cleanup.cleanupReason,
+      imagePath: cleanup.cleanupPath,
+      cleanupError: cleanup.cleanupError,
     }
   }
 
@@ -157,7 +148,7 @@ export async function deleteProductWithHistory({
     ...row,
     outcome: 'deleted',
     cleanupStatus: 'completed',
-    imagePath,
+    imagePath: cleanup.cleanupPath,
   }
 }
 
@@ -171,6 +162,9 @@ export async function retryProductImageCleanup({
     return { ok: false, error: new Error('图片路径无效。') }
   }
 
-  const cleanupError = await removeProductImagePath(supabaseClient, imagePath)
-  return { ok: !cleanupError, error: cleanupError }
+  const { data, error } = await removeProductImagePath(
+    supabaseClient.storage,
+    imagePath,
+  )
+  return { ok: !error, error, data }
 }

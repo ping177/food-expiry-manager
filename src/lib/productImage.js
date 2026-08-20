@@ -69,21 +69,29 @@ export async function compressProductImage(file) {
   return new File([blob], 'product-image.jpg', { type: 'image/jpeg' })
 }
 
-export function getOwnProductImagePath(
+function invalidProductImagePath(error = new Error('无法安全确认用户图片路径。')) {
+  return { status: 'invalid', path: '', error }
+}
+
+export function resolveOwnProductImagePath(
   url,
   userId,
   productId,
   expectedSupabaseUrl,
 ) {
-  if (!url || !userId || !productId || !expectedSupabaseUrl) return ''
+  if (!url) return { status: 'none', path: '', error: null }
+  if (!userId || !productId || !expectedSupabaseUrl) {
+    return invalidProductImagePath()
+  }
+
   try {
     const parsedUrl = new URL(url)
     const expectedOrigin = new URL(expectedSupabaseUrl).origin
-    if (parsedUrl.origin !== expectedOrigin) return ''
+    if (parsedUrl.origin !== expectedOrigin) return invalidProductImagePath()
 
     const path = decodeURIComponent(parsedUrl.pathname)
     const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`
-    if (!path.startsWith(marker)) return ''
+    if (!path.startsWith(marker)) return invalidProductImagePath()
 
     const objectPath = path.slice(marker.length)
     const segments = objectPath.split('/')
@@ -93,19 +101,91 @@ export function getOwnProductImagePath(
       segments[1] !== productId ||
       segments.some((segment) => !segment || segment === '.' || segment === '..')
     ) {
-      return ''
+      return invalidProductImagePath()
     }
 
-    return objectPath
+    return { status: 'valid', path: objectPath, error: null }
   } catch {
-    return ''
+    return invalidProductImagePath()
   }
 }
 
-async function removePath(storage, path) {
-  if (!path) return null
-  const { error } = await storage.from(PRODUCT_IMAGE_BUCKET).remove([path])
-  return error || null
+export function getOwnProductImagePath(
+  url,
+  userId,
+  productId,
+  expectedSupabaseUrl,
+) {
+  const result = resolveOwnProductImagePath(
+    url,
+    userId,
+    productId,
+    expectedSupabaseUrl,
+  )
+  return result.status === 'valid' ? result.path : ''
+}
+
+export async function removeProductImagePath(storage, path) {
+  if (!storage || !path) {
+    return { data: null, error: new Error('图片路径无效。') }
+  }
+
+  try {
+    const response = await storage.from(PRODUCT_IMAGE_BUCKET).remove([path])
+    if (!response || typeof response !== 'object') {
+      return { data: null, error: new Error('图片清理结果无效。') }
+    }
+    return {
+      data: response.data ?? null,
+      error: response.error ?? null,
+    }
+  } catch (error) {
+    return { data: null, error }
+  }
+}
+
+export async function removeOwnProductImage({
+  storage,
+  url,
+  userId,
+  productId,
+  expectedSupabaseUrl,
+}) {
+  const target = resolveOwnProductImagePath(
+    url,
+    userId,
+    productId,
+    expectedSupabaseUrl,
+  )
+
+  if (target.status === 'none') {
+    return {
+      cleanupStatus: 'not_needed',
+      cleanupReason: null,
+      cleanupPath: null,
+      cleanupError: null,
+      data: null,
+    }
+  }
+
+  if (target.status !== 'valid') {
+    return {
+      cleanupStatus: 'pending',
+      cleanupReason: 'invalid_path',
+      cleanupPath: null,
+      cleanupError: target.error,
+      data: null,
+    }
+  }
+
+  const { data, error } = await removeProductImagePath(storage, target.path)
+  return {
+    cleanupStatus: error ? 'pending' : 'completed',
+    cleanupReason: error ? 'storage_error' : null,
+    cleanupPath: target.path,
+    cleanupError: error,
+    data,
+  }
 }
 
 export async function uploadAndReplaceProductImage({
@@ -129,18 +209,24 @@ export async function uploadAndReplaceProductImage({
     .select('id, barcode, name, brand, size_value, size_unit, image_url, user_image_url, category, source')
     .single()
   if (updateError) {
-    await removePath(storage, path)
+    await removeProductImagePath(storage, path)
     throw new Error('图片资料保存失败，请稍后重试。')
   }
 
-  const oldPath = getOwnProductImagePath(
-    previousUserImageUrl,
+  const cleanup = await removeOwnProductImage({
+    storage,
+    url: previousUserImageUrl,
     userId,
     productId,
-    supabaseClient.supabaseUrl,
-  )
-  const cleanupError = await removePath(storage, oldPath)
-  return { product, cleanupError }
+    expectedSupabaseUrl: supabaseClient.supabaseUrl,
+  })
+  return {
+    product,
+    cleanupError: cleanup.cleanupError,
+    cleanupStatus: cleanup.cleanupStatus,
+    cleanupReason: cleanup.cleanupReason,
+    cleanupPath: cleanup.cleanupPath,
+  }
 }
 
 export async function deleteProductUserImage({ supabaseClient, userId, product }) {
@@ -152,14 +238,18 @@ export async function deleteProductUserImage({ supabaseClient, userId, product }
     .select('id, barcode, name, brand, size_value, size_unit, image_url, user_image_url, category, source')
     .single()
   if (updateError) throw new Error('图片资料保存失败，请稍后重试。')
-  const cleanupError = await removePath(
-    supabaseClient.storage,
-    getOwnProductImagePath(
-      previousUserImageUrl,
-      userId,
-      product.id,
-      supabaseClient.supabaseUrl,
-    ),
-  )
-  return { product: updatedProduct, cleanupError }
+  const cleanup = await removeOwnProductImage({
+    storage: supabaseClient.storage,
+    url: previousUserImageUrl,
+    userId,
+    productId: product.id,
+    expectedSupabaseUrl: supabaseClient.supabaseUrl,
+  })
+  return {
+    product: updatedProduct,
+    cleanupError: cleanup.cleanupError,
+    cleanupStatus: cleanup.cleanupStatus,
+    cleanupReason: cleanup.cleanupReason,
+    cleanupPath: cleanup.cleanupPath,
+  }
 }

@@ -121,6 +121,14 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain('onDeleteProduct={handleDeleteProduct}')
   })
 
+  it('keeps standalone image cleanup failures visible and retryable when a path is safe', () => {
+    expect(appSource).toContain('cleanupStatus: result.cleanupStatus')
+    expect(appSource).toContain('cleanupReason: result.cleanupReason')
+    expect(appSource).toContain('pendingProductCleanup?.imagePath')
+    expect(appSource).toContain('无法安全定位旧上传图片')
+    expect(appSource).toContain('可在本次会话中重试')
+  })
+
   it('hardens consume and mark-consumed writes against zero-row updates', () => {
     expect(appSource).toContain(".eq('quantity', 0)")
     expect(appSource).toContain('requireAffectedBatch(updatedBatch)')
