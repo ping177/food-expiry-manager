@@ -1,11 +1,13 @@
 import { formatProductSize } from '../lib/productSize'
 import { getProductImageUrl } from '../lib/productImage'
+import { getArchiveStatusLabel } from '../lib/inventory'
 
 export default function ArchiveBatchCard({ batch, onSelect }) {
   const product = batch.product
   const category = product?.category || '未分类'
   const size = formatProductSize(product)
   const imageUrl = getProductImageUrl(product)
+  const statusLabel = getArchiveStatusLabel(batch.status)
 
   return (
     <article className="rounded-2xl border border-white/70 bg-white shadow-card">
@@ -60,7 +62,7 @@ export default function ArchiveBatchCard({ batch, onSelect }) {
                 <span className="ml-2 text-ink">{batch.expiry_date}</span>
               </p>
               <span className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-                已消耗
+                {statusLabel}
               </span>
             </div>
           </div>

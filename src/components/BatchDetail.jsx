@@ -7,6 +7,7 @@ import {
 } from '../lib/productEdit'
 import ProductImagePicker from './ProductImagePicker'
 import { getProductImageUrl } from '../lib/productImage'
+import { getArchiveStatusLabel } from '../lib/inventory'
 import { formatProductSize, PRODUCT_SIZE_UNITS } from '../lib/productSize'
 import ArchiveBatchActions from './ArchiveBatchActions'
 import InventoryOperationPanel from './InventoryOperationPanel'
@@ -64,6 +65,7 @@ export default function BatchDetail({
   const product = batch.product
   const imageUrl = getProductImageUrl(product)
   const size = formatProductSize(product)
+  const archiveStatusLabel = getArchiveStatusLabel(batch.status)
   const [pendingImageFile, setPendingImageFile] = useState(null)
   const [imagePickerKey, setImagePickerKey] = useState(0)
 
@@ -177,7 +179,7 @@ export default function BatchDetail({
             )}
             {archiveMode && (
               <span className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-                已消耗
+                {archiveStatusLabel}
               </span>
             )}
           </div>
@@ -318,7 +320,7 @@ export default function BatchDetail({
           <p className="mt-1 font-bold text-ink">{batch.expiry_date}</p>
           {archiveMode ? (
             <span className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
-              已消耗
+              {archiveStatusLabel}
             </span>
           ) : (
             <span

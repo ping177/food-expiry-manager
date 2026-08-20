@@ -14,7 +14,7 @@ export default function ArchivePage({
   searchQuery,
 }) {
   const archivedBatches = filterInventoryBatches(batches, {
-    status: 'consumed',
+    status: ['consumed', 'discarded'],
     expiryWindow: 'all',
     category: categoryFilter,
     search: searchQuery,
@@ -85,7 +85,7 @@ export default function ArchivePage({
         <div className="rounded-3xl border border-dashed border-slate-300 bg-white/60 px-6 py-12 text-center">
           <p className="text-lg font-bold text-ink">还没有已归档批次</p>
           <p className="mt-2 text-sm text-slate-500">
-            明确标记为已消耗的库存会出现在这里。
+            已消耗或已删除的批次会出现在这里。
           </p>
         </div>
       ) : !error && archivedBatches.length === 0 ? (

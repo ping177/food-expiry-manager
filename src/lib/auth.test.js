@@ -31,17 +31,19 @@ function createDeferred() {
 function createQueryFromPromise(promise) {
   promise.select = vi.fn(() => promise)
   promise.eq = vi.fn(() => promise)
+  promise.in = vi.fn(() => promise)
   promise.order = vi.fn(() => promise)
   return promise
 }
 
 describe('auth helpers', () => {
-  it('keeps active inventory ordering and supports consumed archive ordering', () => {
+  it('keeps active inventory ordering and queries both archived statuses', () => {
     const queries = []
     const createQuery = () => {
       const query = Promise.resolve({ data: [], error: null })
       query.select = vi.fn(() => query)
       query.eq = vi.fn(() => query)
+      query.in = vi.fn(() => query)
       query.order = vi.fn(() => query)
       queries.push(query)
       return query
@@ -50,7 +52,7 @@ describe('auth helpers', () => {
 
     createInventoryBatchesQuery(supabaseClient)
     createInventoryBatchesQuery(supabaseClient, {
-      status: 'consumed',
+      statuses: ['consumed', 'discarded'],
       orderBy: 'updated_at',
       ascending: false,
     })
@@ -59,7 +61,10 @@ describe('auth helpers', () => {
     expect(queries[0].order).toHaveBeenCalledWith('expiry_date', {
       ascending: true,
     })
-    expect(queries[1].eq).toHaveBeenCalledWith('status', 'consumed')
+    expect(queries[1].in).toHaveBeenCalledWith('status', [
+      'consumed',
+      'discarded',
+    ])
     expect(queries[1].order).toHaveBeenCalledWith('updated_at', {
       ascending: false,
     })

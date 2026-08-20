@@ -30,9 +30,11 @@ export function filterInventoryBatches(
     today = new Date(),
   } = {},
 ) {
+  const allowedStatuses = Array.isArray(status) ? status : [status]
+
   return batches.filter(
     (batch) =>
-      (batch.status ?? 'active') === status &&
+      allowedStatuses.includes(batch.status ?? 'active') &&
       matchesExpiryWindow(batch, expiryWindow, today) &&
       matchesCategory(batch, category) &&
       matchesSearch(batch, search),

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   createConsumedStatusUpdate,
   decrementQuantity,
+  getArchiveStatusLabel,
   prepareInventoryOperationUpdate,
   planInventoryAddition,
   consumeQuantity,
@@ -131,6 +132,13 @@ describe('createConsumedStatusUpdate', () => {
     expect(() => createConsumedStatusUpdate(1)).toThrow(
       '只有库存为 0 时才能标记为已消耗',
     )
+  })
+})
+
+describe('getArchiveStatusLabel', () => {
+  it('distinguishes consumed and discarded archive statuses', () => {
+    expect(getArchiveStatusLabel('consumed')).toBe('已消耗')
+    expect(getArchiveStatusLabel('discarded')).toBe('已删除')
   })
 })
 

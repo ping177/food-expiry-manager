@@ -32,4 +32,21 @@ describe('ArchiveBatchCard', () => {
     expect(html).not.toContain('剩余 0 件')
     expect(html).not.toContain('已过期')
   })
+
+  it('labels a discarded batch as 已删除', () => {
+    const html = renderToStaticMarkup(
+      <ArchiveBatchCard
+        batch={{
+          ...batch,
+          id: 'discarded-batch-1',
+          status: 'discarded',
+          product: { ...batch.product, name: '已删除鸡肉猫罐头' },
+        }}
+        onSelect={vi.fn()}
+      />,
+    )
+
+    expect(html).toContain('已删除')
+    expect(html).not.toContain('已消耗')
+  })
 })

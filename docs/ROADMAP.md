@@ -141,15 +141,28 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 
 ## v0.3.2：Product Deletion & Storage Cleanup
 
-- 状态：初始 RPC 与 Storage cleanup corrective migration 已部署并验证；Production / iPhone
-  PWA 两条图片流程复验尚未执行
+- 状态：已完成并关闭。初始 RPC 与 Storage cleanup corrective migration 已部署并验证；
+  standalone 用户图片删除、整个 Product 删除后的 Storage object 清理，以及 Product
+  仍有 active batch 时的删除禁止均已完成 Production / iPhone PWA 复验
 - Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留
 - Product 仍有 active batch 时，禁止删除整个 Product
 - 没有 active batch 时，允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象
 - 外部 `image_url` 不尝试删除外部资源
 - 使用数据库内原子 RPC 完成 active guard、历史 batch 删除和 Product 删除；数据库提交后
   再清理自己 Storage 对象，失败时提供当前会话显式重试
-- 本次未执行 Product 删除等 production data 操作；仅记录用户已完成的 migration / RPC catalog 验证
+- 初始 migration 阶段未由 Codex 执行 Product 删除等 production data 操作；随后用户完成
+  standalone 图片删除、whole Product 删除与 active guard 的真实 Production / iPhone PWA 复验并 PASS
+
+## v0.3.3：Discarded Batch Archive Flow
+
+- 状态：本地实现、自动化验证与生产构建已完成；Production / iPhone PWA 人工验收待执行
+- 当前 active batch 的“删除当前库存批次”只更新 `status='discarded'`，不执行数据库 DELETE，
+  不删除 Product、图片或其他 batch
+- Archive 同时查询 `consumed` 与 `discarded`；分别显示“已消耗”和“已删除”，继续支持搜索、
+  分类和 `updated_at DESC` 排序
+- Archive 中的“删除历史批次”继续对 `consumed / discarded` 执行真正 hard delete
+- Product deletion 继续使用 v0.3.2 RPC、active guard 和 Storage cleanup contract
+- 复用现有 status 约束，无需新增 migration、数据表、恢复流程、回收站或批量删除
 
 ## 后续候选：Category Navigation
 

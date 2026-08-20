@@ -82,25 +82,39 @@ describe('App auth integration source guards', () => {
     expect(appSource).not.toContain('function handleDecrement')
   })
 
-  it('deletes only the current owned inventory batch and treats zero rows as a failure', () => {
-    expect(appSource).toContain('function handleDeleteBatch(batchId)')
-    expect(appSource).toContain(".from('inventory_batches')")
+  it('discards the current owned inventory batch instead of hard deleting it', () => {
+    const deleteBatchSource = appSource.slice(
+      appSource.indexOf('async function discardBatch'),
+      appSource.indexOf('async function deleteArchivedBatch'),
+    )
+
+    expect(deleteBatchSource).toContain(".from('inventory_batches')")
+    expect(deleteBatchSource).toContain(".update({ status: 'discarded' })")
+    expect(deleteBatchSource).not.toContain('.delete()')
+    expect(deleteBatchSource).toContain(".eq('id', batchId)")
+    expect(deleteBatchSource).toContain(".eq('user_id', session.user.id)")
+    expect(deleteBatchSource).toContain(".eq('status', 'active')")
+    expect(deleteBatchSource).toContain(".select('id')")
+    expect(deleteBatchSource).toContain('.maybeSingle()')
+    expect(deleteBatchSource).toContain('批次已不存在或无权删除')
+    expect(deleteBatchSource).toContain('删除库存批次失败：${updateError.message}')
+    expect(deleteBatchSource).toContain('setSelectedBatchId(null)')
+    expect(deleteBatchSource).toContain("setView('home')")
+    expect(appSource).toContain('async function deleteArchivedBatch')
     expect(appSource).toContain('.delete()')
-    expect(appSource).toContain(".eq('id', batchId)")
-    expect(appSource).toContain(".eq('user_id', session.user.id)")
-    expect(appSource).toContain(".eq('status', 'active')")
-    expect(appSource).toContain(".eq('status', 'consumed')")
-    expect(appSource).toContain(".select('id')")
-    expect(appSource).toContain('.maybeSingle()')
-    expect(appSource).toContain('批次已不存在或无权删除')
-    expect(appSource).toContain('删除库存批次失败：${deleteError.message}')
-    expect(appSource).toContain('setSelectedBatchId(null)')
-    expect(appSource).toContain("setView('home')")
+    expect(appSource).toContain(".in('status', ['consumed', 'discarded'])")
+    const archivedDeleteSource = appSource.slice(
+      appSource.indexOf('async function deleteArchivedBatch'),
+      appSource.indexOf('function handleDeleteBatch'),
+    )
+    expect(archivedDeleteSource).toContain('.delete()')
+    expect(archivedDeleteSource).toContain(".in('status', ['consumed', 'discarded'])")
+    expect(archivedDeleteSource).not.toContain(".update({ status: 'discarded' })")
   })
 
-  it('keeps Archive in a separate consumed query and navigation state', () => {
+  it('keeps Archive in a separate consumed and discarded query and navigation state', () => {
     expect(appSource).toContain('archivedBatches')
-    expect(appSource).toContain("status: 'consumed'")
+    expect(appSource).toContain("statuses: ['consumed', 'discarded']")
     expect(appSource).toContain("orderBy: 'updated_at'")
     expect(appSource).toContain("view === 'archive'")
     expect(appSource).toContain('SidebarDrawer')

@@ -203,9 +203,15 @@ export async function signOutCurrentUser(supabaseClient) {
 
 export function createInventoryBatchesQuery(
   supabaseClient,
-  { status = 'active', orderBy = 'expiry_date', ascending = true } = {},
+  {
+    status = 'active',
+    statuses = null,
+    orderBy = 'expiry_date',
+    ascending = true,
+  } = {},
 ) {
-  return supabaseClient
+  const statusValues = statuses ?? (Array.isArray(status) ? status : [status])
+  const query = supabaseClient
     .from('inventory_batches')
     .select(
       `
@@ -234,8 +240,13 @@ export function createInventoryBatchesQuery(
         )
       `,
     )
-    .eq('status', status)
-    .order(orderBy, { ascending })
+
+  const statusQuery =
+    statusValues.length === 1
+      ? query.eq('status', statusValues[0])
+      : query.in('status', statusValues)
+
+  return statusQuery.order(orderBy, { ascending })
 }
 
 export async function loadInventoryBatchesForSession({
@@ -243,6 +254,7 @@ export async function loadInventoryBatchesForSession({
   session,
   getCurrentUserId,
   status = 'active',
+  statuses = null,
   orderBy = 'expiry_date',
   ascending = true,
 }) {
@@ -253,6 +265,7 @@ export async function loadInventoryBatchesForSession({
 
   const { data, error } = await createInventoryBatchesQuery(supabaseClient, {
     status,
+    statuses,
     orderBy,
     ascending,
   })

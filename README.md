@@ -124,7 +124,7 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前正式版本为 v0.3.2 — Product Deletion & Storage Cleanup（初始 RPC migration 与 Storage cleanup corrective migration 均已部署并验证；Production / iPhone PWA 两条图片流程复验待执行）。v0.3.1 Archive 的 Production / iPhone PWA 人工验收 1–9 项已全部通过。v0.3.2 保留历史 batch 删除，并新增带数据库权威 active guard 的 Product 删除与自有 Storage cleanup；Category Navigation 顺延到后续版本，具体版本号尚未冻结。
+当前正式版本为 v0.3.3 — Discarded Batch Archive Flow。v0.3.2 Product Deletion & Storage Cleanup 已完成 Production 复验：standalone 用户图片删除、整个 Product 删除后的 Storage object 清理，以及 active guard 均通过。v0.3.3 将当前批次删除改为 `active → discarded`，并让 discarded 与 consumed 一起进入 Archive；Category Navigation 顺延到后续版本，具体版本号尚未冻结。
 
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 

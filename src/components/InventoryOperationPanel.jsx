@@ -260,9 +260,9 @@ export default function InventoryOperationPanel({
           <div className="mt-3 space-y-3 rounded-2xl bg-red-50 p-4">
             <h5 className="font-semibold text-danger">确认删除当前库存批次？</h5>
             <p className="text-sm leading-6 text-slate-600">
-              将删除当前库存批次；商品信息、商品图片和其他库存批次都会保留。
+              当前批次会移入已归档并标记为已删除；商品信息、商品图片和其他库存批次都会保留。
             </p>
-            <p className="text-sm font-semibold text-danger">此操作不可恢复。</p>
+            <p className="text-sm font-semibold text-danger">当前版本不支持恢复该批次。</p>
             <div className="grid grid-cols-2 gap-2">
               <button
                 className="rounded-xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700"

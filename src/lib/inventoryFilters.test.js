@@ -205,4 +205,50 @@ describe('filterInventoryBatches', () => {
       ).map((batch) => batch.id),
     ).toEqual(['archived-cat-can'])
   })
+
+  it('filters consumed and discarded batches together while excluding active batches', () => {
+    expect(
+      filterInventoryBatches(
+        [
+          {
+            id: 'consumed-cat-can',
+            status: 'consumed',
+            expiry_date: '2026-04-01',
+            product: {
+              name: '已消耗鸡肉猫罐头',
+              brand: 'MjAMjAM',
+              category: '猫罐头',
+            },
+          },
+          {
+            id: 'discarded-cat-can',
+            status: 'discarded',
+            expiry_date: '2026-04-02',
+            product: {
+              name: '已删除鸡肉猫罐头',
+              brand: 'MjAMjAM',
+              category: '猫罐头',
+            },
+          },
+          {
+            id: 'active-cat-can',
+            status: 'active',
+            expiry_date: '2026-04-03',
+            product: {
+              name: '当前鸡肉猫罐头',
+              brand: 'MjAMjAM',
+              category: '猫罐头',
+            },
+          },
+        ],
+        {
+          status: ['consumed', 'discarded'],
+          expiryWindow: 'all',
+          category: '猫罐头',
+          search: 'mjamjam',
+          today,
+        },
+      ).map((batch) => batch.id),
+    ).toEqual(['consumed-cat-can', 'discarded-cat-can'])
+  })
 })

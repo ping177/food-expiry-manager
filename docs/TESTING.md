@@ -11,7 +11,7 @@
 
 ## 自动化测试
 
-使用 Vitest。当前完整自动化验收结果为 26 个测试文件、228 个测试通过；其中
+使用 Vitest。当前完整自动化验收结果为 26 个测试文件、234 个测试通过；其中
 包含 v0.3.1 Archive / drawer、consumed 详情只读、历史 batch 删除边界、状态更新
 0-row 防误报，以及既有 B1 三态详情、库存新增合并/新批次、库存消耗确认和当前
 batch 删除确认边界。
@@ -79,7 +79,7 @@ RPC / 权限 catalog 验证；接下来只需使用现有测试 Product 做下�
 6. Storage remove 失败时，数据库删除已经成功且 UI 明确显示 cleanup pending；当前会话
    重试只调用 Storage remove，不重试 destructive RPC。
 7. RPC / DB 错误或 0-row / stale response 不显示成功，也不触发 Storage remove。
-8. 现有“删除历史批次”仍只删除当前 consumed batch，Product、图片、其他 batch 均保留。
+8. 现有“删除历史批次”仍只删除当前 consumed / discarded batch，Product、图片、其他 batch 均保留。
 
 ### Production catalog preflight（只读）
 
@@ -135,7 +135,9 @@ order by tablename, policyname;
 - PASS：函数为 `SECURITY INVOKER`，`search_path` 为空。
 - PASS：`authenticated` 拥有 EXECUTE；`anon` / `PUBLIC` 无 EXECUTE。
 - PASS：`postgres` / `service_role` 后台权限保留，无需调整。
-- Pending：Production / iPhone PWA manual acceptance；尚未执行 Product 删除业务数据操作。
+- PASS：用户已完成 Production / iPhone PWA corrective revalidation：standalone 用户图片删除后
+  Storage object 实际消失；删除整个 Product 后对应 Storage object 实际消失；Product 仍有
+  active batch 时整 Product 删除被禁止。未由 Codex 执行 Product 删除业务数据操作。
 
 ### v0.3.2 Storage cleanup corrective regression（2026-08-20）
 
@@ -148,7 +150,8 @@ order by tablename, policyname;
 - 新增 `supabase/migrations/20260820130000_add_product_image_select_policy.sql`，补充
   authenticated owner-scoped `storage.objects` SELECT policy；用户已在 Production 验证
   `product-images` 的 owner-scoped INSERT / UPDATE / DELETE / SELECT policies，未修改 Product
-  deletion RPC。前端 Production 发布确认与两条图片 cleanup 复验仍待执行。
+  deletion RPC。用户已完成 standalone / whole Product 图片 cleanup 与 active guard 的
+  Production / iPhone PWA 复验并 PASS。
 - 定向验证：`src/lib/productImage.test.js`、`src/lib/productDeletion.test.js`、
   `src/App.test.jsx`、`tests/product-image-storage-policy.test.js` 共 4 个测试文件 / 43 个
   测试通过；完整 `npm test` 26 个测试文件 / 228 个测试通过，`npm run build` 与
@@ -179,14 +182,45 @@ order by tablename, policyname;
 8. 不创建第二账号；cross-account smoke 继续 deferred，除非本次真实修改 RLS（本次
    不修改）。
 
+## v0.3.3 Discarded Batch Archive Flow 自动化覆盖
+
+- `src/lib/auth.test.js`：active query 继续只取 `status='active'`；Archive 使用
+  `status in ('consumed', 'discarded')` 与 `updated_at DESC`。
+- `src/lib/inventory.test.js`、`src/lib/inventoryFilters.test.js`：状态文案区分、双状态
+  筛选和 active 隔离。
+- `src/components/ArchivePage.test.jsx`、`src/components/ArchiveBatchCard.test.jsx`、
+  `src/components/BatchDetail.test.jsx`：consumed / discarded 卡片和详情分别显示“已消耗 /
+  已删除”。
+- `src/App.test.jsx`：当前 active 删除只执行 owner-scoped `UPDATE status='discarded'` 并检查
+  0-row；Archive 删除才对 consumed / discarded 执行 hard delete；其他 active batch 由
+  batch id 条件保持隔离。
+- Product deletion RPC、Storage cleanup、active guard 与现有 Archive / active 回归测试继续
+  保持在完整测试中。
+- v0.3.3 定向验证：8 个测试文件 / 95 个测试通过；完整 `npm test`：26 个测试文件 / 234 个
+  测试通过；`npm run build` 与 `git diff --check` 通过。测试仅使用本地 fixtures 与 source
+  contracts，不访问 Supabase 或 Production data。
+
+### v0.3.3 Production / iPhone PWA 人工验收
+
+完成发布后按以下顺序验收：
+
+1. 在库存详情确认“删除当前库存批次”，检查确认文案说明会进入 Archive 并标记“已删除”。
+2. 刷新库存，确认该 batch 不再出现；同商品其他 active batch 与 Product、图片均保留。
+3. 打开 Archive，确认该 batch 与 consumed batch 同时出现，卡片状态分别为“已删除 / 已消耗”。
+4. 用搜索和分类筛选分别命中两种状态；确认排序仍按最近归档更新时间优先。
+5. 打开 discarded detail，确认只读、状态为“已删除”，可取消或确认“删除历史批次”。
+6. 确认 discarded 与 consumed 历史 batch 均可 hard delete，Product、图片和其他 batch 不受影响。
+7. 重复 v0.3.2 Product deletion / Storage cleanup smoke 的 active guard、历史清理和图片回退
+   回归；不执行恢复、批量删除或独立“已删除”导航验收。
+
 ## v0.3.1 Archive & Navigation 自动化覆盖
 
-- `src/lib/auth.test.js`：active query 默认只取 `status='active'`；Archive query 使用 `status='consumed'`、`updated_at DESC`。
-- `src/lib/inventoryFilters.test.js`、`src/components/ArchivePage.test.jsx`：Archive 搜索 / 分类只作用 consumed 数据，不带入 active 批次或临期时间窗口，并覆盖 loading、error、empty。
+- `src/lib/auth.test.js`：active query 默认只取 `status='active'`；v0.3.1 Archive 基线使用 `status='consumed'`、`updated_at DESC`，现由 v0.3.3 双状态查询覆盖。
+- `src/lib/inventoryFilters.test.js`、`src/components/ArchivePage.test.jsx`：Archive 搜索 / 分类只作用历史数据，不带入 active 批次或临期时间窗口，并覆盖 loading、error、empty。
 - `src/components/SidebarDrawer.test.jsx`：drawer 的库存 / 已归档入口、selected state、关闭控件、safe-area 和横向溢出保护；`src/App.test.jsx`：底部双 Tab + 独立 `+` 以及 App 接线。
-- `src/components/ArchiveBatchCard.test.jsx`：图片、名称 / 品牌、分类、规格、原到期日和“已消耗”语义，不出现“剩余 0 件”或 active 到期 badge。
-- `src/components/BatchDetail.test.jsx`：consumed detail 返回 Archive，隐藏 Product 编辑、图片和 active 库存操作。
-- `src/components/ArchiveBatchActions.test.jsx`、`src/App.test.jsx`、`src/lib/inventory.test.js`：取消删除不写入、历史删除确认 / id + user + consumed 约束、0-row 失败、Product / Storage 不删除，以及 consume / mark-consumed 0-row 防误报。
+- `src/components/ArchiveBatchCard.test.jsx`：图片、名称 / 品牌、分类、规格、原到期日和历史状态语义，不出现“剩余 0 件”或 active 到期 badge。
+- `src/components/BatchDetail.test.jsx`：历史 detail 返回 Archive，隐藏 Product 编辑、图片和 active 库存操作。
+- `src/components/ArchiveBatchActions.test.jsx`、`src/App.test.jsx`、`src/lib/inventory.test.js`：取消删除不写入、历史删除确认 / id + user + archived status 约束、0-row 失败、Product / Storage 不删除，以及 consume / mark-consumed 0-row 防误报。
 - `npm test`：23 个测试文件 / 201 个测试通过；`npm run build` 成功；`git diff --check` 通过。上述测试均使用本地 fixtures / source guards，不访问真实 Supabase 或生产数据。
 
 ### v0.3.1 iPhone PWA / Production 人工验收（已完成，1–9 全部通过）

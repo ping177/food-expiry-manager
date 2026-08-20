@@ -394,7 +394,7 @@
 
 ## D-033：v0.3.2 Product Deletion & Storage Cleanup 优先于 Category Navigation
 
-- 状态：已决定；Production migration 已部署，manual acceptance 待执行
+- 状态：已决定并完成；Production migration 与 manual acceptance 均已完成
 - 日期：2026-08-20
 - 决策：下一正式版本改为 `v0.3.2 — Product Deletion & Storage Cleanup`。Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留。
 - 删除边界：Product 仍有 active batch 时禁止删除整个 Product；没有 active batch 时允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象。外部 `image_url` 不尝试删除外部资源。
@@ -403,7 +403,7 @@
 
 ## D-034：v0.3.2 使用 DB-first 原子 Product 删除与当前会话 Storage 重试
 
-- 状态：已决定并完成实现；Production migration 已部署，manual acceptance 待执行
+- 状态：已决定并完成实现；Production migration 与 manual acceptance 均已完成
 - 日期：2026-08-20
 - 决策：使用 `public.delete_product_with_history(uuid)` 作为唯一权威删除入口。该
   `security invoker` RPC 在同一数据库事务中以 `auth.uid()` 锁定 Product 行，拒绝仍有
@@ -418,12 +418,12 @@
   外部 `image_url`、其他用户路径、其他 Product 路径均不尝试删除。
 - 非目标：不新增 CASCADE、独立 Product 管理页、删除队列 / worker、后台补偿任务、批量
   删除、discarded UI、Category Navigation 或 cross-account 新账号 smoke。
-- 验收边界：Production migration 已验证，但 Production / iPhone PWA manual acceptance
-  完成前，不声称 v0.3.2 已完成。
+- 验收边界：Production migration 已验证；用户已完成 Production / iPhone PWA manual
+  acceptance，v0.3.2 已完成并关闭。
 
 ## D-035：v0.3.2 standalone 与 Product deletion 共用 Storage cleanup primitive
 
-- 状态：已决定并完成本地修复；corrective migration 已部署并验证，Production manual acceptance 待执行
+- 状态：已决定并完成本地修复；corrective migration 与 Production manual acceptance 均已完成
 - 日期：2026-08-20
 - 决策：将 `user_image_url` cleanup 统一为 tri-state owned-path resolver 与共享
   `removeProductImagePath` primitive。无图片时不调用 Storage；可严格验证为当前用户 / Product
@@ -436,3 +436,16 @@
   既有 owner-scoped insert / update / delete policy；`20260820130000_add_product_image_select_policy.sql`
   已由用户部署并验证，不修改已验收的 Product deletion RPC、FK、Product / batch RLS 或数据库
   deletion contract。
+
+## D-036：v0.3.3 使用 discarded 逻辑删除并并入现有 Archive
+
+- 状态：已决定并完成本地实现；自动化验证与生产构建已通过，Production / iPhone PWA 人工验收待执行
+- 日期：2026-08-20
+- 决策：当前库存的“删除当前库存批次”只允许按当前用户、batch id 和 `status='active'`
+  执行 `UPDATE status='discarded'`，不执行数据库 DELETE；成功后从 active inventory 消失。
+- Archive：查询 `status in ('consumed', 'discarded')`，按 `updated_at DESC` 展示；consumed
+  显示“已消耗”，discarded 显示“已删除”，搜索和分类逻辑保持一致。
+- Hard delete：只有 Archive 的“删除历史批次”允许对 consumed / discarded 执行 DELETE；
+  Product、图片和其他 batch 不受当前批次逻辑删除影响。
+- 数据边界：复用现有 status 约束与 v0.3.2 Product deletion / Storage cleanup contract，
+  不新增 migration、回收站、恢复、批量删除、独立导航或 Category Navigation。

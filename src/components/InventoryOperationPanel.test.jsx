@@ -24,4 +24,10 @@ describe('InventoryOperationPanel delete batch contract', () => {
     expect(panelSource).toContain('await onDeleteBatch(deletion.id)')
     expect(cancelHandler).not.toContain('onDeleteBatch')
   })
+
+  it('explains that active deletion archives the batch as discarded', () => {
+    expect(panelSource).toContain('移入已归档并标记为已删除')
+    expect(panelSource).toContain('当前版本不支持恢复该批次')
+    expect(panelSource).not.toContain('此操作不可恢复')
+  })
 })

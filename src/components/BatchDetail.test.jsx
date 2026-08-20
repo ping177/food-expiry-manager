@@ -202,6 +202,18 @@ describe('BatchDetail', () => {
     expect(html).not.toContain('从相册选择')
   })
 
+  it('renders discarded details with the 已删除 status label', () => {
+    const html = renderBatchDetail({
+      archiveMode: true,
+      batch: { ...batch, quantity: 6, status: 'discarded' },
+      productDeleteGuard: { status: 'clear', productId: 'product-1' },
+    })
+
+    expect(html).toContain('已删除')
+    expect(html).not.toContain('已消耗')
+    expect(html).toContain('删除历史批次')
+  })
+
   it('disables whole-product deletion while active status is loading or blocked', () => {
     const loadingHtml = renderBatchDetail({
       archiveMode: true,

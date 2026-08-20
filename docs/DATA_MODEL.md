@@ -196,5 +196,15 @@ products (1) ──────< inventory_batches (N)
   `INSERT` / `UPDATE` / `DELETE` policy 一并生效。
 - 初始 Product deletion RPC migration 已由用户部署并完成 RPC 存在性、SECURITY INVOKER、
   空 `search_path` 和 EXECUTE 权限验证；当前 corrective fix 未修改 RPC、FK 或 Product / batch
-  RLS。未执行 Product 删除业务数据操作；版本在两条图片 cleanup 的 Production / iPhone
-  PWA manual acceptance 完成前不标记 closed。
+  RLS。用户随后完成 Production / iPhone PWA 复验：standalone 用户图片删除后的 Storage
+  object 实际消失、整个 Product 删除后的对应 Storage object 实际消失、Product 仍有 active
+  batch 时整 Product 删除被禁止，均为 PASS。
+
+## v0.3.3 Discarded Batch Archive 生命周期检查
+
+- 无需 migration。现有 `inventory_batches.status` 已允许 `active`、`consumed`、`discarded`。
+- 当前库存删除只将 owner-scoped 的 active batch 更新为 `discarded`；Product、商品图片和其他
+  batch 保持不变。active 查询继续只读取 `status='active'`。
+- Archive 查询同时读取 `consumed` 与 `discarded`，两种历史状态继续使用同一张表和既有 RLS。
+- Archive 历史删除才执行 hard delete，并同时允许两种 archived 状态；Product deletion RPC 的
+  `consumed / discarded` 白名单保持不变。

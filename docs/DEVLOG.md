@@ -2,7 +2,25 @@
 
 ## 2026-08-20
 
-### v0.3.2 Product Deletion & Storage Cleanup 本地实现与 Production migration 部署（未关闭）
+### v0.3.3 Discarded Batch Archive Flow（本地实现完成，待人工验收）
+
+- 当前库存“删除当前库存批次”已拆为独立的 `discardBatch` 操作：按 batch id、当前
+  user id 和 `status='active'` 执行 `UPDATE { status: 'discarded' }`，检查返回行后从
+  active 列表移除，并刷新 active / Archive 两路数据。Product、用户图片、Storage 和
+  其他 batch 不受影响。
+- Archive 查询扩展为 `status in ('consumed', 'discarded')`，继续按 `updated_at DESC`；
+  筛选同时覆盖两种历史状态。Archive 卡片和详情使用共享状态文案：consumed 为“已消耗”，
+  discarded 为“已删除”。
+- Archive 的“删除历史批次”拆为独立 `deleteArchivedBatch`，仅对 consumed / discarded
+  执行真正 hard delete；Product deletion 继续复用 v0.3.2 RPC、active guard 和 Storage
+  cleanup contract。
+- 无新增 migration、依赖、数据表、回收站、恢复、批量删除、独立“已删除”导航或 Category
+  Navigation。规格见 `docs/V0.3.3_DISCARDED_BATCH_ARCHIVE.md`。
+- 定向验证 8 个测试文件 / 95 个测试通过；完整 `npm test` 通过 26 个测试文件 / 234 个测试，
+  `npm run build` 与 `git diff --check` 均通过。未连接 Supabase、未读取 secrets、未执行
+  Production 数据操作。
+
+### v0.3.2 Product Deletion & Storage Cleanup 本地实现与 Production migration 部署（已完成并关闭）
 
 - 新增 `supabase/migrations/20260820120000_add_product_deletion_rpc.sql`，并同步
   `supabase/schema.sql`：`delete_product_with_history(uuid)` 使用 `security invoker`、
@@ -20,10 +38,10 @@
   个测试通过；随后完整 `npm test` 通过 25 个测试文件 / 219 个测试，`npm run build` 和
   `git diff --check` 通过。Production migration 已由用户部署并验证：RPC 存在、SECURITY
   INVOKER、空 `search_path`、`authenticated` EXECUTE 以及 `anon` / `PUBLIC` 无 EXECUTE；
-  `postgres` / `service_role` 后台权限保持不变。Production / iPhone PWA manual acceptance
-  仍待执行，v0.3.2 尚未标记 completed / closed。
+  `postgres` / `service_role` 后台权限保持不变。后续 Production / iPhone PWA 复验结果见
+  下方 closeout 记录。
 
-### v0.3.2 Storage cleanup corrective fix（已部署，待 Production 复验）
+### v0.3.2 Storage cleanup corrective fix（已部署，Production 复验 PASS）
 
 - 真实验收发现 standalone “删除用户图片”和 whole Product deletion 都可能先清除
   `user_image_url` / Product，再把无法解析的非空 URL 当成“无需清理”，因此共享的
@@ -41,7 +59,9 @@
   完整 `npm test` 通过 26 个测试文件 / 228 个测试，`npm run build` 与 `git diff --check`
   通过。用户已部署并验证 corrective migration，Production `product-images` 现有
   authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policies；前端 Production
-  发布确认及两条真实图片 cleanup manual acceptance 待执行。
+  发布确认及两条真实图片 cleanup manual acceptance 已由用户完成：standalone 用户图片删除
+  后 Storage object 实际消失 PASS；删除整个 Product 后对应 Storage object 实际消失 PASS；
+  Product 仍有 active batch 时整 Product 删除被禁止 PASS。v0.3.2 已关闭。
 
 ### v0.3.1 Archive & Navigation Foundation
 

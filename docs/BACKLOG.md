@@ -32,24 +32,24 @@ v0.3.1 已完成并关闭最小 Archive 与 Navigation Foundation，本节保留
 已完成：
 
 - 库存标题区 hamburger 打开左侧 drawer；drawer 只提供“库存 / 已归档”，支持 selected state、遮罩关闭和 iPhone safe-area。
-- active 首页继续查询 `status='active'`；Archive 独立查询 `status='consumed'`，按 `updated_at DESC`，不新增归档表、状态机、`consumed_at` 或 event log。
+- active 首页继续查询 `status='active'`；Archive 同时查询 `status in ('consumed', 'discarded')`，按 `updated_at DESC`，不新增归档表、状态机、`consumed_at` 或 event log。
 - Archive 支持商品名 / 品牌搜索和现有 Product 分类筛选，不带入 active 临期时间窗口。
-- Archive 卡片展示 Product 图片、名称、品牌、分类、规格、原到期日和“已消耗”；不展示剩余 0 件或 active 临期 badge。
-- consumed BatchDetail 只读，隐藏 Product 编辑、图片操作和 active 库存操作；仅保留当前历史 batch 的二次确认删除。
-- 历史删除限定 batch id、当前 user id 与 `status='consumed'`，0-row 失败，成功后停留 Archive，并保留 Product、图片和其他 batch。
+- Archive 卡片展示 Product 图片、名称、品牌、分类、规格、原到期日和状态文案；consumed 显示“已消耗”，discarded 显示“已删除”，不展示剩余 0 件或 active 临期 badge。
+- 历史 BatchDetail 只读，隐藏 Product 编辑、图片操作和 active 库存操作；仅保留当前历史 batch 的二次确认删除。
+- 历史删除限定 batch id、当前 user id 与 `status in ('consumed', 'discarded')`，0-row 失败，成功后停留 Archive，并保留 Product、图片和其他 batch。
 - consume / mark-consumed update 增加 active / quantity=0 约束及返回行校验，避免 0-row 误报成功。
 
 人工验收收尾（1–9 全部通过）：
 
 - PASS：drawer、底部导航、Archive 持久化 / 搜索 / 分类、consumed detail 只读、历史 batch 删除、active 页面回归、`active quantity=0` 保持库存，以及显式 consumed 后从 active 进入 Archive。
 
-v0.3.1 明确未做：
+v0.3.1 明确未做（后续版本已分别处理）：
 
-- 分类迁移到侧边栏、左侧分类树、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项；Product 删除与 Storage cleanup 转入下一正式版本 v0.3.2。
+- 分类迁移到侧边栏、左侧分类树、consumed / discarded 恢复、补货、批量删除、分页和 Android 专项；Product 删除与 Storage cleanup 转入 v0.3.2，discarded Archive flow 转入 v0.3.3。
 
 ### Backlog 2：Product Deletion & Storage Cleanup
 
-v0.3.2 是当前正式版本，范围已冻结；初始 RPC migration 与 Storage cleanup corrective migration 已部署并验证，共享 corrective fix 已在本地完成；前端 Production 发布确认及 Production / iPhone PWA 两条图片流程复验待执行：
+v0.3.2 已完成并关闭；初始 RPC migration 与 Storage cleanup corrective migration 已部署并验证，共享 corrective fix 与 Production / iPhone PWA 复验均已完成：
 
 - Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留。
 - Product 仍有 active batch 时，禁止删除整个 Product。
@@ -57,8 +57,20 @@ v0.3.2 是当前正式版本，范围已冻结；初始 RPC migration 与 Storag
 - 外部 `image_url` 不尝试删除外部资源。
 - 已加入原子 `delete_product_with_history` RPC、Archive guard / 二次确认与 DB-first
   Storage cleanup retry；初始 RPC 权限与 Storage corrective migration 的
-  authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policy 已由用户验证，尚未
-  执行修复后的两条图片 cleanup 人工验收。
+  authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policy 已由用户验证；
+  standalone 用户图片删除、整个 Product 删除后的 Storage object 清理，以及 active guard
+  均已完成 Production / iPhone PWA 人工验收并 PASS。
+
+### Backlog 3：Discarded Batch Archive Flow
+
+v0.3.3 为当前正式版本，范围已冻结；本地实现、自动化验证和生产构建已完成，待 Production
+发布后的人工验收：
+
+- 当前库存“删除当前库存批次”改为 owner-scoped `active → discarded` UPDATE，不执行数据库 DELETE。
+- discarded 从 active inventory 消失，并与 consumed 一起进入 Archive。
+- Archive 卡片和详情分别显示“已删除 / 已消耗”；搜索、分类和 `updated_at DESC` 排序继续保持一致。
+- Archive “删除历史批次”对 consumed / discarded 保留真正 hard delete。
+- 不新增 migration、回收站、独立“已删除”导航、恢复、批量删除或 Category Navigation。
 
 ### 顺延候选：Category Navigation
 

@@ -91,6 +91,13 @@ export function createConsumedStatusUpdate(quantity) {
   return { status: 'consumed' }
 }
 
+export function getArchiveStatusLabel(status) {
+  return {
+    consumed: '已消耗',
+    discarded: '已删除',
+  }[status] ?? ''
+}
+
 export function prepareInventoryOperationUpdate(
   batch,
   operation,

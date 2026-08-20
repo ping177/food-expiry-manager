@@ -178,7 +178,7 @@ export default function App() {
           supabaseClient: supabase,
           session: targetSession,
           getCurrentUserId: () => sessionRef.current?.user?.id ?? null,
-          status: 'consumed',
+          statuses: ['consumed', 'discarded'],
           orderBy: 'updated_at',
           ascending: false,
         })
@@ -684,26 +684,54 @@ export default function App() {
     }
   }
 
-  async function deleteBatch(
-    batchId,
-    { expectedStatus = 'active', returnView = 'home' } = {},
-  ) {
+  async function discardBatch(batchId) {
     setBusyBatchId(batchId)
     setError('')
     setMessage('')
 
     try {
-      const deleteQuery = supabase
+      const { data: discardedBatch, error: updateError } = await supabase
+        .from('inventory_batches')
+        .update({ status: 'discarded' })
+        .eq('id', batchId)
+        .eq('user_id', session.user.id)
+        .eq('status', 'active')
+        .select('id')
+        .maybeSingle()
+
+      if (updateError) throw updateError
+      if (!discardedBatch) {
+        throw new Error('批次已不存在或无权删除')
+      }
+
+      setBatches((currentBatches) =>
+        currentBatches.filter((batch) => batch.id !== batchId),
+      )
+      setSelectedBatchId(null)
+      setView('home')
+      setMessage('库存批次已移入已归档并标记为已删除；商品信息和图片已保留。')
+      await Promise.all([loadBatches(), loadArchivedBatches()])
+      return true
+    } catch (updateError) {
+      setError(`删除库存批次失败：${updateError.message}`)
+      return false
+    } finally {
+      setBusyBatchId(null)
+    }
+  }
+
+  async function deleteArchivedBatch(batchId) {
+    setBusyBatchId(batchId)
+    setError('')
+    setMessage('')
+
+    try {
+      const { data: deletedBatch, error: deleteError } = await supabase
         .from('inventory_batches')
         .delete()
         .eq('id', batchId)
         .eq('user_id', session.user.id)
-
-      const statusQuery =
-        expectedStatus === 'consumed'
-          ? deleteQuery.eq('status', 'consumed')
-          : deleteQuery.eq('status', 'active')
-      const { data: deletedBatch, error: deleteError } = await statusQuery
+        .in('status', ['consumed', 'discarded'])
         .select('id')
         .maybeSingle()
 
@@ -712,28 +740,13 @@ export default function App() {
         throw new Error('批次已不存在或无权删除')
       }
 
-      if (expectedStatus === 'consumed') {
-        setArchivedBatches((currentBatches) =>
-          currentBatches.filter((batch) => batch.id !== batchId),
-        )
-        setSelectedArchiveBatchId(null)
-      } else {
-        setBatches((currentBatches) =>
-          currentBatches.filter((batch) => batch.id !== batchId),
-        )
-        setSelectedBatchId(null)
-      }
-      setView(returnView)
-      setMessage(
-        expectedStatus === 'consumed'
-          ? '历史库存批次已删除；商品信息和图片已保留。'
-          : '库存批次已删除；商品信息和图片已保留。',
+      setArchivedBatches((currentBatches) =>
+        currentBatches.filter((batch) => batch.id !== batchId),
       )
-      if (expectedStatus === 'consumed') {
-        await loadArchivedBatches()
-      } else {
-        await loadBatches()
-      }
+      setSelectedArchiveBatchId(null)
+      setView('archive')
+      setMessage('历史库存批次已删除；商品信息和图片已保留。')
+      await loadArchivedBatches()
       return true
     } catch (deleteError) {
       setError(`删除库存批次失败：${deleteError.message}`)
@@ -744,14 +757,11 @@ export default function App() {
   }
 
   function handleDeleteBatch(batchId) {
-    return deleteBatch(batchId)
+    return discardBatch(batchId)
   }
 
   function handleDeleteArchivedBatch(batchId) {
-    return deleteBatch(batchId, {
-      expectedStatus: 'consumed',
-      returnView: 'archive',
-    })
+    return deleteArchivedBatch(batchId)
   }
 
   async function handleDeleteProduct(product) {

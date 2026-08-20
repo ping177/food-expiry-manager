@@ -15,6 +15,16 @@ const batch = {
   },
 }
 
+const discardedBatch = {
+  ...batch,
+  id: 'discarded-batch-1',
+  status: 'discarded',
+  product: {
+    ...batch.product,
+    name: '被删除的鸡肉猫罐头',
+  },
+}
+
 function renderPage(overrides = {}) {
   return renderToStaticMarkup(
     <ArchivePage
@@ -64,5 +74,13 @@ describe('ArchivePage', () => {
 
     expect(html).toContain('鸡肉猫罐头')
     expect(html).not.toContain('仍在库存的商品')
+  })
+
+  it('shows consumed and discarded batches together with distinct status labels', () => {
+    const html = renderPage({ batches: [batch, discardedBatch] })
+
+    expect(html).toContain('已消耗')
+    expect(html).toContain('已删除')
+    expect(html).toContain('被删除的鸡肉猫罐头')
   })
 })

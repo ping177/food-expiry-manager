@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.3.2 — Product Deletion & Storage Cleanup.
+v0.3.3 — Discarded Batch Archive Flow.
 
 ## Current status
 
-v0.3.1 已完成并关闭。当前 v0.3.2 初始 Product deletion RPC migration 与 Storage cleanup corrective migration 均已部署并验证；本地共享 Storage cleanup 修复已完成，前端 Production 发布确认与 Production / iPhone PWA 复验仍待执行。Archive 详情仍保留历史 batch 删除，Product 删除继续由数据库 RPC 权威执行，并对 standalone 图片删除与 Product deletion 共用严格自有路径 cleanup / retry。完整本地测试、build 与 diff check 已通过；版本尚未 completed / closed。Category Navigation 继续顺延。
+v0.3.2 已完成并关闭：初始 Product deletion RPC 与 Storage cleanup corrective migration 已部署并验证，standalone 用户图片删除、整个 Product 删除后的 Storage object 清理，以及 Product 仍有 active batch 时的整 Product 删除禁止均已完成 Production / iPhone PWA 复验并 PASS。当前 v0.3.3 implementation complete：本地实现、自动化验证和生产构建均已完成，Production / iPhone PWA 人工验收尚未完成。Category Navigation 继续顺延。
 
 ## Latest completed
 
-完成并关闭 v0.3.1 Archive & Navigation Foundation：新增移动端侧边栏“库存 / 已归档”、独立 consumed 查询与历史卡片、只读 consumed 详情、历史 batch 二次确认删除，以及 consume / mark-consumed 的 0-row 防误报。保留现有底部双 Tab 与独立 `+`，未迁移分类。随后完成 v0.3.2 初始 RPC migration 与 Storage cleanup corrective migration 部署验证，以及本地共享 Storage cleanup corrective fix：standalone 图片删除与 Product deletion 共用 tri-state owned-path resolver / remove primitive，Storage 失败和不可验证路径均显式进入 pending / warning；Production / iPhone PWA 两条图片流程 manual acceptance 待执行。
+完成并关闭 v0.3.1 Archive & Navigation Foundation；随后完成并关闭 v0.3.2 Product Deletion & Storage Cleanup，Production / iPhone PWA 图片 cleanup 与 active guard 复验均 PASS。v0.3.3 已将 active batch 删除改为 `active → discarded`，Archive 现同时读取 consumed / discarded，并保留两种历史 batch 的 hard delete。
 
 ## Deployment
 
@@ -45,19 +45,20 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.12-C｜删除库存批次
 - v0.2.12-D｜商品容量 / 规格
 - v0.3.1｜Archive & Navigation Foundation（已完成）
-- v0.3.2｜Product Deletion & Storage Cleanup（RPC 与 Storage corrective migration 已部署；Production / iPhone PWA manual acceptance 待执行）
+- v0.3.2｜Product Deletion & Storage Cleanup（已完成并关闭）
+- v0.3.3｜Discarded Batch Archive Flow（本地实现与自动化验证完成；人工验收待执行）
 
 ## Last verified
 
-2026-08-20: v0.3.2 Storage corrective fix 定向验证 4 files / 43 tests，完整 `npm test` 26 files / 228 tests，`npm run build` 与 `git diff --check` 均通过；初始 RPC migration 与 Storage corrective migration 已由用户部署并验证，`product-images` 已有 authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policies。前端 Production 发布确认与 standalone / Product deletion 两条图片 cleanup 流程 Production / iPhone PWA manual acceptance 待执行。此前 v0.3.1 Production / iPhone PWA 1–9 均 PASS。No further Supabase operation was performed by Codex.
+2026-08-20: v0.3.3 定向验证 8 files / 95 tests，完整 `npm test` 26 files / 234 tests，`npm run build` 与 `git diff --check` 均通过；v0.3.2 Production / iPhone PWA standalone cleanup、whole Product cleanup 与 active guard 均由用户复验 PASS。No Supabase operation was performed by Codex.
 
 ## Next Action
 
-下一步确认本轮前端修复进入 Production 后，重新完成 standalone “删除用户图片”与 whole Product deletion 的 Production / iPhone PWA Storage cleanup / retry 验收；通过后再将版本标记 completed / closed。Category Navigation 继续顺延。
+下一步完成 Production / iPhone PWA 人工验收：active batch 删除后进入 Archive 且显示“已删除”、consumed / discarded 筛选与详情文案、Archive 两种历史 batch hard delete，以及 Product deletion / Storage cleanup 回归。Category Navigation 继续顺延。
 
 ## Blockers
 
-Storage corrective migration 已部署并验证；前端 Production 发布确认与两条真实图片 cleanup 流程重新验收仍未完成，因此 v0.3.2 不能关闭。
+暂无明确阻塞。
 
 ## Important Context
 
@@ -95,14 +96,15 @@ Storage corrective migration 已部署并验证；前端 Production 发布确认
 - v0.2.12-D 在首页摘要中为有值商品增加规格标签；规格属于 product，不属于 batch。无 barcode 复用必须同时匹配名称、品牌和规格。
 - Product data APIs must not infer shelf life.
 - v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持验收；双账号图片隔离和 Android 图片流程未手动覆盖，均为 deferred / not manually covered，不作为 blocker。
-- v0.3.1 Archive 只查询 `status='consumed'`，active 首页继续只查询 `status='active'`；Archive 与 active 使用独立数据、loading、error、搜索和分类状态。
+- v0.3.1 的 Archive 基线只查询 `status='consumed'`；v0.3.3 已扩展为同时查询 `consumed / discarded`，active 首页继续只查询 `status='active'`；Archive 与 active 使用独立数据、loading、error、搜索和分类状态。
 - v0.3.1 已归档入口位于库存标题区 hamburger 打开的左侧 drawer；drawer 只包含“库存”和“已归档”，底部导航仍严格为“库存 | + | 我的”。分类迁移到 sidebar、恢复 consumed、批量删除和分页均 deferred。
-- v0.3.1 删除历史 batch 只按 batch id、当前 user id 和 `status='consumed'` 约束，成功后停留 Archive；Product、`user_image_url`、Storage object 和其他 batch 保留。
+- v0.3.3 当前库存删除按 batch id、当前 user id 和 `status='active'` 限定，只更新为 `discarded`；Archive 历史删除按 batch id、当前 user id 和 `status in ('consumed', 'discarded')` hard delete，Product、`user_image_url`、Storage object 和其他 batch 保留。
 - v0.3.1 Production / iPhone PWA closeout 已完成；1–9 项人工验收全部 PASS。
 - v0.3.2 Product 删除由已部署并验证的 `delete_product_with_history(uuid)` RPC 权威执行：Product 行锁 + `active` guard + consumed/discarded 历史清理 + Product 删除同事务完成；不使用 FK CASCADE。客户端预检查仅用于 UI，不能替代 RPC。
 - v0.3.2 DB-first 后 Storage cleanup 失败是可见的 partial success；仅当前会话提供同一自有对象路径 retry，不自动重试 destructive RPC，不尝试删除外部 `image_url`。
-- v0.3.2 corrective fix 已让 standalone 图片删除与 Product deletion 共用 tri-state owned-path resolver / Storage remove primitive：无 `user_image_url` 不需清理；可验证自有 Production URL 必须调用 remove；无法验证的非空 URL 显示 warning / cleanup pending，不静默成功。`product-images` 的 authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policies 已由用户在 Production 验证。
+- v0.3.2 corrective fix 已让 standalone 图片删除与 Product deletion 共用 tri-state owned-path resolver / Storage remove primitive；用户已在 Production / iPhone PWA 验证自有 Storage object 实际删除和 active guard，均 PASS。`product-images` 的 authenticated owner-scoped INSERT / UPDATE / DELETE / SELECT policies 已由用户在 Production 验证。
+- v0.3.3 不新增 migration；复用现有 `status` 约束、v0.3.2 Product deletion RPC 与 Storage cleanup contract。
 
 ## Handoff Prompt
 
-Confirm the pushed frontend is live, then complete v0.3.2 acceptance for standalone user-image deletion and whole Product deletion: validate actual owned-object remove / retry, invalid-path warning, active guard, atomic historical deletion, Product isolation, external-image safety, Archive history deletion regression, and iPhone PWA persistence. Do not close the version before manual acceptance passes; keep Category Navigation deferred.
+Publish v0.3.3, then complete Production / iPhone PWA acceptance for the discarded batch Archive flow: verify active deletion performs `active → discarded`, active inventory excludes it, Archive includes both consumed and discarded with distinct labels, archived hard delete works for both states, other active batches and v0.3.2 Product / Storage deletion behavior remain intact. Keep Category Navigation deferred.
