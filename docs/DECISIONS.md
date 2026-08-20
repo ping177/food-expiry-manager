@@ -391,3 +391,12 @@
 - 状态写入：consume update 必须检查返回行；mark-consumed update 必须同时限定 active 与 quantity=0 并检查返回行。quantity=0 仍不自动改变 status，只有用户明确标记才进入 consumed。
 - 非目标：分类导航迁移、Product 删除、Storage cleanup、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项留到后续评估。
 - 人工验收：drawer、底部导航、Archive 持久化 / 筛选、consumed detail、历史 batch 删除、active 回归、active quantity=0 保持库存和显式 consumed 转换均已 PASS；v0.3.1 1–9 项 Production / iPhone PWA 验收全部通过。
+
+## D-033：v0.3.2 Product Deletion & Storage Cleanup 优先于 Category Navigation
+
+- 状态：已决定，尚未实施
+- 日期：2026-08-20
+- 决策：下一正式版本改为 `v0.3.2 — Product Deletion & Storage Cleanup`。Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留。
+- 删除边界：Product 仍有 active batch 时禁止删除整个 Product；没有 active batch 时允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象。外部 `image_url` 不尝试删除外部资源。
+- 优先级：Category Navigation 顺延到后续版本，具体版本号尚未冻结。
+- 本次仅记录治理决策，不实施业务代码、Supabase、Auth、RLS、Storage 或 schema 变更。

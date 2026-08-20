@@ -43,13 +43,23 @@ v0.3.1 已完成并关闭最小 Archive 与 Navigation Foundation，本节保留
 
 - PASS：drawer、底部导航、Archive 持久化 / 搜索 / 分类、consumed detail 只读、历史 batch 删除、active 页面回归、`active quantity=0` 保持库存，以及显式 consumed 后从 active 进入 Archive。
 
-明确未做：
+v0.3.1 明确未做：
 
-- 分类迁移到侧边栏、左侧分类树、Product 删除、Storage cleanup、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项。
+- 分类迁移到侧边栏、左侧分类树、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项；Product 删除与 Storage cleanup 转入下一正式版本 v0.3.2。
 
-下一规划候选：
+### Backlog 2：Product Deletion & Storage Cleanup
 
-- v0.3.2 再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏；不与 v0.3.1 Archive 混做。
+v0.3.2 是下一正式版本，当前冻结范围但尚未实施：
+
+- Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留。
+- Product 仍有 active batch 时，禁止删除整个 Product。
+- 没有 active batch 时，允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象。
+- 外部 `image_url` 不尝试删除外部资源。
+- 本次仅更新治理范围，不实施业务代码、Supabase、Auth、RLS、Storage 或 schema 变更。
+
+### 顺延候选：Category Navigation
+
+- Category Navigation 顺延到后续版本，具体版本号尚未冻结；不在 v0.3.2 混入分类侧栏迁移。
 
 ### v0.2.12-B2：库存操作（已完成本地实现）
 

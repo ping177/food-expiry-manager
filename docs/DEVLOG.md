@@ -16,7 +16,13 @@
 - PASS：左侧 drawer 打开 / 关闭及“库存 / 已归档”切换；底部 `库存 | + | 我的` 保持不变；Archive 历史持久化、搜索、分类筛选和历史展示语义正常。
 - PASS：consumed detail 隐藏 active / Product 写操作；实际删除一个 consumed batch 后，该历史 batch 消失，同 Product 的 active 库存、Product、图片及其他批次均保留；active 页面和既有筛选未发现回归。
 - PASS：active batch `quantity=0` 后仍留在库存；显式标记为 consumed 后，该 batch 从 active 消失并进入 Archive。至此 v0.3.1 Production / iPhone PWA 人工验收 1–9 项全部通过。
-- 本次仅同步验收结论；未修改业务代码、Supabase、Auth、RLS、Storage、schema、production data 或 secrets。下一规划候选为 v0.3.2 Category Navigation 范围评估。
+- 本次仅同步验收结论；未修改业务代码、Supabase、Auth、RLS、Storage、schema、production data 或 secrets。下一正式版本改为 v0.3.2 Product Deletion & Storage Cleanup，Category Navigation 顺延。
+
+### v0.3.2 优先级治理修正
+
+- 基于真实 Archive 验收中“删除 consumed batch 后 Product 与用户图片仍保留”的结果，下一正式版本改为 Product Deletion & Storage Cleanup。
+- 冻结方向：Product 删除入口位于 Archive / 已归档详情；保留历史 batch 删除；有 active batch 时禁止删除整个 Product；无 active batch 时删除 Product、关联历史 batches，并清理属于该 Product 的 `user_image_url` Storage 对象；不删除外部 `image_url` 资源。
+- Category Navigation 顺延到后续版本，具体版本号尚未冻结。本次仅更新治理文档，未实施业务代码或任何 Supabase 变更。
 
 ### 新增 / 编辑商品窄屏表单 UI polish
 

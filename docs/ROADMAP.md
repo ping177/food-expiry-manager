@@ -137,11 +137,21 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 - 库存标题区 hamburger 打开只包含“库存 / 已归档”的侧边栏；底部导航继续保持“库存 | + | 我的”
 - Archive 支持商品名 / 品牌搜索、Product 分类筛选、历史卡片、只读 consumed detail 和当前历史 batch 删除
 - 0-row 业务更新视为失败；consume / mark-consumed 不改变既有 quantity=0 需显式标记的规则
-- 非目标：分类迁移到 sidebar、Product 删除、Storage cleanup、恢复 consumed、补货、批量删除、分页和 Android 专项
+- 非目标：分类迁移到 sidebar、恢复 consumed、补货、批量删除和 Android 专项；Product 删除与 Storage cleanup 转入下一正式版本 v0.3.2
 
-## v0.3.2（候选）：Category Navigation
+## v0.3.2：Product Deletion & Storage Cleanup
 
-- 在 v0.3.1 Archive 真实使用验收后，再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏
+- 状态：下一正式版本，范围已冻结，尚未实施
+- Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留
+- Product 仍有 active batch 时，禁止删除整个 Product
+- 没有 active batch 时，允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象
+- 外部 `image_url` 不尝试删除外部资源
+- 本次范围记录不代表已执行任何业务代码、Supabase、Auth、RLS、Storage 或 schema 变更
+
+## 后续候选：Category Navigation
+
+- Category Navigation 顺延到后续版本，具体版本号尚未冻结
+- 未来再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏
 - 不预设左侧分类树或新的数据模型；先依据真实使用反馈决定最小导航形态
 
 ## 后续候选：商品图片上传体验
