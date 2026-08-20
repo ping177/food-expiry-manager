@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.12-D structured size correction implemented locally.
+v0.2.12-D structured product size with narrow-screen form polish.
 
 ## Current status
 
-v0.2.12-D 已完成本地结构化修正：应用使用可选 `size_value` + `size_unit`；新增和编辑页将品牌/规格、分类/图片链接整理为两行两列，规格数值与单位保持单行，默认单位为 `g`。远程已部署的 legacy `size` text 列保留但不再读写。无 barcode 商品仅在名称、品牌、容量数值和单位均相同时复用；`inventory_batches`、Auth、RLS、Storage、环境变量和依赖均未修改。远程兼容 migration 与移动端真实录入验收尚未完成。
+v0.2.12-D 的结构化容量保持 `size_value` + `size_unit`；新增与编辑表单已完成 iPhone 窄屏布局修正，容量数值占主要宽度、单位列保持紧凑，分类与外部图片链接两列对齐且不再因旧 label 产生不必要换行。本轮未修改字段含义、保存逻辑、图片 fallback、`inventory_batches`、Auth、RLS、Storage、环境变量或依赖。
 
 ## Latest completed
 
-v0.2.12-D 改为结构化容量：数值加单位输入，空值保存为两个 `null`，展示组合为 `170g`；新增和编辑页使用紧凑的两行两列布局，单位默认 `g`。条码流程只解析 API 明确字段，不从名称猜测。
+新增与编辑商品的窄屏表单 UI polish：容量数值与单位使用可收缩的主列加 `4rem` 单位列；分类与“外部图片链接（可选）”保持对齐的两列布局。新增商品、扫码/手动填写、规格保存、分类和图片 URL 业务行为不变。
 
 ## Deployment
 
@@ -47,11 +47,11 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Last verified
 
-2026-07-22: v0.2.12-D structured-size automated tests (18 files / 167 tests), production build and `git diff --check` passed locally; remote compatibility migration and mobile smoke (including two-column product fields) need verification.
+2026-08-20: narrow-screen product-form tests and full automated suite (19 files / 187 tests), production build and `git diff --check` passed locally. The local browser had no authenticated session, so a logged-in iPhone PWA visual smoke remains recommended but is not a blocker.
 
 ## Next Action
 
-先在 Supabase SQL Editor 执行结构化兼容 migration，确认 legacy `size` 未删除且新列存在；随后完成新增、编辑、同名不同数值/单位不复用、API 明确容量回填与展示 smoke。
+进入 Backlog 1：Archive / 已归档系统；先按该 backlog 确认产品范围与验收标准，再开始实现。
 
 ## Blockers
 
@@ -96,4 +96,4 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Handoff Prompt
 
-Verify v0.2.12-A, B1, B2, and C on iPhone and Android PWA: the bottom navigation must clear the Home Indicator, the center `+` must open the existing add flow, product detail must preserve the three modes, and inventory operations must pass add/merge, new-batch, cancel, consume, zero-inventory, consumed-confirmation, delete-cancel, delete-confirmation, retained product/image/other batches, and post-refresh deletion smoke checks.
+Start Backlog 1：Archive / 已归档系统. Confirm its product scope and acceptance criteria before implementation; preserve the existing products / inventory_batches separation and do not mix unrelated UI or data-model changes into the archive work.

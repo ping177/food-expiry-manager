@@ -195,7 +195,7 @@ export default function BatchDetail({
             />
           </label>
           <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-3">
-            <label className="block">
+            <label className="block min-w-0">
               <span className="mb-1.5 block text-sm font-semibold text-slate-700">
                 品牌
               </span>
@@ -207,14 +207,14 @@ export default function BatchDetail({
                 }
               />
             </label>
-            <label className="block">
+            <label className="block min-w-0">
               <span className="mb-1.5 block text-sm font-semibold text-slate-700">
                 容量/规格（可选）
               </span>
-              <div className="flex gap-2">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_4rem] gap-2">
                 <input
                   aria-label="容量数值"
-                  className="min-w-0 flex-1 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
+                  className="min-w-0 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
                   inputMode="decimal"
                   min="0"
                   placeholder="170"
@@ -225,19 +225,21 @@ export default function BatchDetail({
                     updateProductField('sizeValue', event.target.value)
                   }
                 />
-                <select aria-label="容量单位" className="w-auto shrink-0 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink" value={productForm.sizeUnit} onChange={(event) => updateProductField('sizeUnit', event.target.value)}>
-                  {PRODUCT_SIZE_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+                <select aria-label="容量单位" className="min-w-0 w-full rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-ink" value={productForm.sizeUnit} onChange={(event) => updateProductField('sizeUnit', event.target.value)}>
+                  {PRODUCT_SIZE_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>{unit}</option>
+                  ))}
                 </select>
               </div>
             </label>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+            <label className="block min-w-0">
+              <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold text-slate-700 sm:text-sm">
                 分类
               </span>
               <select
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
+                className="min-w-0 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
                 value={productForm.category}
                 onChange={(event) =>
                   updateProductField('category', event.target.value)
@@ -251,12 +253,12 @@ export default function BatchDetail({
                 ))}
               </select>
             </label>
-            <label className="block">
-              <span className="mb-1.5 block text-sm font-semibold text-slate-700">
-                外部兜底图片链接（可选）
+            <label className="block min-w-0">
+              <span className="mb-1.5 block whitespace-nowrap text-xs font-semibold text-slate-700 sm:text-sm">
+                外部图片链接（可选）
               </span>
               <input
-                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
+                className="min-w-0 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
                 inputMode="url"
                 placeholder="可留空"
                 type="url"

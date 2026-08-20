@@ -28,10 +28,10 @@ const initialForm = {
   note: '',
 }
 
-function Field({ label, children }) {
+function Field({ label, labelClassName = '', children }) {
   return (
-    <label className="block">
-      <span className="mb-1.5 block text-sm font-semibold text-slate-700">
+    <label className="block min-w-0">
+      <span className={`mb-1.5 block text-sm font-semibold text-slate-700 ${labelClassName}`}>
         {label}
       </span>
       {children}
@@ -285,18 +285,20 @@ export default function AddBatchForm({
               />
             </Field>
             <Field label="容量/规格（可选）">
-              <div className="flex gap-2">
-                <input aria-label="容量数值" className={`${inputClass} min-w-0 flex-1`} inputMode="decimal" min="0" placeholder="170" step="any" type="number" value={form.sizeValue} onChange={(event) => update('sizeValue', event.target.value)} />
-                <select aria-label="容量单位" className={`${inputClass} w-auto shrink-0`} value={form.sizeUnit} onChange={(event) => update('sizeUnit', event.target.value)}>
-                  {PRODUCT_SIZE_UNITS.map((unit) => <option key={unit} value={unit}>{unit}</option>)}
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_4rem] gap-2">
+                <input aria-label="容量数值" className="min-w-0 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink placeholder:text-slate-400" inputMode="decimal" min="0" placeholder="170" step="any" type="number" value={form.sizeValue} onChange={(event) => update('sizeValue', event.target.value)} />
+                <select aria-label="容量单位" className="min-w-0 w-full rounded-xl border border-slate-200 bg-white px-2 py-2.5 text-ink" value={form.sizeUnit} onChange={(event) => update('sizeUnit', event.target.value)}>
+                  {PRODUCT_SIZE_UNITS.map((unit) => (
+                    <option key={unit} value={unit}>{unit}</option>
+                  ))}
                 </select>
               </div>
             </Field>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="分类">
+          <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-2">
+            <Field label="分类" labelClassName="whitespace-nowrap text-xs sm:text-sm">
               <select
-                className={inputClass}
+                className={`${inputClass} min-w-0`}
                 value={form.category}
                 onChange={(event) => update('category', event.target.value)}
               >
@@ -308,9 +310,9 @@ export default function AddBatchForm({
                 ))}
               </select>
             </Field>
-            <Field label="外部兜底图片链接（可选）">
+            <Field label="外部图片链接（可选）" labelClassName="whitespace-nowrap text-xs sm:text-sm">
               <input
-                className={inputClass}
+                className={`${inputClass} min-w-0`}
                 inputMode="url"
                 placeholder="可留空"
                 type="url"

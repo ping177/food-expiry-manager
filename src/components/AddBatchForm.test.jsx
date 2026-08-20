@@ -21,11 +21,20 @@ describe('AddBatchForm category field', () => {
     expect(html).toContain('容量/规格（可选）')
     expect(html).toContain('aria-label="容量数值"')
     expect(html).toContain('aria-label="容量单位"')
-    expect(html).toContain('flex-1')
-    expect(html).toContain('w-auto shrink-0')
+    expect(html).toContain('grid-cols-[minmax(0,1fr)_4rem]')
+    expect(html).toContain('min-w-0 w-full')
     expect(html).toContain('grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]')
     expect(html).toMatch(/<option value="g" selected="">g<\/option>/)
     expect(html).not.toContain('选择单位')
+  })
+
+  it('keeps category and external image fields aligned in two shrinkable columns', () => {
+    const html = renderAddBatchForm()
+
+    expect(html).toContain('grid-cols-[minmax(0,1fr)_minmax(0,1fr)]')
+    expect(html).toContain('外部图片链接（可选）')
+    expect(html).not.toContain('外部兜底图片链接（可选）')
+    expect(html).toContain('whitespace-nowrap')
   })
 
   it('uses the shared built-in category list and allows an empty category', () => {
