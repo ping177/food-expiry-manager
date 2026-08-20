@@ -124,6 +124,8 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
+当前正式版本为 v0.3.1 — Archive & Navigation Foundation。Archive 的 Production / iPhone PWA 人工验收已完成；`active quantity=0` 保持库存和显式 consumed 转换因没有合适真实库存而 deferred / not manually covered，已有自动化覆盖，不构成 blocker。下一规划候选为 v0.3.2 Category Navigation，尚未冻结实现范围。
+
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 
 ```text

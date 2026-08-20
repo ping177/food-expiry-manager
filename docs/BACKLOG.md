@@ -27,7 +27,7 @@
 
 ### Backlog 1：Archive / 已归档系统
 
-v0.3.1 已完成最小 Archive 与 Navigation Foundation，本节保留为该 backlog 的交付记录。
+v0.3.1 已完成并关闭最小 Archive 与 Navigation Foundation，本节保留为该 backlog 的交付记录。
 
 已完成：
 
@@ -39,11 +39,16 @@ v0.3.1 已完成最小 Archive 与 Navigation Foundation，本节保留为该 ba
 - 历史删除限定 batch id、当前 user id 与 `status='consumed'`，0-row 失败，成功后停留 Archive，并保留 Product、图片和其他 batch。
 - consume / mark-consumed update 增加 active / quantity=0 约束及返回行校验，避免 0-row 误报成功。
 
+人工验收收尾：
+
+- PASS：drawer、底部导航、Archive 持久化 / 搜索 / 分类、consumed detail 只读、历史 batch 删除及 active 页面回归。
+- Deferred / not manually covered：`active quantity=0` 保持库存、显式 consumed 转换；已有自动化覆盖，不构成 blocker，不影响 v0.3.1 关闭。
+
 明确未做：
 
 - 分类迁移到侧边栏、左侧分类树、Product 删除、Storage cleanup、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项。
 
-后续候选：
+下一规划候选：
 
 - v0.3.2 再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏；不与 v0.3.1 Archive 混做。
 

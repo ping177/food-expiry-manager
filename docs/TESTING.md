@@ -41,20 +41,25 @@ batch 删除确认边界。
 - `src/components/ArchiveBatchActions.test.jsx`、`src/App.test.jsx`、`src/lib/inventory.test.js`：取消删除不写入、历史删除确认 / id + user + consumed 约束、0-row 失败、Product / Storage 不删除，以及 consume / mark-consumed 0-row 防误报。
 - `npm test`：23 个测试文件 / 201 个测试通过；`npm run build` 成功；`git diff --check` 通过。上述测试均使用本地 fixtures / source guards，不访问真实 Supabase 或生产数据。
 
-### v0.3.1 iPhone PWA / Production 人工验收（待执行）
+### v0.3.1 iPhone PWA / Production 人工验收（已完成，含 deferred）
 
-1. 点击库存标题区 `☰`，确认 drawer 可打开；点击遮罩或关闭按钮后可关闭。
-2. 确认 drawer 只有“库存”和“已归档”，selected state 正确；两项切换后 drawer 自动关闭。
-3. 确认 active batch `quantity=0` 仍在库存，不会自动出现在 Archive。
-4. 对一个 active batch 显式执行“标记已消耗”，确认它从库存消失并进入 Archive。
-5. 刷新 / 重开 PWA，确认 Archive 历史数据仍存在且排序稳定。
-6. 搜索商品名 / 品牌、切换分类，确认只过滤 consumed；Archive 不出现 active 临期筛选。
-7. 打开 consumed detail，确认没有 Product 编辑、图片替换 / 删除、新增库存、消耗或标记 consumed 操作。
-8. 取消删除确认，确认数据不变；确认删除后只移除当前历史 batch 且仍停留 Archive。
-9. 确认 Product、图片和同商品其他 batch 均保留。
-10. 确认底部 `库存 | + | 我的`、新增商品快捷操作和 active 首页搜索 / 分类 / 临期筛选无回归。
+人工 PASS：
 
-本版本不要求创建第二账号；cross-account smoke 继续 deferred，不作为 blocker。无需执行 Supabase SQL 或其他生产数据操作。
+- 左侧 drawer 可打开、关闭；“库存 / 已归档”切换和 selected state 正常。
+- 底部导航仍严格为 `库存 | + | 我的`，没有新增 Archive Tab。
+- Archive 历史批次可读取并在刷新 / 重开后保持；商品名 / 品牌搜索、分类筛选和历史展示语义正常，未出现 active 临期筛选。
+- consumed detail 只读，没有商品编辑、图片编辑、新增库存或消耗库存等 active 写操作。
+- 实际删除一个 consumed batch 后，该历史 batch 消失；同一 Product 仍存在的 active 库存、Product、图片和其他批次保持正常。
+- active 库存页、既有导航、搜索 / 分类 / 临期筛选未发现回归。
+
+Deferred / not manually covered（不作为 blocker）：
+
+- `active quantity=0` 后仍留在当前库存。
+- 显式“标记为已消耗”后从 active 消失并进入 Archive。
+
+原因：当前没有正好需要消耗至 0 的真实库存；不人为制造或修改真实库存。两项已有自动化测试覆盖生命周期语义，未来真实库存自然消耗到 0 时顺手补充观察即可。
+
+本次不要求创建第二账号；cross-account smoke 继续 deferred。未执行 Supabase SQL、Auth、RLS、Storage 或 production data 操作。
 
 ## Project State Push Gate 自动化测试
 
@@ -97,7 +102,7 @@ PROJECT_STATE 内容真实性，也不会自动 commit 或 push。
 - `src/components/InventoryOperationPanel.test.jsx`：删除必须进入独立确认状态，确认回调仅接收当前 batch id，取消路径保留为无写入状态。
 - `src/lib/inventory.test.js`：取消操作返回空 payload；删除确认只产生当前 batch id。
 - `src/App.test.jsx`：删除仅针对 `inventory_batches`，按 batch id 和当前 user id 限定，使用返回行识别 0 行删除，并在成功后清除选择、返回列表。
-- 真实 Supabase smoke 待执行：确认删除当前 batch 后 product、用户图片、Storage 对象和其他 batch 均保留；另一账号不能删除该 batch。
+- Production smoke 已确认：删除当前历史 batch 后 Product、用户图片、Storage 对象和其他 batch 均保留；cross-account 不能删除该 batch 的场景继续 deferred，不作为 blocker。
 
 ## v0.2.12-B2 自动化覆盖
 

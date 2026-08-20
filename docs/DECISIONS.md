@@ -383,10 +383,11 @@
 
 ## D-032：v0.3.1 Archive 直接复用 consumed batch 与最小侧边栏导航
 
-- 状态：已决定并完成本地实现
+- 状态：已决定并完成 v0.3.1 实现与 Production / iPhone PWA 人工验收收尾
 - 日期：2026-08-20
 - 决策：Archive 是 `inventory_batches.status = 'consumed'` 的历史区域，不新增归档表、`consumed_at`、event log、复杂状态机或 migration。active 首页继续只查询 `status='active'`；Archive 独立查询 `status='consumed'`，按 `updated_at DESC`，并保留现有 owner / RLS 隔离。
 - 导航：Archive 正式入口位于库存标题区 hamburger 打开的左侧 drawer；drawer 只提供“库存”和“已归档”。底部导航继续是“库存 | + | 我的”，不增加 Archive Tab，也不把分类迁入 sidebar。
 - 详情与删除：consumed BatchDetail 复用信息主体但只读，仅允许删除当前历史 `inventory_batches`。删除按 batch id、当前 user id 和 `status='consumed'` 限定，返回 0 行视为失败；不得删除 Product、`user_image_url`、Storage object 或其他 batch，成功后停留 Archive。
 - 状态写入：consume update 必须检查返回行；mark-consumed update 必须同时限定 active 与 quantity=0 并检查返回行。quantity=0 仍不自动改变 status，只有用户明确标记才进入 consumed。
 - 非目标：分类导航迁移、Product 删除、Storage cleanup、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项留到后续评估。
+- 人工验收：drawer、底部导航、Archive 持久化 / 筛选、consumed detail、历史 batch 删除和 active 回归已 PASS；active quantity=0 保持库存、显式 consumed 转换因无合适真实库存 deferred / not manually covered，已有自动化覆盖且不构成 blocker。
