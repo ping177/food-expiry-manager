@@ -15,7 +15,7 @@
 
 - PASS：左侧 drawer 打开 / 关闭及“库存 / 已归档”切换；底部 `库存 | + | 我的` 保持不变；Archive 历史持久化、搜索、分类筛选和历史展示语义正常。
 - PASS：consumed detail 隐藏 active / Product 写操作；实际删除一个 consumed batch 后，该历史 batch 消失，同 Product 的 active 库存、Product、图片及其他批次均保留；active 页面和既有筛选未发现回归。
-- Deferred / not manually covered：`active quantity=0` 保持库存、显式标记 consumed 后进入 Archive。没有合适真实库存可安全执行，本次不人为制造或修改真实数据；已有自动化生命周期测试覆盖，两项不构成 blocker。
+- PASS：active batch `quantity=0` 后仍留在库存；显式标记为 consumed 后，该 batch 从 active 消失并进入 Archive。至此 v0.3.1 Production / iPhone PWA 人工验收 1–9 项全部通过。
 - 本次仅同步验收结论；未修改业务代码、Supabase、Auth、RLS、Storage、schema、production data 或 secrets。下一规划候选为 v0.3.2 Category Navigation 范围评估。
 
 ### 新增 / 编辑商品窄屏表单 UI polish

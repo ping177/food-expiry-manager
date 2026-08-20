@@ -390,4 +390,4 @@
 - 详情与删除：consumed BatchDetail 复用信息主体但只读，仅允许删除当前历史 `inventory_batches`。删除按 batch id、当前 user id 和 `status='consumed'` 限定，返回 0 行视为失败；不得删除 Product、`user_image_url`、Storage object 或其他 batch，成功后停留 Archive。
 - 状态写入：consume update 必须检查返回行；mark-consumed update 必须同时限定 active 与 quantity=0 并检查返回行。quantity=0 仍不自动改变 status，只有用户明确标记才进入 consumed。
 - 非目标：分类导航迁移、Product 删除、Storage cleanup、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项留到后续评估。
-- 人工验收：drawer、底部导航、Archive 持久化 / 筛选、consumed detail、历史 batch 删除和 active 回归已 PASS；active quantity=0 保持库存、显式 consumed 转换因无合适真实库存 deferred / not manually covered，已有自动化覆盖且不构成 blocker。
+- 人工验收：drawer、底部导航、Archive 持久化 / 筛选、consumed detail、历史 batch 删除、active 回归、active quantity=0 保持库存和显式 consumed 转换均已 PASS；v0.3.1 1–9 项 Production / iPhone PWA 验收全部通过。

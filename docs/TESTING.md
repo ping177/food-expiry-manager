@@ -41,7 +41,7 @@ batch 删除确认边界。
 - `src/components/ArchiveBatchActions.test.jsx`、`src/App.test.jsx`、`src/lib/inventory.test.js`：取消删除不写入、历史删除确认 / id + user + consumed 约束、0-row 失败、Product / Storage 不删除，以及 consume / mark-consumed 0-row 防误报。
 - `npm test`：23 个测试文件 / 201 个测试通过；`npm run build` 成功；`git diff --check` 通过。上述测试均使用本地 fixtures / source guards，不访问真实 Supabase 或生产数据。
 
-### v0.3.1 iPhone PWA / Production 人工验收（已完成，含 deferred）
+### v0.3.1 iPhone PWA / Production 人工验收（已完成，1–9 全部通过）
 
 人工 PASS：
 
@@ -51,13 +51,8 @@ batch 删除确认边界。
 - consumed detail 只读，没有商品编辑、图片编辑、新增库存或消耗库存等 active 写操作。
 - 实际删除一个 consumed batch 后，该历史 batch 消失；同一 Product 仍存在的 active 库存、Product、图片和其他批次保持正常。
 - active 库存页、既有导航、搜索 / 分类 / 临期筛选未发现回归。
-
-Deferred / not manually covered（不作为 blocker）：
-
-- `active quantity=0` 后仍留在当前库存。
+- active batch `quantity=0` 后仍留在当前库存。
 - 显式“标记为已消耗”后从 active 消失并进入 Archive。
-
-原因：当前没有正好需要消耗至 0 的真实库存；不人为制造或修改真实库存。两项已有自动化测试覆盖生命周期语义，未来真实库存自然消耗到 0 时顺手补充观察即可。
 
 本次不要求创建第二账号；cross-account smoke 继续 deferred。未执行 Supabase SQL、Auth、RLS、Storage 或 production data 操作。
 

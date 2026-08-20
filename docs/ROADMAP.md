@@ -132,7 +132,7 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 
 ## v0.3.1：Archive & Navigation Foundation
 
-- 状态：已完成并关闭；自动化测试、生产构建和 iPhone PWA / Production 人工验收通过，两个真实库存生命周期场景 deferred / not manually covered 且不构成 blocker
+- 状态：已完成并关闭；自动化测试、生产构建和 iPhone PWA / Production 人工验收 1–9 项全部通过
 - Archive 直接复用 `inventory_batches.status='consumed'`，按 `updated_at DESC` 独立读取历史批次，不新增归档表、`consumed_at`、event log 或状态机
 - 库存标题区 hamburger 打开只包含“库存 / 已归档”的侧边栏；底部导航继续保持“库存 | + | 我的”
 - Archive 支持商品名 / 品牌搜索、Product 分类筛选、历史卡片、只读 consumed detail 和当前历史 batch 删除
