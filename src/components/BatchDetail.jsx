@@ -49,6 +49,9 @@ export default function BatchDetail({
   onConsume = async () => true,
   onMarkConsumed = async () => true,
   onDeleteBatch = async () => true,
+  onDeleteProduct = async () => ({ outcome: 'error' }),
+  productDeleteGuard = { status: 'loading' },
+  productDeleteBusy = false,
   defaultMode = 'view',
   archiveMode = false,
 }) {
@@ -381,6 +384,9 @@ export default function BatchDetail({
           batch={batch}
           busy={busy}
           onDeleteBatch={onDeleteBatch}
+          onDeleteProduct={onDeleteProduct}
+          productDeleteBusy={productDeleteBusy}
+          productDeleteGuard={productDeleteGuard}
         />
       )}
 

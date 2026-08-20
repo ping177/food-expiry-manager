@@ -43,6 +43,11 @@ import {
   deleteProductUserImage,
   uploadAndReplaceProductImage,
 } from './lib/productImage'
+import {
+  checkProductActiveStatus,
+  deleteProductWithHistory,
+  retryProductImageCleanup,
+} from './lib/productDeletion'
 
 export const APP_DISPLAY_NAME = '库存保质期管理'
 
@@ -68,11 +73,20 @@ export default function App() {
   const [archiveError, setArchiveError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [busyBatchId, setBusyBatchId] = useState(null)
+  const [productDeleteBusy, setProductDeleteBusy] = useState(false)
+  const [productDeleteGuard, setProductDeleteGuard] = useState({
+    productId: null,
+    status: 'idle',
+    error: null,
+  })
+  const [pendingProductCleanup, setPendingProductCleanup] = useState(null)
+  const [productCleanupBusy, setProductCleanupBusy] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [authBusy, setAuthBusy] = useState(false)
   const [emailOtpCooldown, setEmailOtpCooldown] = useState(0)
   const [pendingOtpEmail, setPendingOtpEmail] = useState('')
+  const productDeleteGuardRequestRef = useRef(0)
   const handleCloseSidebar = useCallback(() => {
     setSidebarOpen(false)
   }, [])
@@ -90,6 +104,10 @@ export default function App() {
     setArchiveCategoryFilter('all')
     setArchiveSearchQuery('')
     setBusyBatchId(null)
+    setProductDeleteBusy(false)
+    setProductDeleteGuard({ productId: null, status: 'idle', error: null })
+    setPendingProductCleanup(null)
+    setProductCleanupBusy(false)
     setMessage('')
     setArchiveLoading(false)
     setArchiveError('')
@@ -291,6 +309,8 @@ export default function App() {
     setMessage('')
     setSelectedBatchId(null)
     setSelectedArchiveBatchId(null)
+    productDeleteGuardRequestRef.current += 1
+    setProductDeleteGuard({ productId: null, status: 'idle', error: null })
     setSidebarOpen(false)
     setActiveTab(nextTab)
     setView(nextTab === 'account' ? 'account' : 'home')
@@ -301,6 +321,8 @@ export default function App() {
     setMessage('')
     setSelectedBatchId(null)
     setSelectedArchiveBatchId(null)
+    productDeleteGuardRequestRef.current += 1
+    setProductDeleteGuard({ productId: null, status: 'idle', error: null })
     setSidebarOpen(false)
     setActiveTab('inventory')
 
@@ -313,12 +335,48 @@ export default function App() {
     setView('home')
   }
 
-  function handleOpenArchiveDetail(batchId) {
+  async function handleOpenArchiveDetail(batchId) {
     setError('')
     setMessage('')
     setSelectedArchiveBatchId(batchId)
     setSidebarOpen(false)
     setView('archive-detail')
+
+    const selectedBatch = archivedBatches.find((batch) => batch.id === batchId)
+    const productId = selectedBatch?.product?.id
+    const userId = sessionRef.current?.user?.id
+    const requestId = productDeleteGuardRequestRef.current + 1
+    productDeleteGuardRequestRef.current = requestId
+
+    if (!productId || !userId) {
+      setProductDeleteGuard({ productId: null, status: 'error', error: new Error('商品状态检查参数无效。') })
+      return
+    }
+
+    setProductDeleteGuard({ productId, status: 'loading', error: null })
+    const result = await checkProductActiveStatus({
+      supabaseClient: supabase,
+      userId,
+      productId,
+    })
+    if (
+      requestId !== productDeleteGuardRequestRef.current ||
+      sessionRef.current?.user?.id !== userId
+    ) {
+      return
+    }
+    setProductDeleteGuard({
+      productId,
+      status: result.status,
+      error: result.error ?? null,
+    })
+  }
+
+  function handleBackToArchive() {
+    productDeleteGuardRequestRef.current += 1
+    setProductDeleteGuard({ productId: null, status: 'idle', error: null })
+    setSelectedArchiveBatchId(null)
+    setView('archive')
   }
 
   function handleOpenAdd() {
@@ -326,6 +384,8 @@ export default function App() {
     setMessage('')
     setSelectedBatchId(null)
     setSelectedArchiveBatchId(null)
+    productDeleteGuardRequestRef.current += 1
+    setProductDeleteGuard({ productId: null, status: 'idle', error: null })
     setSidebarOpen(false)
     setActiveTab('inventory')
     setView('add')
@@ -335,6 +395,8 @@ export default function App() {
     setError('')
     setMessage('')
     setSelectedArchiveBatchId(null)
+    productDeleteGuardRequestRef.current += 1
+    setProductDeleteGuard({ productId: null, status: 'idle', error: null })
     setSidebarOpen(false)
     setActiveTab('inventory')
     setSelectedBatchId(batch.id)
@@ -692,6 +754,116 @@ export default function App() {
     })
   }
 
+  async function handleDeleteProduct(product) {
+    const userId = sessionRef.current?.user?.id
+    if (!userId || !product?.id) {
+      return { outcome: 'error', error: new Error('商品删除参数无效。') }
+    }
+    if (
+      productDeleteGuard.productId !== product.id ||
+      productDeleteGuard.status !== 'clear'
+    ) {
+      return {
+        outcome: 'error',
+        error: new Error('当前库存状态尚未确认，暂不能删除整个商品。'),
+      }
+    }
+
+    setProductDeleteBusy(true)
+    setError('')
+    setMessage('')
+
+    try {
+      const result = await deleteProductWithHistory({
+        supabaseClient: supabase,
+        userId,
+        product,
+      })
+
+      if (sessionRef.current?.user?.id !== userId) {
+        return {
+          outcome: 'error',
+          error: new Error('登录状态已变化，请重新打开已归档详情。'),
+        }
+      }
+
+      if (result.outcome === 'blocked_active') {
+        setProductDeleteGuard({
+          productId: product.id,
+          status: 'active',
+          error: null,
+        })
+        await Promise.all([loadBatches(), loadArchivedBatches()])
+        setError('该商品仍有当前库存，请先处理当前库存后再删除整个商品。')
+        return result
+      }
+
+      if (result.outcome === 'not_found') {
+        await Promise.all([loadBatches(), loadArchivedBatches()])
+        setError('商品不存在或无权删除。')
+        return result
+      }
+
+      if (result.outcome !== 'deleted' && result.outcome !== 'cleanup_pending') {
+        setError('删除整个商品失败，请稍后重试。')
+        return result
+      }
+
+      setArchivedBatches((currentBatches) =>
+        currentBatches.filter((batch) => batch.product?.id !== product.id),
+      )
+      setSelectedArchiveBatchId(null)
+      setProductDeleteGuard({ productId: null, status: 'idle', error: null })
+      setView('archive')
+
+      if (result.outcome === 'cleanup_pending') {
+        setPendingProductCleanup({
+          userId,
+          productId: product.id,
+          imagePath: result.imagePath,
+        })
+        setMessage('商品及历史批次已删除，但用户图片清理失败；可在本次会话中重试。')
+      } else {
+        setPendingProductCleanup(null)
+        setMessage('整个商品及历史批次已删除。')
+      }
+
+      await Promise.all([loadArchivedBatches(), loadBatches()])
+      return result
+    } catch (deleteError) {
+      setError('删除整个商品失败，请稍后重试。')
+      return { outcome: 'error', error: deleteError }
+    } finally {
+      setProductDeleteBusy(false)
+    }
+  }
+
+  async function handleRetryProductCleanup() {
+    if (!pendingProductCleanup || productCleanupBusy) return false
+
+    const retryUserId = pendingProductCleanup.userId
+    setProductCleanupBusy(true)
+    setError('')
+    const result = await retryProductImageCleanup({
+      supabaseClient: supabase,
+      ...pendingProductCleanup,
+    })
+
+    if (sessionRef.current?.user?.id !== retryUserId) {
+      setProductCleanupBusy(false)
+      return false
+    }
+
+    if (result.ok) {
+      setPendingProductCleanup(null)
+      setMessage('用户图片已清理。')
+    } else {
+      setError('商品删除已完成，但用户图片清理仍失败，请稍后重试。')
+    }
+    setProductCleanupBusy(false)
+    return result.ok
+  }
+
   async function handleUpdateProductImage(batchId, product, file) {
     setBusyBatchId(batchId)
     setError('')
@@ -843,7 +1015,17 @@ export default function App() {
         )}
         {message && (
           <div className="mb-4 rounded-2xl bg-mint px-4 py-3 text-sm text-leaf">
-            {message}
+            <p>{message}</p>
+            {pendingProductCleanup && (
+              <button
+                className="mt-3 rounded-xl border border-leaf px-3 py-2 font-semibold text-leaf disabled:opacity-50"
+                disabled={productCleanupBusy}
+                type="button"
+                onClick={handleRetryProductCleanup}
+              >
+                {productCleanupBusy ? '清理中…' : '重试清理用户图片'}
+              </button>
+            )}
           </div>
         )}
 
@@ -909,11 +1091,11 @@ export default function App() {
             archiveMode
             batch={selectedArchivedBatch}
             busy={busyBatchId === selectedArchivedBatch.id}
-            onBack={() => {
-              setSelectedArchiveBatchId(null)
-              setView('archive')
-            }}
+            onDeleteProduct={handleDeleteProduct}
+            onBack={handleBackToArchive}
             onDeleteBatch={handleDeleteArchivedBatch}
+            productDeleteBusy={productDeleteBusy}
+            productDeleteGuard={productDeleteGuard}
           />
         ) : view === 'archive-detail' ? (
           <section className="rounded-3xl bg-white p-6 text-center shadow-card">
@@ -921,10 +1103,7 @@ export default function App() {
             <button
               className="mt-4 rounded-xl bg-leaf px-4 py-3 font-semibold text-white"
               type="button"
-              onClick={() => {
-                setSelectedArchiveBatchId(null)
-                setView('archive')
-              }}
+              onClick={handleBackToArchive}
             >
               返回已归档
             </button>

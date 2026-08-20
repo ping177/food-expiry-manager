@@ -107,6 +107,20 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain("onDeleteBatch={handleDeleteArchivedBatch}")
   })
 
+  it('guards product deletion with an authoritative RPC and refreshes both lists', () => {
+    expect(appSource).toContain("from './lib/productDeletion'")
+    expect(appSource).toContain('checkProductActiveStatus')
+    expect(appSource).toContain('deleteProductWithHistory')
+    expect(appSource).toContain('retryProductImageCleanup')
+    expect(appSource).toContain('deleteProductWithHistory({')
+    expect(appSource).toContain('blocked_active')
+    expect(appSource).toContain('cleanup_pending')
+    expect(appSource).toContain('setSelectedArchiveBatchId(null)')
+    expect(appSource).toContain('await loadArchivedBatches()')
+    expect(appSource).toContain('await loadBatches()')
+    expect(appSource).toContain('onDeleteProduct={handleDeleteProduct}')
+  })
+
   it('hardens consume and mark-consumed writes against zero-row updates', () => {
     expect(appSource).toContain(".eq('quantity', 0)")
     expect(appSource).toContain('requireAffectedBatch(updatedBatch)')

@@ -124,7 +124,7 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前正式版本为 v0.3.1 — Archive & Navigation Foundation。Archive 的 Production / iPhone PWA 人工验收 1–9 项已全部通过。下一正式版本改为 v0.3.2 — Product Deletion & Storage Cleanup；Category Navigation 顺延到后续版本，具体版本号尚未冻结。Product 删除与 Storage cleanup 当前尚未实施。
+当前正式版本为 v0.3.2 — Product Deletion & Storage Cleanup（Production migration 已部署并验证，Production / iPhone PWA 验收待执行）。v0.3.1 Archive 的 Production / iPhone PWA 人工验收 1–9 项已全部通过。v0.3.2 保留历史 batch 删除，并新增带数据库权威 active guard 的 Product 删除与自有 Storage cleanup；Category Navigation 顺延到后续版本，具体版本号尚未冻结。
 
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 

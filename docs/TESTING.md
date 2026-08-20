@@ -31,6 +31,132 @@ batch 删除确认边界。
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
 
+## v0.3.2 Product Deletion & Storage Cleanup 自动化覆盖
+
+本地实现新增以下测试层次：
+
+- `tests/product-deletion-rpc.test.js`：migration / canonical schema 合同，覆盖
+  `ON DELETE RESTRICT`、`security invoker`、空 `search_path`、`auth.uid()`、Product
+  行锁、active guard、历史状态白名单、返回合同和 `authenticated` 执行权限。
+- `src/lib/productDeletion.test.js`：`blocked_active`、`not_found`、RPC 错误、DB 返回
+  的锁定图片 URL、外部 / 错用户 / 错 Product URL、Storage 成功与失败、当前会话重试、
+  owner + `status='active'` 预检查和 fail-closed 行为。
+- `src/lib/productImage.test.js`：项目 origin、bucket marker、`user_id/product_id`
+  路径校验，以及替换 / 删除 helper 只能识别自有对象。
+- `src/components/ArchiveBatchActions.test.jsx`、`src/components/BatchDetail.test.jsx`
+  和 `src/App.test.jsx`：保留历史 batch 删除、增加更危险的 Product 删除、active / loading /
+  error 禁用提示、二次确认、RPC 接线、数据库和 active/archive 两路刷新。
+
+本地定向验证：
+
+```bash
+npm test -- --run src/components/ArchiveBatchActions.test.jsx \
+  src/components/BatchDetail.test.jsx src/App.test.jsx \
+  src/lib/productDeletion.test.js src/lib/productImage.test.js
+```
+
+结果：6 个测试文件 / 51 个测试通过（仅本地 fixtures 与 source contract，不访问
+Supabase）。随后完整 `npm test` 通过 25 个测试文件 / 219 个测试，`npm run build` 与
+`git diff --check` 也通过；这些本地检查不能替代远程 DB integration 或 Production 验收。
+
+由于仓库没有可安全启动的本地 Supabase 项目配置，本地实现阶段没有连接远程或执行真实
+数据库集成测试；不得用 Production 数据替代。Production migration 已由用户部署并完成
+RPC / 权限 catalog 验证；接下来只需使用现有测试 Product 做下列事务 / Storage smoke。
+
+### v0.3.2 必须覆盖的数据库 / Storage 场景
+
+1. 只有 consumed batch 时，Product 删除返回 `deleted`，所有 consumed / discarded
+   batches 与 Product 均消失，`deleted_batch_count` 准确。
+2. Product 同时存在 consumed + active batch 时返回 `blocked_active`；Product、active
+   和 consumed rows 均保留，Storage remove 不发生。
+3. `active quantity = 0` 仍阻止 Product 删除。
+4. 同一 Product 的多个历史 batches 全部删除；其他 Product 与其 batches 不受影响。
+5. owned `user_image_url` 删除成功；外部 `image_url`、外部 `user_image_url`、错 user /
+   错 Product path 均不触发 remove。
+6. Storage remove 失败时，数据库删除已经成功且 UI 明确显示 cleanup pending；当前会话
+   重试只调用 Storage remove，不重试 destructive RPC。
+7. RPC / DB 错误或 0-row / stale response 不显示成功，也不触发 Storage remove。
+8. 现有“删除历史批次”仍只删除当前 consumed batch，Product、图片、其他 batch 均保留。
+
+### Production catalog preflight（只读）
+
+部署 migration 前，在目标项目 SQL Editor 只读执行；不要把结果中的 UUID、邮箱或任何
+凭据写入仓库：
+
+```sql
+select
+  ccu.table_schema,
+  ccu.table_name,
+  ccu.column_name,
+  rc.delete_rule
+from information_schema.constraint_column_usage as ccu
+join information_schema.referential_constraints as rc
+  on rc.constraint_name = ccu.constraint_name
+where ccu.table_schema = 'public'
+  and ccu.table_name = 'products'
+  and ccu.column_name = 'id';
+
+select
+  routine_schema,
+  routine_name,
+  routine_type,
+  security_type,
+  external_language,
+  data_type
+from information_schema.routines
+where routine_schema = 'public'
+  and routine_name = 'delete_product_with_history';
+
+select
+  grantee,
+  privilege_type
+from information_schema.routine_privileges
+where routine_schema = 'public'
+  and routine_name = 'delete_product_with_history'
+order by grantee, privilege_type;
+
+select schemaname, tablename, policyname, cmd, roles, qual, with_check
+from pg_policies
+where schemaname = 'public'
+  and tablename in ('products', 'inventory_batches')
+order by tablename, policyname;
+```
+
+预期：`inventory_batches.product_id → products.id` 为 `RESTRICT`；RPC 为
+`FUNCTION / INVOKER`；`authenticated` 拥有 EXECUTE，`anon` / `public` 不拥有；两表
+仍有 owner-scoped SELECT / DELETE policy。该查询不读取业务行内容。
+
+### Production migration preflight result（2026-08-20）
+
+- PASS：`delete_product_with_history(uuid)` 已存在。
+- PASS：函数为 `SECURITY INVOKER`，`search_path` 为空。
+- PASS：`authenticated` 拥有 EXECUTE；`anon` / `PUBLIC` 无 EXECUTE。
+- PASS：`postgres` / `service_role` 后台权限保留，无需调整。
+- Pending：Production / iPhone PWA manual acceptance；尚未执行 Product 删除业务数据操作。
+
+### Production / iPhone PWA 最小人工验收
+
+使用用户已有测试 Product；先确认它只有历史批次，若仍有 active batch，先按正常流程
+处理并确认回到 Archive。完成一组后刷新 / 重新打开页面核对持久化：
+
+1. 登录既有账号，打开 drawer → 已归档，进入测试 Product 的 consumed detail。
+2. 确认“删除历史批次”和“删除整个商品”是两个独立操作；先只测试历史删除的取消路径，
+   确认 Product 与图片仍保留。若要验证历史删除成功，使用另一个 consumed batch / 测试
+   Product，避免先删掉唯一 Archive 入口后无法继续测试 whole-Product delete。
+3. 为另一个测试 Product 保留一个 active batch（可为 quantity 0），从其 Archive detail
+   观察 Product 删除按钮在检查期间禁用，并明确提示“仍有当前库存”；尝试不能提交。
+4. 对无 active 的测试 Product 点击“删除整个商品”，阅读高风险二次确认，取消一次，
+   再次打开后确认数据仍在。
+5. 再确认删除；等待返回 Archive，测试 Product 的所有历史 cards 消失，其他 Product
+   cards 不受影响，首页 active 列表仍正常。
+6. 若测试 Product 有用户上传图，验证图片对象清理；若 Storage remove 失败，确认页面
+   明确显示已删除但图片待清理，并可用“重试清理用户图片”完成当前会话重试。外部图片
+   链接只验证回退显示，不应被当作 Storage 删除对象。
+7. 刷新 / 关闭后重开 Archive 与库存，确认删除结果保持；再次点击已删除 Product 不得
+   显示成功。
+8. 不创建第二账号；cross-account smoke 继续 deferred，除非本次真实修改 RLS（本次
+   不修改）。
+
 ## v0.3.1 Archive & Navigation 自动化覆盖
 
 - `src/lib/auth.test.js`：active query 默认只取 `status='active'`；Archive query 使用 `status='consumed'`、`updated_at DESC`。

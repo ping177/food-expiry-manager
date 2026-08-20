@@ -394,9 +394,29 @@
 
 ## D-033：v0.3.2 Product Deletion & Storage Cleanup 优先于 Category Navigation
 
-- 状态：已决定，尚未实施
+- 状态：已决定；Production migration 已部署，manual acceptance 待执行
 - 日期：2026-08-20
 - 决策：下一正式版本改为 `v0.3.2 — Product Deletion & Storage Cleanup`。Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留。
 - 删除边界：Product 仍有 active batch 时禁止删除整个 Product；没有 active batch 时允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象。外部 `image_url` 不尝试删除外部资源。
 - 优先级：Category Navigation 顺延到后续版本，具体版本号尚未冻结。
-- 本次仅记录治理决策，不实施业务代码、Supabase、Auth、RLS、Storage 或 schema 变更。
+- 本次决策不扩大 Category Navigation 或其他功能范围。
+
+## D-034：v0.3.2 使用 DB-first 原子 Product 删除与当前会话 Storage 重试
+
+- 状态：已决定并完成实现；Production migration 已部署，manual acceptance 待执行
+- 日期：2026-08-20
+- 决策：使用 `public.delete_product_with_history(uuid)` 作为唯一权威删除入口。该
+  `security invoker` RPC 在同一数据库事务中以 `auth.uid()` 锁定 Product 行，拒绝仍有
+  `active` batch 的 Product；无 active 时只删除 `consumed` / `discarded` batches，随后
+  删除 Product，并返回当时的 `user_image_url` 与删除数量。
+- 并发边界：客户端 Archive 详情只做 fail-closed 的提示性 active 预检查；真正删除仍
+  必须由 RPC 再次检查。Product 行锁与现有 FK 约束共同避免检查后插入 active batch 导致
+  误删或半删除。
+- Storage 顺序：先提交数据库删除，再按 RPC 返回的 `user_image_url` 严格识别本项目
+  `product-images/{user_id}/{product_id}/...` 对象并 remove。Storage 失败不回滚已提交
+  的数据库事务，而是显示“已删除但图片清理失败”，在当前会话提供同一路径的显式重试。
+  外部 `image_url`、其他用户路径、其他 Product 路径均不尝试删除。
+- 非目标：不新增 CASCADE、独立 Product 管理页、删除队列 / worker、后台补偿任务、批量
+  删除、discarded UI、Category Navigation 或 cross-account 新账号 smoke。
+- 验收边界：Production migration 已验证，但 Production / iPhone PWA manual acceptance
+  完成前，不声称 v0.3.2 已完成。

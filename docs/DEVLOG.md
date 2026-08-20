@@ -2,6 +2,27 @@
 
 ## 2026-08-20
 
+### v0.3.2 Product Deletion & Storage Cleanup 本地实现与 Production migration 部署（未关闭）
+
+- 新增 `supabase/migrations/20260820120000_add_product_deletion_rpc.sql`，并同步
+  `supabase/schema.sql`：`delete_product_with_history(uuid)` 使用 `security invoker`、
+  空 `search_path`、`auth.uid()` 与 Product 行锁，在单事务内拒绝 active batch、删除
+  consumed / discarded 历史 batches 并删除 Product；未知状态由 `ON DELETE RESTRICT`
+  失败并回滚。执行权限只授予 `authenticated`。
+- Archive consumed detail 保留“删除历史批次”，新增带 active / loading / error fail-closed
+  guard 的“删除整个商品”高风险二次确认；成功后返回 Archive、清除选中项并刷新 active /
+  archive 两路状态。
+- `getOwnProductImagePath` 现在要求当前 Supabase origin、`product-images` marker、
+  `user_id/product_id` 两级路径；Product 删除使用 RPC 返回的锁定 `user_image_url`，DB
+  提交后才 remove 自有对象，外部 `image_url` 永不删除。Storage 失败显示 cleanup pending，
+  当前会话可显式重试同一路径且不重试 destructive RPC。
+- 新增 RPC 合同、删除编排、Storage 路径和 Archive UI 测试；定向验证 6 个测试文件 / 51
+  个测试通过；随后完整 `npm test` 通过 25 个测试文件 / 219 个测试，`npm run build` 和
+  `git diff --check` 通过。Production migration 已由用户部署并验证：RPC 存在、SECURITY
+  INVOKER、空 `search_path`、`authenticated` EXECUTE 以及 `anon` / `PUBLIC` 无 EXECUTE；
+  `postgres` / `service_role` 后台权限保持不变。Production / iPhone PWA manual acceptance
+  仍待执行，v0.3.2 尚未标记 completed / closed。
+
 ### v0.3.1 Archive & Navigation Foundation
 
 - 在库存标题区新增移动端 hamburger 与左侧 drawer；drawer 只包含“库存 / 已归档”，支持 selected state、遮罩 / Escape 关闭、焦点恢复、横向溢出保护和 iPhone safe-area。底部导航仍保持“库存 | + | 我的”。

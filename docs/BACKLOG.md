@@ -49,13 +49,15 @@ v0.3.1 明确未做：
 
 ### Backlog 2：Product Deletion & Storage Cleanup
 
-v0.3.2 是下一正式版本，当前冻结范围但尚未实施：
+v0.3.2 是当前正式版本，范围已冻结；本地实现完成，Production migration 已部署并验证，Production / iPhone PWA 验收待执行：
 
 - Product 删除入口位于 Archive / 已归档详情；现有“删除历史批次”继续保留。
 - Product 仍有 active batch 时，禁止删除整个 Product。
 - 没有 active batch 时，允许删除 Product、其关联历史 batches，并清理属于该 Product 的 Supabase Storage `user_image_url` 对象。
 - 外部 `image_url` 不尝试删除外部资源。
-- 本次仅更新治理范围，不实施业务代码、Supabase、Auth、RLS、Storage 或 schema 变更。
+- 已加入原子 `delete_product_with_history` RPC、Archive guard / 二次确认与 DB-first
+  Storage cleanup retry；Production migration / RPC 权限已由用户验证，尚未执行 Product
+  删除等 production data 操作或人工验收。
 
 ### 顺延候选：Category Navigation
 

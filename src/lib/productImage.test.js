@@ -24,7 +24,12 @@ function clientMock({ updateError = null, removeError = null } = {}) {
   const select = vi.fn(() => ({ single }))
   const eq = vi.fn(() => ({ select }))
   const update = vi.fn(() => ({ eq }))
-  return { storage, from: vi.fn(() => ({ update })), single }
+  return {
+    supabaseUrl: 'https://project.supabase.co',
+    storage,
+    from: vi.fn(() => ({ update })),
+    single,
+  }
 }
 
 describe('product image helpers', () => {
@@ -42,8 +47,30 @@ describe('product image helpers', () => {
 
   it('places every object under the current user id', () => {
     expect(createProductImagePath(userId, productId, 'uuid')).toBe('user-1/product-1/uuid.jpg')
-    expect(getOwnProductImagePath('https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1/old.jpg', userId)).toBe('user-1/product-1/old.jpg')
-    expect(getOwnProductImagePath('https://project.supabase.co/storage/v1/object/public/product-images/user-2/product-1/old.jpg', userId)).toBe('')
+    expect(getOwnProductImagePath(
+      'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-1/old.jpg',
+      userId,
+      productId,
+      'https://project.supabase.co',
+    )).toBe('user-1/product-1/old.jpg')
+    expect(getOwnProductImagePath(
+      'https://project.supabase.co/storage/v1/object/public/product-images/user-2/product-1/old.jpg',
+      userId,
+      productId,
+      'https://project.supabase.co',
+    )).toBe('')
+    expect(getOwnProductImagePath(
+      'https://project.supabase.co/storage/v1/object/public/product-images/user-1/product-2/old.jpg',
+      userId,
+      productId,
+      'https://project.supabase.co',
+    )).toBe('')
+    expect(getOwnProductImagePath(
+      'https://example.com/storage/v1/object/public/product-images/user-1/product-1/old.jpg',
+      userId,
+      productId,
+      'https://project.supabase.co',
+    )).toBe('')
   })
 
   it('cleans a newly uploaded object when database pointer update fails', async () => {

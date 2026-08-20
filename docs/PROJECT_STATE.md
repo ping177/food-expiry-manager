@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.3.1 — Archive & Navigation Foundation.
+v0.3.2 — Product Deletion & Storage Cleanup.
 
 ## Current status
 
-v0.3.1 已建立最小侧边栏导航和已归档历史区域：Archive 直接复用 `inventory_batches.status = 'consumed'`，独立加载 / 错误 / 筛选状态，按 `updated_at DESC` 展示，并支持只删除当前历史 batch。Production / iPhone PWA 人工验收 1–9 项已全部 PASS：drawer、底部导航、Archive 持久化与筛选、consumed 详情只读、历史 batch 删除、active 回归、`active quantity=0` 保持库存，以及显式标记后进入 Archive。下一正式版本优先级已改为 v0.3.2 — Product Deletion & Storage Cleanup；Category Navigation 顺延到后续版本，具体版本号尚未冻结。Product 删除与 Storage cleanup 尚未实施，本次治理修正不修改业务代码或 Supabase。
+v0.3.1 已完成并关闭。当前 v0.3.2 本地实现与 tracked migration 已完成，Production migration 已部署并验证：Archive 详情保留历史 batch 删除，新增带 fail-closed active guard 的 Product 删除入口；数据库 RPC 在单事务内处理 active guard、历史 batches 与 Product，提交后按严格自有路径清理 Storage，并提供当前会话重试。完整本地测试、build 与 diff check 已通过；Production / iPhone PWA manual acceptance 仍待执行，因此版本尚未 completed / closed。Category Navigation 继续顺延。
 
 ## Latest completed
 
-完成并关闭 v0.3.1 Archive & Navigation Foundation：新增移动端侧边栏“库存 / 已归档”、独立 consumed 查询与历史卡片、只读 consumed 详情、历史 batch 二次确认删除，以及 consume / mark-consumed 的 0-row 防误报。保留现有底部双 Tab 与独立 `+`，未迁移分类、未实现 Product 删除。自动化测试 23 个文件 / 201 个测试通过，生产构建通过；Production / iPhone PWA 人工验收 1–9 项全部通过。下一正式版本优先级已转为 v0.3.2 Product Deletion & Storage Cleanup。
+完成并关闭 v0.3.1 Archive & Navigation Foundation：新增移动端侧边栏“库存 / 已归档”、独立 consumed 查询与历史卡片、只读 consumed 详情、历史 batch 二次确认删除，以及 consume / mark-consumed 的 0-row 防误报。保留现有底部双 Tab 与独立 `+`，未迁移分类。随后完成 v0.3.2 本地代码切片与 Production migration 部署验证：原子 Product deletion RPC、Storage 自有路径校验、Archive UI guard / 二次确认 / cleanup retry 与对应测试均已完成；Production / iPhone PWA manual acceptance 待执行。
 
 ## Deployment
 
@@ -45,14 +45,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.12-C｜删除库存批次
 - v0.2.12-D｜商品容量 / 规格
 - v0.3.1｜Archive & Navigation Foundation（已完成）
+- v0.3.2｜Product Deletion & Storage Cleanup（Production migration 已部署，manual acceptance 待执行）
 
 ## Last verified
 
-2026-08-20: v0.3.1 targeted and full automated suite (23 files / 201 tests), production build and `git diff --check` passed locally. Production / iPhone PWA manual acceptance 1–9 all PASS, including `active quantity=0` retention and explicit consumed transition. No Supabase operation was performed.
+2026-08-20: v0.3.2 定向验证 6 files / 51 tests，完整 `npm test` 25 files / 219 tests，`npm run build` 与 `git diff --check` 均通过；Production migration 已由用户部署并验证 RPC、SECURITY INVOKER、空 search_path 与权限，Production / iPhone PWA manual acceptance 待执行。此前 v0.3.1 Production / iPhone PWA 1–9 均 PASS。No further Supabase operation was performed by Codex.
 
 ## Next Action
 
-进入 v0.3.2 Product Deletion & Storage Cleanup 的实现前审计与实施准备：确认 Archive 详情入口、active batch 阻止、历史 batches 与 `user_image_url` Storage 清理边界；Category Navigation 顺延到后续版本，具体版本号尚未冻结。
+下一步完成 docs/TESTING.md 的 Production / iPhone PWA 最小人工验收；通过后再将版本标记 completed / closed。Category Navigation 继续顺延。
 
 ## Blockers
 
@@ -95,10 +96,12 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - Product data APIs must not infer shelf life.
 - v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持验收；双账号图片隔离和 Android 图片流程未手动覆盖，均为 deferred / not manually covered，不作为 blocker。
 - v0.3.1 Archive 只查询 `status='consumed'`，active 首页继续只查询 `status='active'`；Archive 与 active 使用独立数据、loading、error、搜索和分类状态。
-- v0.3.1 已归档入口位于库存标题区 hamburger 打开的左侧 drawer；drawer 只包含“库存”和“已归档”，底部导航仍严格为“库存 | + | 我的”。分类迁移到 sidebar、恢复 consumed、批量删除和分页均 deferred；Product 删除与 Storage cleanup 已转入 v0.3.2 优先范围，尚未实现。
+- v0.3.1 已归档入口位于库存标题区 hamburger 打开的左侧 drawer；drawer 只包含“库存”和“已归档”，底部导航仍严格为“库存 | + | 我的”。分类迁移到 sidebar、恢复 consumed、批量删除和分页均 deferred。
 - v0.3.1 删除历史 batch 只按 batch id、当前 user id 和 `status='consumed'` 约束，成功后停留 Archive；Product、`user_image_url`、Storage object 和其他 batch 保留。
 - v0.3.1 Production / iPhone PWA closeout 已完成；1–9 项人工验收全部 PASS。
+- v0.3.2 Product 删除由已部署并验证的 `delete_product_with_history(uuid)` RPC 权威执行：Product 行锁 + `active` guard + consumed/discarded 历史清理 + Product 删除同事务完成；不使用 FK CASCADE。客户端预检查仅用于 UI，不能替代 RPC。
+- v0.3.2 DB-first 后 Storage cleanup 失败是可见的 partial success；仅当前会话提供同一自有对象路径 retry，不自动重试 destructive RPC，不尝试删除外部 `image_url`。
 
 ## Handoff Prompt
 
-Begin v0.3.2 Product Deletion & Storage Cleanup scope audit and implementation preparation. Preserve the existing products / inventory_batches separation, block whole-Product deletion when active batches exist, and keep Category Navigation deferred without forcing a version number.
+Complete v0.3.2 Product Deletion & Storage Cleanup acceptance: validate active guard, atomic historical deletion, Product isolation, owned-image cleanup / retry, external-image safety, Archive history deletion regression, and iPhone PWA persistence. Do not close the version before manual acceptance passes; keep Category Navigation deferred.

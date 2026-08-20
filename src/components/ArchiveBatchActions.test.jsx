@@ -17,4 +17,15 @@ describe('ArchiveBatchActions', () => {
     expect(source).not.toContain("from('products')")
     expect(source).not.toContain('storage')
   })
+
+  it('keeps whole-product deletion as a separate guarded destructive action', () => {
+    expect(source).toContain('删除整个商品')
+    expect(source).toContain('仍有当前库存')
+    expect(source).toContain('确认删除整个商品')
+    expect(source).toContain('商品及其所有历史批次都会被永久删除')
+    expect(source).toContain('productDeleteGuard')
+    expect(source).toContain('onDeleteProduct(product)')
+    expect(source).not.toContain("from('products')")
+    expect(source).not.toContain('storage')
+  })
 })

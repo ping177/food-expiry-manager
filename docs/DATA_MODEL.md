@@ -169,3 +169,25 @@ products (1) ──────< inventory_batches (N)
 - `products.size_value` 为 nullable `numeric`，`products.size_unit` 为 nullable `text`；没有默认值、索引或格式约束。
 - 已部署的 legacy `products.size` text 列保留，不由应用读写、删除或回填；本版本不从旧商品名或 legacy 值拆分容量。
 - 外部 API 仅在返回明确容量字段时预填结构化字段，不通过正则猜测商品名称中的容量。
+
+## v0.3.2 Product 删除与 Storage 生命周期检查
+
+- `products` 与 `inventory_batches` 继续是一对多关系；`inventory_batches.product_id`
+  使用 `on delete restrict`，因此删除 Product 前必须先处理全部关联 batch。
+- `inventory_batches.status` 当前允许 `active`、`consumed`、`discarded`。Product
+  删除 RPC 只物理删除 `consumed` / `discarded`；任何 `active` batch 都让 RPC 返回
+  `blocked_active`，不会级联删除库存。若未来出现未被 RPC 白名单覆盖的状态，Product
+  删除会被 FK 拒绝并回滚。
+- 新 migration `20260820120000_add_product_deletion_rpc.sql` 新增
+  `public.delete_product_with_history(uuid)`。函数为 `security invoker`，固定空
+  `search_path`，以 `auth.uid()` 过滤 owner，先锁定 Product 行，再在同一事务中检查
+  active、删除历史 batch、删除 Product，并返回结果和当时的 `user_image_url`。
+- Product 与 batch 的 owner DELETE policy 保持不变；RPC 只授予 `authenticated` 执行，
+  撤销 `public` / `anon` 执行。没有新增 CASCADE、没有改变 RLS 隔离。
+- 用户上传图片对象路径为
+  `{user_id}/{product_id}/{random_uuid}.jpg`，只有 URL origin、bucket marker、首段
+  `user_id` 和第二段 `product_id` 均严格匹配当前 Supabase 项目与待删 Product 时才
+  允许 Storage remove。`image_url` 始终视为外部回退图，不参与删除。
+- 当前代码与 migration 已部署到 Production；用户已完成 RPC 存在性、SECURITY INVOKER、
+  空 `search_path` 和 EXECUTE 权限验证。未执行 Product 删除业务数据操作；版本在
+  Production / iPhone PWA manual acceptance 完成前不标记 closed。

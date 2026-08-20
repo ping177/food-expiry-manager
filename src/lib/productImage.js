@@ -69,14 +69,34 @@ export async function compressProductImage(file) {
   return new File([blob], 'product-image.jpg', { type: 'image/jpeg' })
 }
 
-export function getOwnProductImagePath(url, userId) {
-  if (!url || !userId) return ''
+export function getOwnProductImagePath(
+  url,
+  userId,
+  productId,
+  expectedSupabaseUrl,
+) {
+  if (!url || !userId || !productId || !expectedSupabaseUrl) return ''
   try {
-    const path = decodeURIComponent(new URL(url).pathname)
+    const parsedUrl = new URL(url)
+    const expectedOrigin = new URL(expectedSupabaseUrl).origin
+    if (parsedUrl.origin !== expectedOrigin) return ''
+
+    const path = decodeURIComponent(parsedUrl.pathname)
     const marker = `/storage/v1/object/public/${PRODUCT_IMAGE_BUCKET}/`
-    const index = path.indexOf(marker)
-    const objectPath = index >= 0 ? path.slice(index + marker.length) : ''
-    return objectPath.startsWith(`${userId}/`) ? objectPath : ''
+    if (!path.startsWith(marker)) return ''
+
+    const objectPath = path.slice(marker.length)
+    const segments = objectPath.split('/')
+    if (
+      segments.length !== 3 ||
+      segments[0] !== userId ||
+      segments[1] !== productId ||
+      segments.some((segment) => !segment || segment === '.' || segment === '..')
+    ) {
+      return ''
+    }
+
+    return objectPath
   } catch {
     return ''
   }
@@ -113,7 +133,12 @@ export async function uploadAndReplaceProductImage({
     throw new Error('图片资料保存失败，请稍后重试。')
   }
 
-  const oldPath = getOwnProductImagePath(previousUserImageUrl, userId)
+  const oldPath = getOwnProductImagePath(
+    previousUserImageUrl,
+    userId,
+    productId,
+    supabaseClient.supabaseUrl,
+  )
   const cleanupError = await removePath(storage, oldPath)
   return { product, cleanupError }
 }
@@ -129,7 +154,12 @@ export async function deleteProductUserImage({ supabaseClient, userId, product }
   if (updateError) throw new Error('图片资料保存失败，请稍后重试。')
   const cleanupError = await removePath(
     supabaseClient.storage,
-    getOwnProductImagePath(previousUserImageUrl, userId),
+    getOwnProductImagePath(
+      previousUserImageUrl,
+      userId,
+      product.id,
+      supabaseClient.supabaseUrl,
+    ),
   )
   return { product: updatedProduct, cleanupError }
 }

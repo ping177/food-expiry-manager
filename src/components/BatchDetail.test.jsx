@@ -185,11 +185,14 @@ describe('BatchDetail', () => {
     const html = renderBatchDetail({
       archiveMode: true,
       batch: { ...batch, quantity: 0, status: 'consumed' },
+      productDeleteGuard: { status: 'clear', productId: 'product-1' },
     })
 
     expect(html).toContain('返回已归档')
     expect(html).toContain('已消耗')
     expect(html).toContain('删除历史批次')
+    expect(html).toContain('删除整个商品')
+    expect(html).toContain('删除整个商品会同时删除它的所有历史批次')
     expect(html).not.toContain('编辑商品')
     expect(html).not.toContain('库存操作')
     expect(html).not.toContain('新增库存')
@@ -197,5 +200,23 @@ describe('BatchDetail', () => {
     expect(html).not.toContain('标记为已消耗')
     expect(html).not.toContain('拍照')
     expect(html).not.toContain('从相册选择')
+  })
+
+  it('disables whole-product deletion while active status is loading or blocked', () => {
+    const loadingHtml = renderBatchDetail({
+      archiveMode: true,
+      batch: { ...batch, quantity: 0, status: 'consumed' },
+      productDeleteGuard: { status: 'loading', productId: 'product-1' },
+    })
+    const activeHtml = renderBatchDetail({
+      archiveMode: true,
+      batch: { ...batch, quantity: 0, status: 'consumed' },
+      productDeleteGuard: { status: 'active', productId: 'product-1' },
+    })
+
+    expect(loadingHtml).toContain('正在确认当前库存状态')
+    expect(activeHtml).toContain('仍有当前库存')
+    expect(loadingHtml).toMatch(/删除整个商品[^<]*<\/button>/)
+    expect(activeHtml).toMatch(/删除整个商品[^<]*<\/button>/)
   })
 })
