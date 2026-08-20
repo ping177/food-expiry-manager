@@ -2,6 +2,15 @@
 
 ## 2026-08-20
 
+### v0.3.1 Archive & Navigation Foundation
+
+- 在库存标题区新增移动端 hamburger 与左侧 drawer；drawer 只包含“库存 / 已归档”，支持 selected state、遮罩 / Escape 关闭、焦点恢复、横向溢出保护和 iPhone safe-area。底部导航仍保持“库存 | + | 我的”。
+- 参数化既有 inventory batch query：active 默认 `status='active'` + 到期日升序，Archive 使用 `status='consumed'` + `updated_at DESC`；Archive 使用独立数据、loading、error、搜索和分类状态。
+- 新增 Archive 历史卡片与只读 consumed BatchDetail；详情仅保留当前历史 batch 的二次确认删除，删除按 batch id、当前 user id、consumed 状态限定，0-row 失败，成功后留在 Archive 并保留 Product / 图片 / 其他 batch。
+- 加固 consume 与 mark-consumed：分别检查 update 返回行；mark-consumed 同时限定 active 与 quantity=0。quantity=0 仍不会自动改变 status。
+- 未修改 Supabase schema / migration、Auth、RLS、Storage policy、生产数据或 secrets；未实现分类侧栏迁移和 Product 删除。
+- `npm test`：23 个测试文件 / 201 个测试通过；`npm run build` 成功；`git diff --check` 通过。Production / iPhone PWA 人工验收待执行。
+
 ### 新增 / 编辑商品窄屏表单 UI polish
 
 - 保持品牌与容量/规格、分类与外部图片链接的两列布局；容量控件改为可收缩的数值主列与固定 `4rem` 单位列，避免 iPhone 窄屏横向溢出。

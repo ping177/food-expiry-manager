@@ -27,7 +27,25 @@
 
 ### Backlog 1：Archive / 已归档系统
 
-已确定为新增商品窄屏 UI polish 完成后的下一项工作。具体产品范围与验收标准在启动该任务时确认；本轮不实现归档功能。
+v0.3.1 已完成最小 Archive 与 Navigation Foundation，本节保留为该 backlog 的交付记录。
+
+已完成：
+
+- 库存标题区 hamburger 打开左侧 drawer；drawer 只提供“库存 / 已归档”，支持 selected state、遮罩关闭和 iPhone safe-area。
+- active 首页继续查询 `status='active'`；Archive 独立查询 `status='consumed'`，按 `updated_at DESC`，不新增归档表、状态机、`consumed_at` 或 event log。
+- Archive 支持商品名 / 品牌搜索和现有 Product 分类筛选，不带入 active 临期时间窗口。
+- Archive 卡片展示 Product 图片、名称、品牌、分类、规格、原到期日和“已消耗”；不展示剩余 0 件或 active 临期 badge。
+- consumed BatchDetail 只读，隐藏 Product 编辑、图片操作和 active 库存操作；仅保留当前历史 batch 的二次确认删除。
+- 历史删除限定 batch id、当前 user id 与 `status='consumed'`，0-row 失败，成功后停留 Archive，并保留 Product、图片和其他 batch。
+- consume / mark-consumed update 增加 active / quantity=0 约束及返回行校验，避免 0-row 误报成功。
+
+明确未做：
+
+- 分类迁移到侧边栏、左侧分类树、Product 删除、Storage cleanup、consumed 恢复、补货、discarded UI、批量删除、分页和 Android 专项。
+
+后续候选：
+
+- v0.3.2 再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏；不与 v0.3.1 Archive 混做。
 
 ### v0.2.12-B2：库存操作（已完成本地实现）
 

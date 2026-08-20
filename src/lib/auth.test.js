@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   EMAIL_OTP_COOLDOWN_SECONDS,
+  createInventoryBatchesQuery,
   createAuthSessionController,
   getAccountStatus,
   isAnonymousUser,
@@ -35,6 +36,35 @@ function createQueryFromPromise(promise) {
 }
 
 describe('auth helpers', () => {
+  it('keeps active inventory ordering and supports consumed archive ordering', () => {
+    const queries = []
+    const createQuery = () => {
+      const query = Promise.resolve({ data: [], error: null })
+      query.select = vi.fn(() => query)
+      query.eq = vi.fn(() => query)
+      query.order = vi.fn(() => query)
+      queries.push(query)
+      return query
+    }
+    const supabaseClient = { from: vi.fn(createQuery) }
+
+    createInventoryBatchesQuery(supabaseClient)
+    createInventoryBatchesQuery(supabaseClient, {
+      status: 'consumed',
+      orderBy: 'updated_at',
+      ascending: false,
+    })
+
+    expect(queries[0].eq).toHaveBeenCalledWith('status', 'active')
+    expect(queries[0].order).toHaveBeenCalledWith('expiry_date', {
+      ascending: true,
+    })
+    expect(queries[1].eq).toHaveBeenCalledWith('status', 'consumed')
+    expect(queries[1].order).toHaveBeenCalledWith('updated_at', {
+      ascending: false,
+    })
+  })
+
   it('identifies anonymous users from Supabase user metadata instead of only missing email', () => {
     expect(isAnonymousUser({ id: 'anon', is_anonymous: true })).toBe(true)
     expect(

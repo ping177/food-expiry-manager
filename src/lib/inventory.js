@@ -11,6 +11,11 @@ export function normalizeQuantity(quantity) {
   return next
 }
 
+export function requireAffectedBatch(batch) {
+  if (!batch) throw new Error('批次不存在或无法更新')
+  return batch
+}
+
 function normalizePositiveQuantity(quantity, message) {
   const next = normalizeQuantity(quantity)
   if (next <= 0) {

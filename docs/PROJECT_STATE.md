@@ -8,15 +8,15 @@
 
 ## Current version
 
-v0.2.12-D structured product size with narrow-screen form polish.
+v0.3.1 — Archive & Navigation Foundation.
 
 ## Current status
 
-v0.2.12-D 的结构化容量保持 `size_value` + `size_unit`；新增与编辑表单已完成 iPhone 窄屏布局修正，容量数值占主要宽度、单位列保持紧凑，分类与外部图片链接两列对齐且不再因旧 label 产生不必要换行。v0.2.11 图片 Production Manual Validation 已确认 iPhone PWA 拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持均 PASS；双账号图片隔离和 Android 流程未手动覆盖，均 deferred / not manually covered，不作为 blocker。本轮未修改字段含义、保存逻辑、图片 fallback、`inventory_batches`、Auth、RLS、Storage、环境变量或依赖。
+v0.3.1 已建立最小侧边栏导航和已归档历史区域：Archive 直接复用 `inventory_batches.status = 'consumed'`，独立加载 / 错误 / 筛选状态，按 `updated_at DESC` 展示，并支持只删除当前历史 batch。底部导航仍为“库存 | + | 我的”，分类尚未迁入侧边栏。消耗与显式标记 consumed 的 update 已增加状态、数量和返回行校验。本版本未修改 Supabase schema、migration、Auth、RLS、Storage policy、生产数据、Product 删除能力或图片生命周期；iPhone PWA / Production 人工验收待执行，不作为代码阻塞。
 
 ## Latest completed
 
-新增与编辑商品的窄屏表单 UI polish：容量数值与单位使用可收缩的主列加 `4rem` 单位列；分类与“外部图片链接（可选）”保持对齐的两列布局。新增商品、扫码/手动填写、规格保存、分类和图片 URL 业务行为不变。另完成 v0.2.11 图片 Production Manual Validation：iPhone PWA 图片主流程及 fallback / 刷新保持均 PASS。
+完成 v0.3.1 Archive & Navigation Foundation：新增移动端侧边栏“库存 / 已归档”、独立 consumed 查询与历史卡片、只读 consumed 详情、历史 batch 二次确认删除，以及 consume / mark-consumed 的 0-row 防误报。保留现有底部双 Tab 与独立 `+`，未迁移分类、未实现 Product 删除。自动化测试 23 个文件 / 201 个测试通过，生产构建通过；Production 人工验收步骤已记录在 `docs/TESTING.md`。
 
 ## Deployment
 
@@ -44,14 +44,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.12-B2｜库存操作
 - v0.2.12-C｜删除库存批次
 - v0.2.12-D｜商品容量 / 规格
+- v0.3.1｜Archive & Navigation Foundation
 
 ## Last verified
 
-2026-08-20: narrow-screen product-form tests and full automated suite (19 files / 187 tests), production build and `git diff --check` passed locally; Production iPhone PWA image validation for camera upload, album selection, replacement, deletion/fallback, and refresh/reopen persistence passed. Dual-account image isolation and Android image flow remain deferred / not manually covered, not blockers.
+2026-08-20: v0.3.1 targeted and full automated suite (23 files / 201 tests), production build and `git diff --check` passed locally. v0.2.11 iPhone PWA image validation remains PASS; v0.3.1 Archive iPhone PWA / Production manual smoke is pending user execution. No Supabase operation was performed.
 
 ## Next Action
 
-进入 Backlog 1：Archive / 已归档系统；先按该 backlog 确认产品范围与验收标准，再开始实现。
+在 iPhone PWA / Production 执行 v0.3.1 Archive 人工验收；通过后再评估 v0.3.2 Category Navigation，不在本版本迁移分类到侧边栏。
 
 ## Blockers
 
@@ -93,7 +94,10 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.2.12-D 在首页摘要中为有值商品增加规格标签；规格属于 product，不属于 batch。无 barcode 复用必须同时匹配名称、品牌和规格。
 - Product data APIs must not infer shelf life.
 - v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持验收；双账号图片隔离和 Android 图片流程未手动覆盖，均为 deferred / not manually covered，不作为 blocker。
+- v0.3.1 Archive 只查询 `status='consumed'`，active 首页继续只查询 `status='active'`；Archive 与 active 使用独立数据、loading、error、搜索和分类状态。
+- v0.3.1 已归档入口位于库存标题区 hamburger 打开的左侧 drawer；drawer 只包含“库存”和“已归档”，底部导航仍严格为“库存 | + | 我的”。分类迁移到 sidebar、Product 删除、恢复 consumed、批量删除和分页均 deferred。
+- v0.3.1 删除历史 batch 只按 batch id、当前 user id 和 `status='consumed'` 约束，成功后停留 Archive；Product、`user_image_url`、Storage object 和其他 batch 保留。
 
 ## Handoff Prompt
 
-Start Backlog 1：Archive / 已归档系统. Confirm its product scope and acceptance criteria before implementation; preserve the existing products / inventory_batches separation and do not mix unrelated UI or data-model changes into the archive work.
+Run the v0.3.1 iPhone PWA / Production Archive acceptance checklist. Preserve the existing products / inventory_batches separation; category navigation remains a separate future v0.3.2 decision.

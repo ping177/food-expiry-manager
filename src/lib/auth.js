@@ -201,7 +201,10 @@ export async function signOutCurrentUser(supabaseClient) {
   return { ok: true, errorMessage: '' }
 }
 
-export function createInventoryBatchesQuery(supabaseClient) {
+export function createInventoryBatchesQuery(
+  supabaseClient,
+  { status = 'active', orderBy = 'expiry_date', ascending = true } = {},
+) {
   return supabaseClient
     .from('inventory_batches')
     .select(
@@ -213,6 +216,7 @@ export function createInventoryBatchesQuery(supabaseClient) {
         shelf_life_value,
         shelf_life_unit,
         expiry_date,
+        updated_at,
         storage_location,
         note,
         status,
@@ -230,21 +234,28 @@ export function createInventoryBatchesQuery(supabaseClient) {
         )
       `,
     )
-    .eq('status', 'active')
-    .order('expiry_date', { ascending: true })
+    .eq('status', status)
+    .order(orderBy, { ascending })
 }
 
 export async function loadInventoryBatchesForSession({
   supabaseClient,
   session,
   getCurrentUserId,
+  status = 'active',
+  orderBy = 'expiry_date',
+  ascending = true,
 }) {
   const userId = getSessionUserId(session)
   if (!userId) {
     return { data: [], error: null, stale: true }
   }
 
-  const { data, error } = await createInventoryBatchesQuery(supabaseClient)
+  const { data, error } = await createInventoryBatchesQuery(supabaseClient, {
+    status,
+    orderBy,
+    ascending,
+  })
 
   return {
     data: data ?? [],

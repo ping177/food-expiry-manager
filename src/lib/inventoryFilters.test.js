@@ -169,4 +169,40 @@ describe('filterInventoryBatches', () => {
       ).map((batch) => batch.id),
     ).toEqual(['within30-cat-can'])
   })
+
+  it('filters consumed archive batches by product search and category', () => {
+    expect(
+      filterInventoryBatches(
+        [
+          {
+            id: 'archived-cat-can',
+            status: 'consumed',
+            expiry_date: '2026-04-01',
+            product: {
+              name: '已消耗鸡肉猫罐头',
+              brand: 'MjAMjAM',
+              category: '猫罐头',
+            },
+          },
+          {
+            id: 'active-cat-can',
+            status: 'active',
+            expiry_date: '2026-04-01',
+            product: {
+              name: '当前鸡肉猫罐头',
+              brand: 'MjAMjAM',
+              category: '猫罐头',
+            },
+          },
+        ],
+        {
+          status: 'consumed',
+          expiryWindow: 'all',
+          category: '猫罐头',
+          search: 'mjamjam',
+          today,
+        },
+      ).map((batch) => batch.id),
+    ).toEqual(['archived-cat-can'])
+  })
 })

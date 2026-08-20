@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import AddBatchForm from './components/AddBatchForm'
 import AddInventoryForm from './components/AddInventoryForm'
+import ArchivePage from './components/ArchivePage'
 import AuthPanel from './components/AuthPanel'
 import BatchCard from './components/BatchCard'
 import BatchDetail from './components/BatchDetail'
 import BottomTabNav from './components/BottomTabNav'
 import ConfigNotice from './components/ConfigNotice'
+import SidebarDrawer from './components/SidebarDrawer'
 import {
   getAccountStatus,
   getSessionTransition,
@@ -24,6 +26,7 @@ import {
   createConsumedStatusUpdate,
   planInventoryAddition,
   normalizeQuantity,
+  requireAffectedBatch,
 } from './lib/inventory'
 import { applyProductUpdateToBatches } from './lib/productEdit'
 import { normalizeProductSize } from './lib/productSize'
@@ -49,31 +52,48 @@ export default function App() {
   const sessionRef = useRef(null)
   const cooldownCleanupRef = useRef(null)
   const [batches, setBatches] = useState([])
+  const [archivedBatches, setArchivedBatches] = useState([])
   const [view, setView] = useState('home')
   const [activeTab, setActiveTab] = useState('inventory')
   const [selectedBatchId, setSelectedBatchId] = useState(null)
+  const [selectedArchiveBatchId, setSelectedArchiveBatchId] = useState(null)
   const [expiryWindowFilter, setExpiryWindowFilter] = useState('all')
   const [categoryFilter, setCategoryFilter] = useState('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [archiveCategoryFilter, setArchiveCategoryFilter] = useState('all')
+  const [archiveSearchQuery, setArchiveSearchQuery] = useState('')
   const [authLoading, setAuthLoading] = useState(true)
   const [loading, setLoading] = useState(false)
+  const [archiveLoading, setArchiveLoading] = useState(false)
+  const [archiveError, setArchiveError] = useState('')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [busyBatchId, setBusyBatchId] = useState(null)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [authBusy, setAuthBusy] = useState(false)
   const [emailOtpCooldown, setEmailOtpCooldown] = useState(0)
   const [pendingOtpEmail, setPendingOtpEmail] = useState('')
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarOpen(false)
+  }, [])
 
   const clearAccountScopedState = useCallback(() => {
     setBatches([])
+    setArchivedBatches([])
     setView('home')
     setActiveTab('inventory')
     setSelectedBatchId(null)
+    setSelectedArchiveBatchId(null)
     setExpiryWindowFilter('all')
     setCategoryFilter('all')
     setSearchQuery('')
+    setArchiveCategoryFilter('all')
+    setArchiveSearchQuery('')
     setBusyBatchId(null)
     setMessage('')
+    setArchiveLoading(false)
+    setArchiveError('')
+    setSidebarOpen(false)
   }, [])
 
   const applySession = useCallback(
@@ -122,6 +142,40 @@ export default function App() {
     }
     setLoading(false)
   }, [clearAccountScopedState])
+
+  const loadArchivedBatches = useCallback(
+    async (targetSession = sessionRef.current) => {
+      if (!supabase) return
+
+      if (!targetSession?.user?.id) {
+        setArchivedBatches([])
+        setArchiveLoading(false)
+        return
+      }
+
+      setArchiveLoading(true)
+      setArchiveError('')
+      const { data, error: queryError, stale } =
+        await loadInventoryBatchesForSession({
+          supabaseClient: supabase,
+          session: targetSession,
+          getCurrentUserId: () => sessionRef.current?.user?.id ?? null,
+          status: 'consumed',
+          orderBy: 'updated_at',
+          ascending: false,
+        })
+
+      if (stale) return
+
+      if (queryError) {
+        setArchiveError(`读取已归档失败：${queryError.message}`)
+      } else {
+        setArchivedBatches(data ?? [])
+      }
+      setArchiveLoading(false)
+    },
+    [],
+  )
 
   useEffect(() => {
     if (!supabase) return undefined
@@ -236,14 +290,43 @@ export default function App() {
     setError('')
     setMessage('')
     setSelectedBatchId(null)
+    setSelectedArchiveBatchId(null)
+    setSidebarOpen(false)
     setActiveTab(nextTab)
     setView(nextTab === 'account' ? 'account' : 'home')
+  }
+
+  function handleSidebarNavigate(nextSection) {
+    setError('')
+    setMessage('')
+    setSelectedBatchId(null)
+    setSelectedArchiveBatchId(null)
+    setSidebarOpen(false)
+    setActiveTab('inventory')
+
+    if (nextSection === 'archive') {
+      setView('archive')
+      loadArchivedBatches()
+      return
+    }
+
+    setView('home')
+  }
+
+  function handleOpenArchiveDetail(batchId) {
+    setError('')
+    setMessage('')
+    setSelectedArchiveBatchId(batchId)
+    setSidebarOpen(false)
+    setView('archive-detail')
   }
 
   function handleOpenAdd() {
     setError('')
     setMessage('')
     setSelectedBatchId(null)
+    setSelectedArchiveBatchId(null)
+    setSidebarOpen(false)
     setActiveTab('inventory')
     setView('add')
   }
@@ -251,6 +334,8 @@ export default function App() {
   function handleOpenAddInventory(batch) {
     setError('')
     setMessage('')
+    setSelectedArchiveBatchId(null)
+    setSidebarOpen(false)
     setActiveTab('inventory')
     setSelectedBatchId(batch.id)
     setView('add-inventory')
@@ -482,13 +567,16 @@ export default function App() {
     setMessage('')
 
     try {
-      const { error: updateError } = await supabase
+      const { data: updatedBatch, error: updateError } = await supabase
         .from('inventory_batches')
         .update({ quantity: normalizeQuantity(nextQuantity) })
         .eq('id', batchId)
         .eq('status', 'active')
+        .select('id')
+        .maybeSingle()
 
       if (updateError) throw updateError
+      requireAffectedBatch(updatedBatch)
 
       await loadBatches()
       setMessage('库存已更新。')
@@ -509,13 +597,17 @@ export default function App() {
     try {
       const currentBatch = batches.find((batch) => batch.id === batchId)
       const statusUpdate = createConsumedStatusUpdate(currentBatch?.quantity)
-      const { error: updateError } = await supabase
+      const { data: consumedBatch, error: updateError } = await supabase
         .from('inventory_batches')
         .update(statusUpdate)
         .eq('id', batchId)
         .eq('status', 'active')
+        .eq('quantity', 0)
+        .select('id')
+        .maybeSingle()
 
       if (updateError) throw updateError
+      requireAffectedBatch(consumedBatch)
 
       setSelectedBatchId(null)
       setView('home')
@@ -530,17 +622,26 @@ export default function App() {
     }
   }
 
-  async function handleDeleteBatch(batchId) {
+  async function deleteBatch(
+    batchId,
+    { expectedStatus = 'active', returnView = 'home' } = {},
+  ) {
     setBusyBatchId(batchId)
     setError('')
     setMessage('')
 
     try {
-      const { data: deletedBatch, error: deleteError } = await supabase
+      const deleteQuery = supabase
         .from('inventory_batches')
         .delete()
         .eq('id', batchId)
         .eq('user_id', session.user.id)
+
+      const statusQuery =
+        expectedStatus === 'consumed'
+          ? deleteQuery.eq('status', 'consumed')
+          : deleteQuery.eq('status', 'active')
+      const { data: deletedBatch, error: deleteError } = await statusQuery
         .select('id')
         .maybeSingle()
 
@@ -549,13 +650,28 @@ export default function App() {
         throw new Error('批次已不存在或无权删除')
       }
 
-      setBatches((currentBatches) =>
-        currentBatches.filter((batch) => batch.id !== batchId),
+      if (expectedStatus === 'consumed') {
+        setArchivedBatches((currentBatches) =>
+          currentBatches.filter((batch) => batch.id !== batchId),
+        )
+        setSelectedArchiveBatchId(null)
+      } else {
+        setBatches((currentBatches) =>
+          currentBatches.filter((batch) => batch.id !== batchId),
+        )
+        setSelectedBatchId(null)
+      }
+      setView(returnView)
+      setMessage(
+        expectedStatus === 'consumed'
+          ? '历史库存批次已删除；商品信息和图片已保留。'
+          : '库存批次已删除；商品信息和图片已保留。',
       )
-      setSelectedBatchId(null)
-      setView('home')
-      setMessage('库存批次已删除；商品信息和图片已保留。')
-      await loadBatches()
+      if (expectedStatus === 'consumed') {
+        await loadArchivedBatches()
+      } else {
+        await loadBatches()
+      }
       return true
     } catch (deleteError) {
       setError(`删除库存批次失败：${deleteError.message}`)
@@ -563,6 +679,17 @@ export default function App() {
     } finally {
       setBusyBatchId(null)
     }
+  }
+
+  function handleDeleteBatch(batchId) {
+    return deleteBatch(batchId)
+  }
+
+  function handleDeleteArchivedBatch(batchId) {
+    return deleteBatch(batchId, {
+      expectedStatus: 'consumed',
+      returnView: 'archive',
+    })
   }
 
   async function handleUpdateProductImage(batchId, product, file) {
@@ -620,6 +747,9 @@ export default function App() {
     categoryFilter !== 'all' ||
     searchQuery.trim() !== ''
   const selectedBatch = batches.find((batch) => batch.id === selectedBatchId)
+  const selectedArchivedBatch = archivedBatches.find(
+    (batch) => batch.id === selectedArchiveBatchId,
+  )
   const accountStatus = getAccountStatus(session)
   const accountEmailLabel =
     accountStatus.type === 'email' && session.user.email
@@ -656,13 +786,23 @@ export default function App() {
     <main className="min-h-screen bg-cream pb-[calc(5rem+env(safe-area-inset-bottom))]">
       <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6">
         <header className="mb-5">
-          {view !== 'home' && (
+          {view !== 'home' && view !== 'archive' && (
             <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>
           )}
-          {view === 'home' && (
-            <h1 className="text-2xl font-bold tracking-tight text-ink">
-              库存
-            </h1>
+          {(view === 'home' || view === 'archive') && (
+            <div className="flex items-center gap-3">
+              <button
+                aria-label="打开菜单"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-xl text-slate-600 transition hover:bg-white/70 active:scale-95"
+                type="button"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <span aria-hidden="true">☰</span>
+              </button>
+              <h1 className="text-2xl font-bold tracking-tight text-ink">
+                {view === 'archive' ? '已归档' : '库存'}
+              </h1>
+            </div>
           )}
           {view === 'add' && (
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
@@ -677,6 +817,11 @@ export default function App() {
           {view === 'detail' && (
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
               库存详情
+            </h1>
+          )}
+          {view === 'archive-detail' && (
+            <h1 className="mt-1 text-2xl font-bold tracking-tight text-ink">
+              已归档详情
             </h1>
           )}
           {view === 'account' && (
@@ -746,6 +891,43 @@ export default function App() {
                 ))}
               </div>
             </section>
+          </section>
+        ) : view === 'archive' ? (
+          <ArchivePage
+            batches={archivedBatches}
+            categoryFilter={archiveCategoryFilter}
+            error={archiveError}
+            loading={archiveLoading}
+            onCategoryChange={setArchiveCategoryFilter}
+            onRetry={() => loadArchivedBatches()}
+            onSearchChange={setArchiveSearchQuery}
+            onSelect={handleOpenArchiveDetail}
+            searchQuery={archiveSearchQuery}
+          />
+        ) : view === 'archive-detail' && selectedArchivedBatch ? (
+          <BatchDetail
+            archiveMode
+            batch={selectedArchivedBatch}
+            busy={busyBatchId === selectedArchivedBatch.id}
+            onBack={() => {
+              setSelectedArchiveBatchId(null)
+              setView('archive')
+            }}
+            onDeleteBatch={handleDeleteArchivedBatch}
+          />
+        ) : view === 'archive-detail' ? (
+          <section className="rounded-3xl bg-white p-6 text-center shadow-card">
+            <p className="font-bold text-ink">这条历史批次当前不在已归档列表中。</p>
+            <button
+              className="mt-4 rounded-xl bg-leaf px-4 py-3 font-semibold text-white"
+              type="button"
+              onClick={() => {
+                setSelectedArchiveBatchId(null)
+                setView('archive')
+              }}
+            >
+              返回已归档
+            </button>
           </section>
         ) : view === 'add' ? (
           <AddBatchForm
@@ -896,7 +1078,16 @@ export default function App() {
         )}
       </div>
 
-      {(view === 'home' || view === 'account') && (
+      {(view === 'home' || view === 'archive') && (
+        <SidebarDrawer
+          activeSection={view === 'archive' ? 'archive' : 'inventory'}
+          onClose={handleCloseSidebar}
+          onNavigate={handleSidebarNavigate}
+          open={sidebarOpen}
+        />
+      )}
+
+      {(view === 'home' || view === 'archive' || view === 'account') && (
         <BottomTabNav
           activeTab={activeTab}
           onAdd={handleOpenAdd}

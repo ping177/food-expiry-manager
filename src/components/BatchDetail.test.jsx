@@ -180,4 +180,22 @@ describe('BatchDetail', () => {
     expect(html).toContain('标记为已消耗')
     expect(html).not.toContain('确认标记为已消耗')
   })
+
+  it('renders consumed details as read-only archive history', () => {
+    const html = renderBatchDetail({
+      archiveMode: true,
+      batch: { ...batch, quantity: 0, status: 'consumed' },
+    })
+
+    expect(html).toContain('返回已归档')
+    expect(html).toContain('已消耗')
+    expect(html).toContain('删除历史批次')
+    expect(html).not.toContain('编辑商品')
+    expect(html).not.toContain('库存操作')
+    expect(html).not.toContain('新增库存')
+    expect(html).not.toContain('消耗库存')
+    expect(html).not.toContain('标记为已消耗')
+    expect(html).not.toContain('拍照')
+    expect(html).not.toContain('从相册选择')
+  })
 })

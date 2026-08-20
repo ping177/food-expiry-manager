@@ -8,6 +8,7 @@ import {
 import ProductImagePicker from './ProductImagePicker'
 import { getProductImageUrl } from '../lib/productImage'
 import { formatProductSize, PRODUCT_SIZE_UNITS } from '../lib/productSize'
+import ArchiveBatchActions from './ArchiveBatchActions'
 import InventoryOperationPanel from './InventoryOperationPanel'
 
 const expiryWindowStyles = {
@@ -49,8 +50,9 @@ export default function BatchDetail({
   onMarkConsumed = async () => true,
   onDeleteBatch = async () => true,
   defaultMode = 'view',
+  archiveMode = false,
 }) {
-  const [mode, setMode] = useState(defaultMode)
+  const [mode, setMode] = useState(archiveMode ? 'view' : defaultMode)
   const [productForm, setProductForm] = useState(() =>
     createProductEditForm(batch.product),
   )
@@ -131,7 +133,11 @@ export default function BatchDetail({
           type="button"
           onClick={mode === 'view' ? onBack : closeCurrentMode}
         >
-          {mode === 'view' ? '返回首页' : '返回详情'}
+          {mode === 'view'
+            ? archiveMode
+              ? '返回已归档'
+              : '返回首页'
+            : '返回详情'}
         </button>
       </div>
 
@@ -166,11 +172,16 @@ export default function BatchDetail({
                 条形码：{product.barcode}
               </p>
             )}
+            {archiveMode && (
+              <span className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+                已消耗
+              </span>
+            )}
           </div>
         </div>
       </article>
 
-      {mode === 'product-edit' && (
+      {mode === 'product-edit' && !archiveMode && (
         <form
           className="space-y-3 rounded-3xl border border-slate-100 bg-white p-5 shadow-card"
           onSubmit={handleProductEditSubmit}
@@ -300,19 +311,25 @@ export default function BatchDetail({
 
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-2xl bg-white p-4 shadow-card">
-          <p className="text-xs text-slate-500">保质期至</p>
+          <p className="text-xs text-slate-500">{archiveMode ? '原保质期至' : '保质期至'}</p>
           <p className="mt-1 font-bold text-ink">{batch.expiry_date}</p>
-          <span
-            className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${expiryWindowStyles[expiryWindow.value]}`}
-          >
-            {expiryWindow.label}
-          </span>
+          {archiveMode ? (
+            <span className="mt-3 inline-flex rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">
+              已消耗
+            </span>
+          ) : (
+            <span
+              className={`mt-3 inline-flex rounded-full px-3 py-1 text-xs font-bold ${expiryWindowStyles[expiryWindow.value]}`}
+            >
+              {expiryWindow.label}
+            </span>
+          )}
           <p className="mt-2 text-xs text-slate-500">
-            {daysRemainingText(expiryWindow.daysRemaining)}
+            {archiveMode ? '这条批次已归档。' : daysRemainingText(expiryWindow.daysRemaining)}
           </p>
         </div>
         <div className="rounded-2xl bg-white p-4 shadow-card">
-          <p className="text-xs text-slate-500">当前库存</p>
+          <p className="text-xs text-slate-500">{archiveMode ? '归档时数量' : '当前库存'}</p>
           <p className="mt-1 text-2xl font-bold text-ink">
             {batch.quantity}
             <span className="ml-1 text-sm font-medium text-slate-500">
@@ -327,7 +344,7 @@ export default function BatchDetail({
         </div>
       </div>
 
-      {mode === 'view' && (
+      {mode === 'view' && !archiveMode && (
         <div className="grid grid-cols-2 gap-3">
           <button
             className="rounded-2xl border border-slate-200 bg-white px-4 py-3 font-semibold text-slate-700 disabled:opacity-50"
@@ -348,13 +365,21 @@ export default function BatchDetail({
         </div>
       )}
 
-      {mode === 'inventory-operation' && (
+      {mode === 'inventory-operation' && !archiveMode && (
         <InventoryOperationPanel
           batch={batch}
           busy={busy}
           onAddInventory={onAddInventory}
           onConsume={onConsume}
           onMarkConsumed={onMarkConsumed}
+          onDeleteBatch={onDeleteBatch}
+        />
+      )}
+
+      {archiveMode && mode === 'view' && (
+        <ArchiveBatchActions
+          batch={batch}
+          busy={busy}
           onDeleteBatch={onDeleteBatch}
         />
       )}

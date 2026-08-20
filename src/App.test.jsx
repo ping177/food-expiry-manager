@@ -88,12 +88,29 @@ describe('App auth integration source guards', () => {
     expect(appSource).toContain('.delete()')
     expect(appSource).toContain(".eq('id', batchId)")
     expect(appSource).toContain(".eq('user_id', session.user.id)")
+    expect(appSource).toContain(".eq('status', 'active')")
+    expect(appSource).toContain(".eq('status', 'consumed')")
     expect(appSource).toContain(".select('id')")
     expect(appSource).toContain('.maybeSingle()')
     expect(appSource).toContain('批次已不存在或无权删除')
     expect(appSource).toContain('删除库存批次失败：${deleteError.message}')
     expect(appSource).toContain('setSelectedBatchId(null)')
     expect(appSource).toContain("setView('home')")
+  })
+
+  it('keeps Archive in a separate consumed query and navigation state', () => {
+    expect(appSource).toContain('archivedBatches')
+    expect(appSource).toContain("status: 'consumed'")
+    expect(appSource).toContain("orderBy: 'updated_at'")
+    expect(appSource).toContain("view === 'archive'")
+    expect(appSource).toContain('SidebarDrawer')
+    expect(appSource).toContain("onDeleteBatch={handleDeleteArchivedBatch}")
+  })
+
+  it('hardens consume and mark-consumed writes against zero-row updates', () => {
+    expect(appSource).toContain(".eq('quantity', 0)")
+    expect(appSource).toContain('requireAffectedBatch(updatedBatch)')
+    expect(appSource).toContain('requireAffectedBatch(consumedBatch)')
   })
 })
 

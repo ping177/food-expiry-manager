@@ -6,6 +6,7 @@ import {
   planInventoryAddition,
   consumeQuantity,
   normalizeQuantity,
+  requireAffectedBatch,
 } from './inventory'
 
 describe('decrementQuantity', () => {
@@ -156,5 +157,16 @@ describe('prepareInventoryOperationUpdate', () => {
     expect(
       prepareInventoryOperationUpdate({ quantity: 0 }, 'mark-consumed'),
     ).toEqual({ status: 'consumed' })
+  })
+})
+
+describe('requireAffectedBatch', () => {
+  it('rejects a zero-row update result', () => {
+    expect(() => requireAffectedBatch(null)).toThrow('批次不存在或无法更新')
+  })
+
+  it('returns the updated row when the database affected one batch', () => {
+    const row = { id: 'batch-1' }
+    expect(requireAffectedBatch(row)).toBe(row)
   })
 })

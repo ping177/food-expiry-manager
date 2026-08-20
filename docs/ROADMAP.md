@@ -130,6 +130,20 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 - 条码流程仅解析外部 API 明确返回的容量，不从商品名称猜测
 - 首页卡片、详情页和新增库存摘要在有规格时显示；无规格不显示占位
 
+## v0.3.1：Archive & Navigation Foundation
+
+- 状态：已完成本地实现；自动化测试和生产构建通过，iPhone PWA / Production 人工验收待执行
+- Archive 直接复用 `inventory_batches.status='consumed'`，按 `updated_at DESC` 独立读取历史批次，不新增归档表、`consumed_at`、event log 或状态机
+- 库存标题区 hamburger 打开只包含“库存 / 已归档”的侧边栏；底部导航继续保持“库存 | + | 我的”
+- Archive 支持商品名 / 品牌搜索、Product 分类筛选、历史卡片、只读 consumed detail 和当前历史 batch 删除
+- 0-row 业务更新视为失败；consume / mark-consumed 不改变既有 quantity=0 需显式标记的规则
+- 非目标：分类迁移到 sidebar、Product 删除、Storage cleanup、恢复 consumed、补货、批量删除、分页和 Android 专项
+
+## v0.3.2（候选）：Category Navigation
+
+- 在 v0.3.1 Archive 真实使用验收后，再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏
+- 不预设左侧分类树或新的数据模型；先依据真实使用反馈决定最小导航形态
+
 ## 后续候选：商品图片上传体验
 
 - 支持手机直接拍照或从相册选择商品图片

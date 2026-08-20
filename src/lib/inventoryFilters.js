@@ -26,12 +26,13 @@ export function filterInventoryBatches(
     expiryWindow = 'all',
     category = 'all',
     search = '',
+    status = 'active',
     today = new Date(),
   } = {},
 ) {
   return batches.filter(
     (batch) =>
-      (batch.status ?? 'active') === 'active' &&
+      (batch.status ?? 'active') === status &&
       matchesExpiryWindow(batch, expiryWindow, today) &&
       matchesCategory(batch, category) &&
       matchesSearch(batch, search),

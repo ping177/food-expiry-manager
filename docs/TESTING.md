@@ -11,8 +11,10 @@
 
 ## 自动化测试
 
-使用 Vitest。当前完整自动化验收结果为 19 个测试文件、187 个测试通过；其中
-包含 B1 三态详情展示、库存新增合并/新批次、库存消耗确认和当前 batch 删除确认边界。
+使用 Vitest。当前完整自动化验收结果为 23 个测试文件、201 个测试通过；其中
+包含 v0.3.1 Archive / drawer、consumed 详情只读、历史 batch 删除边界、状态更新
+0-row 防误报，以及既有 B1 三态详情、库存新增合并/新批次、库存消耗确认和当前
+batch 删除确认边界。
 核心测试文件包括：
 
 - `src/lib/expiry.test.js`
@@ -21,8 +23,38 @@
 - `src/lib/auth.test.js`
 - `src/components/AuthPanel.test.jsx`
 - `src/App.test.jsx`
+- `src/components/SidebarDrawer.test.jsx`
+- `src/components/ArchivePage.test.jsx`
+- `src/components/ArchiveBatchCard.test.jsx`
+- `src/components/ArchiveBatchActions.test.jsx`
+- `src/components/BatchDetail.test.jsx`：active / consumed 详情模式边界。
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚和删除清理。
+
+## v0.3.1 Archive & Navigation 自动化覆盖
+
+- `src/lib/auth.test.js`：active query 默认只取 `status='active'`；Archive query 使用 `status='consumed'`、`updated_at DESC`。
+- `src/lib/inventoryFilters.test.js`、`src/components/ArchivePage.test.jsx`：Archive 搜索 / 分类只作用 consumed 数据，不带入 active 批次或临期时间窗口，并覆盖 loading、error、empty。
+- `src/components/SidebarDrawer.test.jsx`：drawer 的库存 / 已归档入口、selected state、关闭控件、safe-area 和横向溢出保护；`src/App.test.jsx`：底部双 Tab + 独立 `+` 以及 App 接线。
+- `src/components/ArchiveBatchCard.test.jsx`：图片、名称 / 品牌、分类、规格、原到期日和“已消耗”语义，不出现“剩余 0 件”或 active 到期 badge。
+- `src/components/BatchDetail.test.jsx`：consumed detail 返回 Archive，隐藏 Product 编辑、图片和 active 库存操作。
+- `src/components/ArchiveBatchActions.test.jsx`、`src/App.test.jsx`、`src/lib/inventory.test.js`：取消删除不写入、历史删除确认 / id + user + consumed 约束、0-row 失败、Product / Storage 不删除，以及 consume / mark-consumed 0-row 防误报。
+- `npm test`：23 个测试文件 / 201 个测试通过；`npm run build` 成功；`git diff --check` 通过。上述测试均使用本地 fixtures / source guards，不访问真实 Supabase 或生产数据。
+
+### v0.3.1 iPhone PWA / Production 人工验收（待执行）
+
+1. 点击库存标题区 `☰`，确认 drawer 可打开；点击遮罩或关闭按钮后可关闭。
+2. 确认 drawer 只有“库存”和“已归档”，selected state 正确；两项切换后 drawer 自动关闭。
+3. 确认 active batch `quantity=0` 仍在库存，不会自动出现在 Archive。
+4. 对一个 active batch 显式执行“标记已消耗”，确认它从库存消失并进入 Archive。
+5. 刷新 / 重开 PWA，确认 Archive 历史数据仍存在且排序稳定。
+6. 搜索商品名 / 品牌、切换分类，确认只过滤 consumed；Archive 不出现 active 临期筛选。
+7. 打开 consumed detail，确认没有 Product 编辑、图片替换 / 删除、新增库存、消耗或标记 consumed 操作。
+8. 取消删除确认，确认数据不变；确认删除后只移除当前历史 batch 且仍停留 Archive。
+9. 确认 Product、图片和同商品其他 batch 均保留。
+10. 确认底部 `库存 | + | 我的`、新增商品快捷操作和 active 首页搜索 / 分类 / 临期筛选无回归。
+
+本版本不要求创建第二账号；cross-account smoke 继续 deferred，不作为 blocker。无需执行 Supabase SQL 或其他生产数据操作。
 
 ## Project State Push Gate 自动化测试
 
