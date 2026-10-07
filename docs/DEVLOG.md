@@ -1,5 +1,23 @@
 # 开发日志
 
+## 2026-10-07
+
+### v0.3.4 — Category Navigation（implementation complete，awaiting manual acceptance）
+
+- 实际 baseline：main，HEAD / 本地 origin/main 均为 55eabcf9c72996d89d300f5f784f5101559fd990，ahead / behind 0 / 0，初始 working tree clean，与用户审计一致。
+- 按用户冻结规格及获批最小方案，将 Active 分类入口从页面 select 移入现有 Sidebar。分类直接来源于 PRODUCT_CATEGORIES；选择分类复用 categoryFilter 与现有返回库存回调，关闭 Drawer，保持搜索 / 临期。顶层库存保留原 Active 筛选；清除筛选逻辑不变。
+- Archive 页面、查询及独立分类 / 搜索状态不变；filterInventoryBatches、历史分类兼容、batch lifecycle、数据库和图片链路不变。Drawer 保留关闭 / focus restore / safe-area，并补足长列表视口内滚动。
+- TDD：旧实现下新增行为测试 8 项失败、Drawer 既有关闭行为 3 项通过；实现后最终定向 6 files / 63 tests、完整 27 files / 247 tests 全部通过。build 与 git diff --check 通过；build 有大于 500 kB chunk 警告，未扩大范围做 bundle 重构。
+- 测试使用 Node shallow hook harness / 本地 fixtures 和静态 markup；真实浏览器焦点、触屏滚动、Production / iPhone PWA 验收仍待用户执行，最小清单见 TESTING.md。
+- 未新增依赖，未读取或打印 secrets，未操作 Supabase 或外部项目文件；未 commit / push / reset / stash。本版本未 completed / closed。
+
+### v0.3.4 提交前 review 与本地人工验收同步
+
+- 用户于 2026-10-07 逐组完成本地人工验收并确认全部 PASS：A Sidebar 基本结构与滚动、B 分类导航与选中状态、C 组合筛选与清除、D Archive 独立性、E Drawer 关闭与焦点。本地验收期间没有代码或文档变化。
+- 最终 diff review 未发现阻塞问题；范围仍为 Category Navigation、对应测试及治理文档，无新依赖或数据库 / migration / RPC / RLS、Barcode、Product Image、batch lifecycle 变更，Archive 保持独立。
+- 提交准备只同步治理文档；继续沿用此前定向 63 tests、完整 247 tests 与 build PASS（代码未变化），本轮 git diff --check、3 个 gate / hook shell 语法检查均通过，Project State Push Gate 定向测试 19 / 19 PASS。用户授权正式 implementation commit 与正常 origin/main push；使用 Project-State-Review: updated，因为 PROJECT_STATE 相对远端有净变化。
+- 本地 PASS 已同步 PROJECT_STATE / TESTING 及其他受影响治理文档；Next Action 为确认 Production 部署后进行 Production / iPhone PWA 人工验收。部署状态 Needs verification，不将 push 等同部署或人工验收 PASS，v0.3.4 不关闭。
+
 ## 2026-08-20
 
 ### v0.3.3 Discarded Batch Archive Flow（已完成并关闭）

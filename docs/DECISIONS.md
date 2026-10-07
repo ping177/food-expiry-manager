@@ -451,3 +451,13 @@
   不新增 migration、回收站、恢复、批量删除、独立导航或 Category Navigation。
 - Production / iPhone PWA closeout：active batch 删除后进入 Archive 并显示“已删除” PASS；
   Archive 中真正删除该历史 batch PASS。
+
+## D-037：v0.3.4 将 Active 分类入口迁入现有 Sidebar
+
+- 状态：已决定并完成本地实现；local manual acceptance A–E PASS，awaiting Production / iPhone PWA manual acceptance
+- 日期：2026-10-07
+- Sidebar 的“库存”下常驻“全部”与 PRODUCT_CATEGORIES 的全部 canonical 分类；不复制分类列表，不按库存动态隐藏，不增加计数或 accordion。
+- 选择分类复用 Active categoryFilter，返回 home / inventory 并关闭 Drawer；“全部”仅重置 category，顶层“库存”保留 category / search / expiry。
+- Active 移除 category select；组合筛选仍复用 filterInventoryBatches，清除筛选仍清除三个条件。Archive 搜索、category select、filter state 与查询完全独立。
+- 空分类与未知历史分类继续在 all 下显示；canonical 分类精确匹配，卡片与 BatchDetail 历史兼容逻辑不变。不新增未分类导航或 category cleanup / migration。
+- 仅修改现有导航体验；不涉及 schema、RPC、RLS、Production 数据、Barcode API、Product Image、batch lifecycle、Product deletion 或 Storage cleanup。

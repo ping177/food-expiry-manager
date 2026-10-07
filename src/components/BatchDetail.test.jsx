@@ -141,6 +141,12 @@ describe('BatchDetail', () => {
     }
   })
 
+  it('preserves the selected unknown historical category when editing', () => {
+    const html = renderBatchDetail({ defaultMode: 'product-edit' })
+
+    expect(html).toMatch(/<option value="旧分类" selected="">旧分类<\/option>/)
+  })
+
   it('keeps barcode read-only in the product edit form', () => {
     const html = renderBatchDetail({ defaultMode: 'product-edit' })
 

@@ -11,7 +11,7 @@
 
 ## 自动化测试
 
-使用 Vitest。当前完整自动化验收结果为 26 个测试文件、234 个测试通过；其中
+使用 Vitest。当前完整自动化验收结果为 27 个测试文件、247 个测试通过；其中
 包含 v0.3.1 Archive / drawer、consumed 详情只读、历史 batch 删除边界、状态更新
 0-row 防误报，以及既有 B1 三态详情、库存新增合并/新批次、库存消耗确认和当前
 batch 删除确认边界。
@@ -31,6 +31,40 @@ batch 删除确认边界。
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚、共享
   Storage remove primitive 和删除清理。
+
+## v0.3.4 Category Navigation 验证
+
+- `src/App.categoryNavigation.test.jsx`：在现有 Node 环境中用可保留状态的 shallow hook harness 调用真实 App / Sidebar JSX 回调，检查重新渲染的过滤结果；认证和数据为本地 fixtures，不执行网络请求。覆盖全部 canonical 分类 / 全部 / selected state、选择与关闭、Archive 状态隔离、跨页面保留、status + category + search + expiry 组合、清除筛选与空 / 历史分类。
+- 同文件通过 document / focus 测试替身执行真实 Drawer effect，覆盖 Escape、overlay、close button、监听清理与焦点恢复。它不覆盖真实 DOM 的事件分发或浏览器焦点行为。
+- `SidebarDrawer.test.jsx` 静态 markup 验证视口高度、safe-area、横向溢出保护及纵向滚动样式；真实触屏滚动仍需手工验证。
+- `BatchDetail.test.jsx` 保留未知历史分类作为已选编辑 option，防止历史兼容回归。
+- 定向结果：6 files / 63 tests；完整结果：27 files / 247 tests；build 通过（有大于 500 kB chunk 警告）；`git diff --check` 通过。
+
+```bash
+npm test -- src/App.categoryNavigation.test.jsx src/components/SidebarDrawer.test.jsx src/lib/inventoryFilters.test.js src/components/BatchDetail.test.jsx src/components/ArchivePage.test.jsx src/App.test.jsx
+npm test
+npm run build
+git diff --check
+```
+
+### 本地人工验收（2026-10-07，用户确认全部 PASS）
+
+- A. Sidebar 基本结构与滚动：PASS。
+- B. 分类导航与选中状态：PASS。
+- C. 组合筛选、“全部”保留搜索 / 临期及清除筛选：PASS。
+- D. Archive 独立性：PASS。
+- E. 遮罩、关闭按钮、桌面 Escape 与关闭后焦点行为：PASS。
+
+用户逐组验收后明确确认 A–E 全部 PASS；验收期间代码和文档没有变化。本地 PASS 不代表 Production / iPhone PWA PASS。空 / 历史分类及详情编辑兼容由自动化覆盖，未单独宣称人工 PASS。
+
+### Production / iPhone PWA 最小人工验收（待执行）
+
+1. Sidebar 显示“库存 → 全部 + 全部 canonical 分类 → 已归档”，包括没有库存的 canonical 分类；无计数、accordion、未分类项。选分类后正确过滤并关闭，再打开时 selected state 正确。
+2. 设置 Active 搜索 / 临期 / 分类，进入 Archive 设置独立搜索 / 分类；从 Sidebar 选 Active 分类或“全部”返回库存，搜索 / 临期保持。再次进 Archive，其原筛选保持；顶层“库存”及底部 Tab 返回也保留 Active 筛选。
+3. Active 只有搜索和临期 select，无分类 select；组合过滤和空结果“清除筛选”正确清除三条件；all 下空分类显示“未分类”，未知分类保留原值，详情编辑保留未知分类。
+4. 浏览器验证 Escape、遮罩和关闭按钮关闭菜单，焦点回到打开菜单按钮；iPhone PWA 验证顶部 / 底部 safe-area、小屏或横屏滚动到底部“已归档”可达、无横向溢出。
+
+v0.3.4 本地人工验收已 PASS；Production 部署状态待确认，Production / iPhone PWA 人工验收尚未执行，不记录其 PASS，不关闭版本。
 
 ## v0.3.2 Product Deletion & Storage Cleanup 自动化覆盖
 

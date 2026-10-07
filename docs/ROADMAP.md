@@ -5,7 +5,7 @@
 
 版本范围按“先建立可用闭环，再快速扩展录入效率”的原则安排。
 
-v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，不作为当前锁定计划。
+未冻结的后续版本为候选方向，具体顺序会根据真实使用反馈调整；已明确的版本范围见下文。
 
 ## v0.1：手动录入 MVP
 
@@ -165,11 +165,14 @@ v0.3 及以后为候选方向，具体顺序会根据真实使用反馈调整，
 - 复用现有 status 约束，无需新增 migration、数据表、恢复流程、回收站或批量删除
 - 人工 PASS：active batch 删除后进入 Archive 并显示“已删除”；Archive 中真正删除该历史 batch
 
-## 当前下一功能候选：Category Navigation
+## v0.3.4：Category Navigation
 
-- v0.3.3 closeout 后，Category Navigation 是当前下一功能候选，具体版本号尚未冻结
-- 未来再评估将“全部 / 猫罐头 / 猫粮 / 食品 / 日用品”等分类迁入侧边栏
-- 不预设左侧分类树或新的数据模型；先依据真实使用反馈决定最小导航形态
+- 状态：implementation complete；本地测试、构建及人工验收 A–E PASS，awaiting Production / iPhone PWA manual acceptance
+- 现有 Sidebar 的“库存”下显示“全部”与 PRODUCT_CATEGORIES 全部 canonical 分类
+- 选择分类返回 Active、关闭 Drawer，并保留搜索 / 临期；顶层“库存”保留全部 Active 筛选
+- Active 移除 category select；清除筛选继续清除 category / search / expiry
+- Archive 保留自己的搜索、category select 与独立状态；不变更查询、数据模型或分类历史兼容行为
+- 不做分类计数、accordion、动态隐藏、未分类 Sidebar 项或导航架构重构
 
 ## 后续候选：商品图片上传体验
 

@@ -73,10 +73,12 @@ iPhone PWA 最小人工验收均已完成：
 - 不新增 migration、回收站、独立“已删除”导航、恢复、批量删除或 Category Navigation。
 - 人工 PASS：active batch 删除后进入 Archive 并显示“已删除”；Archive 中真正删除该历史 batch。
 
-### 当前下一功能候选：Category Navigation
+### 当前版本：v0.3.4 Category Navigation
 
-- v0.3.3 closeout 后，Category Navigation 是当前下一功能候选；具体版本号尚未冻结。
-- 先评估最小导航形态，再决定是否将分类迁入侧边栏；不在本次 closeout 实现。
+- implementation complete；本地自动化及人工验收 A–E PASS，awaiting Production / iPhone PWA manual acceptance。
+- Active 分类入口迁至现有 Sidebar，复用 PRODUCT_CATEGORIES 与 categoryFilter；Archive 独立行为保持现状。
+- 不增加计数、accordion、未分类导航、动态分类隐藏、数据模型或分类 migration。
+- 人工验收安排见 docs/TESTING.md；验收前不得记为 completed / closed。
 
 ### 未来正式 Backlog：Barcode API Coverage Expansion
 

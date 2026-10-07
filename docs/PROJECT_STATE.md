@@ -8,22 +8,22 @@
 
 ## Current version
 
-v0.3.3 — Discarded Batch Archive Flow.
+v0.3.4 — Category Navigation
 
 ## Current status
 
-v0.3.2 已完成并关闭：初始 Product deletion RPC 与 Storage cleanup corrective migration 已部署并验证，standalone 用户图片删除、整个 Product 删除后的 Storage object 清理，以及 Product 仍有 active batch 时的整 Product 删除禁止均已完成 Production / iPhone PWA 复验并 PASS。v0.3.3 已完成并关闭：本地实现、自动化验证、生产构建和 Production / iPhone PWA 最小人工验收均已完成；active batch discarded 流程与 Archive 历史 hard delete 复验 PASS。Category Navigation 作为当前下一功能候选。
+v0.3.4 implementation complete：Active 分类入口已迁入现有 Sidebar，本地自动化测试、生产构建与 local manual acceptance A–E 均 PASS；awaiting Production / iPhone PWA manual acceptance，尚未 completed / closed。v0.3.3 及 v0.3.2 已完成并关闭，原人工 PASS 记录保留。
 
 ## Latest completed
 
-完成并关闭 v0.3.1 Archive & Navigation Foundation；随后完成并关闭 v0.3.2 Product Deletion & Storage Cleanup，Production / iPhone PWA 图片 cleanup 与 active guard 复验均 PASS。v0.3.3 已将 active batch 删除改为 `active → discarded`，Archive 现同时读取 consumed / discarded，并保留两种历史 batch 的 hard delete；Production / iPhone PWA 已复验 active 删除进入 Archive 并显示“已删除”、历史 batch 真正删除均 PASS。
+完成 v0.3.4 本地实现与自动化验证：Sidebar 显示“全部”与全部 canonical 分类，复用 Active categoryFilter；保留搜索 / 临期组合、清除筛选和 Archive 独立状态，长 Drawer 支持视口内滚动。用户已完成本地 A–E 人工验收并全部 PASS；版本仍等待 Production / iPhone PWA 人工验收。
 
 ## Deployment
 
 Status: public_deployed
 Public URL: https://food-expiry-manager-two.vercel.app/
 Provider: Vercel
-Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`.
+Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. v0.3.4 的本地自动化与人工验收均通过；该版本的 Vercel Production deployment 状态 Needs verification，Production / iPhone PWA 人工验收待执行。Git push 成功不代表部署或人工验收 PASS。
 
 ## Version Index
 
@@ -47,14 +47,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.3.1｜Archive & Navigation Foundation（已完成）
 - v0.3.2｜Product Deletion & Storage Cleanup（已完成并关闭）
 - v0.3.3｜Discarded Batch Archive Flow（已完成并关闭）
+- v0.3.4｜Category Navigation（implementation complete，local manual acceptance PASS，awaiting Production / iPhone PWA acceptance）
 
 ## Last verified
 
-2026-08-20: v0.3.3 定向验证 8 files / 95 tests，完整 `npm test` 26 files / 234 tests，`npm run build` 与 `git diff --check` 均通过；用户完成 v0.3.3 Production / iPhone PWA 最小人工复验：active batch 删除进入 Archive 并显示“已删除”、Archive 历史 batch 真正删除均 PASS。v0.3.2 Production / iPhone PWA standalone cleanup、whole Product cleanup 与 active guard 亦由用户复验 PASS。No Supabase operation was performed by Codex.
+2026-10-07：v0.3.4 定向测试 6 files / 63 tests；完整 `npm test` 27 files / 247 tests；`npm run build` 与 `git diff --check` 通过。build 提示大于 500 kB 的 chunk 警告。用户已在本地完成 A Sidebar 结构与滚动、B 分类导航、C 组合筛选、D Archive 独立性、E Drawer 交互，均 PASS；Production / iPhone PWA 尚未验收。未读取或打印 secrets，未执行 Supabase 操作。此前 v0.3.3 Production / iPhone PWA PASS 属于已关闭版本，不代表 v0.3.4 验收结果。
 
 ## Next Action
 
-下一步评估并规划 Category Navigation；具体版本号与最小导航形态尚未冻结。Barcode API Coverage Expansion 与 Product Image Sourcing & Polish 记录为未来正式 Backlog。
+确认 v0.3.4 Production 部署就绪后，完成 Production / iPhone PWA 最小人工验收（见 docs/TESTING.md）；本地 A–E 已 PASS，Production / iPhone PWA 人工验收前不关闭版本。Barcode API Coverage Expansion 与 Product Image Sourcing & Polish 继续保留为未来 Backlog。
 
 ## Blockers
 
@@ -97,7 +98,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - Product data APIs must not infer shelf life.
 - v0.2.11 商品图片上传已在 Production iPhone PWA 完成拍照、相册选择、替换、删除用户图片及 fallback、刷新 / 重开状态保持验收；双账号图片隔离和 Android 图片流程未手动覆盖，均为 deferred / not manually covered，不作为 blocker。
 - v0.3.1 的 Archive 基线只查询 `status='consumed'`；v0.3.3 已扩展为同时查询 `consumed / discarded`，active 首页继续只查询 `status='active'`；Archive 与 active 使用独立数据、loading、error、搜索和分类状态。
-- v0.3.1 已归档入口位于库存标题区 hamburger 打开的左侧 drawer；drawer 只包含“库存”和“已归档”，底部导航仍严格为“库存 | + | 我的”。分类迁移到 sidebar、恢复 consumed、批量删除和分页均 deferred。
+- 已归档入口位于库存标题区 hamburger 打开的左侧 drawer；v0.3.4 在“库存”下显示“全部”与 PRODUCT_CATEGORIES，分类只作用 Active，Archive 保留自身 category select。底部导航仍为“库存 | + | 我的”；恢复 consumed、批量删除和分页仍 deferred。
 - v0.3.3 当前库存删除按 batch id、当前 user id 和 `status='active'` 限定，只更新为 `discarded`；Archive 历史删除按 batch id、当前 user id 和 `status in ('consumed', 'discarded')` hard delete，Product、`user_image_url`、Storage object 和其他 batch 保留。
 - v0.3.1 Production / iPhone PWA closeout 已完成；1–9 项人工验收全部 PASS。
 - v0.3.2 Product 删除由已部署并验证的 `delete_product_with_history(uuid)` RPC 权威执行：Product 行锁 + `active` guard + consumed/discarded 历史清理 + Product 删除同事务完成；不使用 FK CASCADE。客户端预检查仅用于 UI，不能替代 RPC。
@@ -107,4 +108,4 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Handoff Prompt
 
-Begin scope planning for Category Navigation only after explicit approval; do not implement it in this closeout. Keep Barcode API Coverage Expansion and Product Image Sourcing & Polish as future formal Backlog items.
+v0.3.4 Category Navigation implementation, automated verification and local manual acceptance A–E are PASS. Confirm Production deployment readiness and arrange Production / iPhone PWA manual acceptance using docs/TESTING.md. Do not mark completed / closed before those real user acceptances. Keep Barcode API Coverage Expansion and Product Image Sourcing & Polish as future Backlog items.

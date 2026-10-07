@@ -6,6 +6,8 @@ function renderDrawer(activeSection = 'archive') {
   return renderToStaticMarkup(
     <SidebarDrawer
       activeSection={activeSection}
+      categoryFilter="all"
+      onCategoryNavigate={vi.fn()}
       onClose={vi.fn()}
       onNavigate={vi.fn()}
       open
@@ -32,5 +34,9 @@ describe('SidebarDrawer', () => {
     expect(html).toContain('env(safe-area-inset-top)')
     expect(html).toContain('env(safe-area-inset-bottom)')
     expect(html).toContain('overflow-x-hidden')
+    expect(html).toContain('h-[100dvh]')
+    expect(html).toContain('overflow-y-auto')
+    expect(html).toContain('overscroll-y-contain')
+    expect(html).toContain('shrink-0')
   })
 })

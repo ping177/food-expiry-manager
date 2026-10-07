@@ -19,7 +19,6 @@ import {
   startEmailOtpCooldown,
   verifyEmailOtp,
 } from './lib/auth'
-import { PRODUCT_CATEGORIES } from './lib/categories'
 import { EXPIRY_WINDOW_OPTIONS } from './lib/expiryWindows'
 import { filterInventoryBatches } from './lib/inventoryFilters'
 import {
@@ -333,6 +332,11 @@ export default function App() {
     }
 
     setView('home')
+  }
+
+  function handleCategoryNavigate(category) {
+    setCategoryFilter(category)
+    handleSidebarNavigate('inventory')
   }
 
   async function handleOpenArchiveDetail(batchId) {
@@ -1222,7 +1226,7 @@ export default function App() {
                     onChange={(event) => setSearchQuery(event.target.value)}
                   />
                 </label>
-                <div className="grid grid-cols-2 gap-3">
+                <div>
                   <label className="block">
                     <span className="mb-1.5 block text-sm font-semibold text-slate-700">
                       到期时间
@@ -1237,23 +1241,6 @@ export default function App() {
                       {EXPIRY_WINDOW_OPTIONS.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label className="block">
-                    <span className="mb-1.5 block text-sm font-semibold text-slate-700">
-                      分类
-                    </span>
-                    <select
-                      className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-ink"
-                      value={categoryFilter}
-                      onChange={(event) => setCategoryFilter(event.target.value)}
-                    >
-                      <option value="all">全部分类</option>
-                      {PRODUCT_CATEGORIES.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
                         </option>
                       ))}
                     </select>
@@ -1313,6 +1300,8 @@ export default function App() {
       {(view === 'home' || view === 'archive') && (
         <SidebarDrawer
           activeSection={view === 'archive' ? 'archive' : 'inventory'}
+          categoryFilter={categoryFilter}
+          onCategoryNavigate={handleCategoryNavigate}
           onClose={handleCloseSidebar}
           onNavigate={handleSidebarNavigate}
           open={sidebarOpen}
