@@ -12,18 +12,18 @@ v0.3.4 — Category Navigation
 
 ## Current status
 
-v0.3.4 implementation complete：Active 分类入口已迁入现有 Sidebar，本地自动化测试、生产构建与 local manual acceptance A–E 均 PASS；awaiting Production / iPhone PWA manual acceptance，尚未 completed / closed。v0.3.3 及 v0.3.2 已完成并关闭，原人工 PASS 记录保留。
+v0.3.4 completed / closed：implementation complete，本地自动化测试与生产构建通过，local manual acceptance A–E PASS，Production iPhone PWA manual acceptance PASS。Production desktop browser not separately tested；Production desktop Escape / focus 未记录为 PASS，仅此前本地验收通过。
 
 ## Latest completed
 
-完成 v0.3.4 本地实现与自动化验证：Sidebar 显示“全部”与全部 canonical 分类，复用 Active categoryFilter；保留搜索 / 临期组合、清除筛选和 Archive 独立状态，长 Drawer 支持视口内滚动。用户已完成本地 A–E 人工验收并全部 PASS；版本仍等待 Production / iPhone PWA 人工验收。
+完成并关闭 v0.3.4 Category Navigation：Active 分类入口迁入现有 Sidebar，搜索 / 临期组合、清除筛选及 Archive 独立状态保持正确。用户已确认 Production iPhone PWA 分类导航、选中状态、组合筛选、Archive 独立、Drawer 关闭（含遮罩）、长列表滚动、安全区、无横向溢出及 PWA 重开全部 PASS。
 
 ## Deployment
 
 Status: public_deployed
 Public URL: https://food-expiry-manager-two.vercel.app/
 Provider: Vercel
-Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. v0.3.4 的本地自动化与人工验收均通过；该版本的 Vercel Production deployment 状态 Needs verification，Production / iPhone PWA 人工验收待执行。Git push 成功不代表部署或人工验收 PASS。
+Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 implementation 部署；docs-only closeout push 不代表新的人工验收。
 
 ## Version Index
 
@@ -47,15 +47,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.3.1｜Archive & Navigation Foundation（已完成）
 - v0.3.2｜Product Deletion & Storage Cleanup（已完成并关闭）
 - v0.3.3｜Discarded Batch Archive Flow（已完成并关闭）
-- v0.3.4｜Category Navigation（implementation complete，local manual acceptance PASS，awaiting Production / iPhone PWA acceptance）
+- v0.3.4｜Category Navigation（completed / closed；local 与 Production iPhone PWA 验收 PASS，Production desktop 未单独验收）
 
 ## Last verified
 
-2026-10-07：v0.3.4 定向测试 6 files / 63 tests；完整 `npm test` 27 files / 247 tests；`npm run build` 与 `git diff --check` 通过。build 提示大于 500 kB 的 chunk 警告。用户已在本地完成 A Sidebar 结构与滚动、B 分类导航、C 组合筛选、D Archive 独立性、E Drawer 交互，均 PASS；Production / iPhone PWA 尚未验收。未读取或打印 secrets，未执行 Supabase 操作。此前 v0.3.3 Production / iPhone PWA PASS 属于已关闭版本，不代表 v0.3.4 验收结果。
+2026-10-07：implementation 定向 6 files / 63 tests、完整 27 files / 247 tests、build 与 git diff --check 均通过（build 有 >500 kB chunk 警告）。用户本地 A–E 全 PASS；指定 implementation commit 的 Production 部署 success，用户 Production iPhone PWA 全 PASS（含遮罩关闭）。Production desktop browser not separately tested，desktop Escape / focus 仅本地验收 PASS。本次 closeout 仅文档变化，不重复运行完整测试或 build。
 
 ## Next Action
 
-确认 v0.3.4 Production 部署就绪后，完成 Production / iPhone PWA 最小人工验收（见 docs/TESTING.md）；本地 A–E 已 PASS，Production / iPhone PWA 人工验收前不关闭版本。Barcode API Coverage Expansion 与 Product Image Sourcing & Polish 继续保留为未来 Backlog。
+基于真实使用反馈评估并确定下一项 Backlog 优先级。候选与范围见 docs/BACKLOG.md；本次不冻结下一功能或数字版本。
 
 ## Blockers
 
@@ -108,4 +108,4 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Handoff Prompt
 
-v0.3.4 Category Navigation implementation, automated verification and local manual acceptance A–E are PASS. Confirm Production deployment readiness and arrange Production / iPhone PWA manual acceptance using docs/TESTING.md. Do not mark completed / closed before those real user acceptances. Keep Barcode API Coverage Expansion and Product Image Sourcing & Polish as future Backlog items.
+v0.3.4 Category Navigation is completed / closed. Implementation, automated verification, local manual acceptance and Production iPhone PWA manual acceptance are PASS. Production desktop browser was not separately tested; desktop Escape / focus passed locally only. Evaluate and determine the next Backlog priority from real usage feedback; no next feature or numeric version is frozen. See docs/BACKLOG.md for the retained candidates.

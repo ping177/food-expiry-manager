@@ -124,7 +124,7 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前正式版本为 v0.3.4 — Category Navigation：implementation complete / local manual acceptance A–E PASS，等待 Production / iPhone PWA 人工验收，尚未 completed / closed。Active 分类入口已迁至 Sidebar，搜索与临期筛选仍在库存页，Archive 保留独立搜索与分类选择。v0.3.3 Discarded Batch Archive Flow 与 v0.3.2 Product Deletion & Storage Cleanup 已完成并关闭；其历史 Production PASS 不代表 v0.3.4 已验收。
+当前正式版本 v0.3.4 — Category Navigation 已 completed / closed：implementation complete，本地自动化、构建和人工验收 A–E PASS，Production iPhone PWA 人工验收全部 PASS。Production 桌面浏览器未单独验收，desktop Escape / focus 仅本地验收 PASS。Active 分类入口位于 Sidebar，搜索与临期筛选保留，Archive 保持独立搜索与分类选择。下一步基于真实使用反馈评估 Backlog 优先级，尚未冻结下一版本。
 
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 

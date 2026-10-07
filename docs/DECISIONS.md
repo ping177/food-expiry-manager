@@ -454,7 +454,7 @@
 
 ## D-037：v0.3.4 将 Active 分类入口迁入现有 Sidebar
 
-- 状态：已决定并完成本地实现；local manual acceptance A–E PASS，awaiting Production / iPhone PWA manual acceptance
+- 状态：completed / closed；implementation complete，local manual acceptance A–E PASS，Production iPhone PWA manual acceptance 全部 PASS。Production desktop browser not separately tested；desktop Escape / focus 仅本地 PASS
 - 日期：2026-10-07
 - Sidebar 的“库存”下常驻“全部”与 PRODUCT_CATEGORIES 的全部 canonical 分类；不复制分类列表，不按库存动态隐藏，不增加计数或 accordion。
 - 选择分类复用 Active categoryFilter，返回 home / inventory 并关闭 Drawer；“全部”仅重置 category，顶层“库存”保留 category / search / expiry。

@@ -57,14 +57,18 @@ git diff --check
 
 用户逐组验收后明确确认 A–E 全部 PASS；验收期间代码和文档没有变化。本地 PASS 不代表 Production / iPhone PWA PASS。空 / 历史分类及详情编辑兼容由自动化覆盖，未单独宣称人工 PASS。
 
-### Production / iPhone PWA 最小人工验收（待执行）
+### Production iPhone PWA 人工验收（2026-10-07，用户确认全部 PASS）
 
-1. Sidebar 显示“库存 → 全部 + 全部 canonical 分类 → 已归档”，包括没有库存的 canonical 分类；无计数、accordion、未分类项。选分类后正确过滤并关闭，再打开时 selected state 正确。
-2. 设置 Active 搜索 / 临期 / 分类，进入 Archive 设置独立搜索 / 分类；从 Sidebar 选 Active 分类或“全部”返回库存，搜索 / 临期保持。再次进 Archive，其原筛选保持；顶层“库存”及底部 Tab 返回也保留 Active 筛选。
-3. Active 只有搜索和临期 select，无分类 select；组合过滤和空结果“清除筛选”正确清除三条件；all 下空分类显示“未分类”，未知分类保留原值，详情编辑保留未知分类。
-4. 浏览器验证 Escape、遮罩和关闭按钮关闭菜单，焦点回到打开菜单按钮；iPhone PWA 验证顶部 / 底部 safe-area、小屏或横屏滚动到底部“已归档”可达、无横向溢出。
+- implementation commit：`989ee41f343e47c36e1ea987f3d8b65517345766`；GitHub Vercel check、environment=Production 的 deployment status 均 success。
+- Sidebar / 分类：全部与 canonical 分类完整显示、selected state 正确；分类选择返回 Active 并正确过滤，顶层“库存”保留分类，“全部”恢复所有分类，均 PASS。
+- 组合筛选：category + search + expiry 同时生效；“全部”只取消分类，搜索 / 临期保留；清除筛选重置三条件，PASS。
+- Archive：原搜索与 category select 正常，Active ↔ Archive 各自筛选独立保留，PASS。
+- Drawer / 手机布局：正常打开 / 关闭、关闭按钮、遮罩关闭（用户另行明确确认）、长分类列表滚动到底部、已归档入口可见可点、顶部 / 底部 safe-area、无横向溢出，PASS。
+- PWA 重开后无明显导航异常，PASS；不要求重开保留筛选。使用“全部”与 2–3 个有真实库存的分类，不要求逐一测试全部 13 类。
 
-v0.3.4 本地人工验收已 PASS；Production 部署状态待确认，Production / iPhone PWA 人工验收尚未执行，不记录其 PASS，不关闭版本。
+Production desktop browser not separately tested；Production desktop Escape / focus 不记录 PASS，仅此前本地人工验收通过。空 / 非 canonical 历史分类及详情编辑兼容继续引用自动化覆盖，不额外宣称 Production 人工 PASS。
+
+v0.3.4 completed / closed；implementation complete、本地人工验收及 Production iPhone PWA 人工验收 PASS，不扩写为所有 Production 平台 PASS。
 
 ## v0.3.2 Product Deletion & Storage Cleanup 自动化覆盖
 

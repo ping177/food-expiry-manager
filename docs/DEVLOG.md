@@ -2,6 +2,15 @@
 
 ## 2026-10-07
 
+### v0.3.4 docs-only closeout（completed / closed）
+
+- closeout baseline：main，HEAD / 本地 origin/main 均为 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766`，ahead / behind 0 / 0，working tree clean；implementation 已正常 push，无后续未知代码变化。
+- 已确认该 commit 的 GitHub Vercel check 与 Production deployment status 均 success。用户本地人工验收 A–E 全 PASS，随后 Production iPhone PWA 分类导航、selected state、组合筛选、Archive 独立、Drawer 关闭（含明确补确认的遮罩关闭）、长列表滚动、safe-area、无横向溢出与 PWA 重开全 PASS。
+- Production 桌面浏览器未单独验收；Production desktop Escape / focus 不记录 PASS，仅此前本地验收通过。不将 iPhone PWA PASS 扩写为所有 Production 平台 PASS。
+- PROJECT_STATE、TESTING、README、BACKLOG、ROADMAP 与 DECISIONS 据实同步 v0.3.4 completed / closed；保留既有 Version Index 项并更新状态，不新增版本号。Next Action 为基于真实使用反馈评估并确定下一项 Backlog 优先级，六项候选见 BACKLOG；未启动或冻结下一版本。
+- 本轮只改治理文档，业务代码、依赖、数据库、外部项目文件未变，未读取或输出 secrets。沿用 implementation 定向 63 tests、完整 247 tests 与 build PASS，不机械重跑。
+- closeout 验证：git diff --check、治理范围 / headings / Blockers / acceptance 边界 / Version Index 项数检查、3 个 hook / gate shell 语法检查均通过；既有 Project State Push Gate 测试 19 / 19 PASS。
+
 ### v0.3.4 — Category Navigation（implementation complete，awaiting manual acceptance）
 
 - 实际 baseline：main，HEAD / 本地 origin/main 均为 55eabcf9c72996d89d300f5f784f5101559fd990，ahead / behind 0 / 0，初始 working tree clean，与用户审计一致。

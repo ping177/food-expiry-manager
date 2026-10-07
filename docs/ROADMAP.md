@@ -167,7 +167,7 @@
 
 ## v0.3.4：Category Navigation
 
-- 状态：implementation complete；本地测试、构建及人工验收 A–E PASS，awaiting Production / iPhone PWA manual acceptance
+- 状态：completed / closed；implementation complete，本地测试、构建及人工验收 A–E PASS，Production iPhone PWA manual acceptance 全部 PASS；Production 桌面浏览器未单独验收，desktop Escape / focus 仅本地 PASS
 - 现有 Sidebar 的“库存”下显示“全部”与 PRODUCT_CATEGORIES 全部 canonical 分类
 - 选择分类返回 Active、关闭 Drawer，并保留搜索 / 临期；顶层“库存”保留全部 Active 筛选
 - Active 移除 category select；清除筛选继续清除 category / search / expiry
