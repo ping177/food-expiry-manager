@@ -2,6 +2,24 @@
 
 ## 2026-10-08
 
+### v0.3.5 Final Gesture Fix Review & Release 授权
+
+- baseline：main，HEAD / origin/main / 只读远端main均`318cfe6a991bdc798fed1fccd282933c08e176f7`，ahead/behind0/0；15个已知tracked修改，无新增文件。
+- 聚焦review无blocker：主列表与任务页main绑定路径互斥，任务页转发四类Pointer事件给原controller，子section无重复绑定；原mode、Back/Protected Exit/busy/confirmation不被绕过，卸载清理ref和reset一致。Sidebar打开时main open disabled，up不能凭空创建start；Bottom Navigation/保存/删除/文件输入未获起滑许可，正常tap保留。
+- 本轮业务代码/测试未变，沿用定向152 / 完整329 tests与build PASS；重跑diff、语法、治理/staged范围及commit/pre-push所需检查。用户授权独立`fix: improve mobile gesture coverage` commit及正常origin/main push，使用`Project-State-Review: updated`，不跳过hook、不force、不amend。
+- 治理Next Action改为本次Production部署可用后的A/B/C真机复验，保留318cfe6六组用户PASS及历史UX findings。Node不证明label默认行为、真实命中和iOS边缘；本次不closeout，不预报新修复人工PASS。
+- 本条是提交前review与授权记录，不预报commit/push/deployment成功；最终结果以本轮Git及commit对应部署查询为准。无依赖、DB/Supabase/Barcode/图片业务/Batch lifecycle或外部项目文件变化，未主动读取/输出secrets。
+
+### v0.3.5 Final Gesture Usability Fix（本地完成，awaiting review）
+
+- baseline：main，HEAD / 本地origin/main `318cfe6a991bdc798fed1fccd282933c08e176f7`，ahead/behind0/0，初始working tree clean。本轮不commit/push/部署。
+- 用户确认该Production修复的卡片tap/右滑、Sidebar分类tap/左滑、Product Edit/Add/Add Inventory未保存退出、危险确认保护和纵向滚动PASS；仍有A左边缘限制、B Detail上下空白、C Add大部分位置不能起滑。保留原a811b11普通位置FAIL及指定位置PASS历史，不泛化已知PASS。
+- 实际原因：App的minStartX=24显式拒绝左边缘；Detail/Add仅内部section监听，App header、外层padding及main底部留白未覆盖；blanket label排除同时拒绝字段标题文字。
+- 定向修复：删去人为边缘限制；main使用原min-h-screen及padding覆盖页面，home/archive直接复用open handlers，任务页仅经ref转发当前子组件原controller；hook注册/卸载清理，子section不再重复绑定。Detail mode、所有Back callback及Protected Exit逻辑不变。
+- label非编辑文字可起滑，input/textarea/select/contenteditable、扫码/picker/data-no-swipe及未获许可的保存/删除按钮继续排除。click suppression代码未改；正常tap不preventDefault，合格swipe继续阻断尾随click。
+- 先新增失败测试再实现；新增11 tests，包含x=0、完整main监听面/单owner、原返回目标、内部mode/dirty/busy/危险确认、label与实际控件、ref卸载清理。旧App接线用例改由main触发，standalone组件保留本地绑定。定向13 files / 152 tests、完整29 files / 329 tests、build PASS（原>500 kB chunk警告）；diff/语法/范围及治理检查PASS。
+- 本地新修复未发布、未Production验收；Node测试不能证明系统边缘仲裁、真实命中区域或label默认聚焦/软键盘/文本选择。保留真机复验清单，不completed/closed。无新增依赖、DB/Supabase/Barcode/图片业务/Batch lifecycle或外部项目文件变化，未主动读取/输出secrets。
+
 ### v0.3.5 体验修复最终 review 与发布授权
 
 - 实际baseline仍main，HEAD / origin/main / 只读远端main均`a811b11e7671557962be2bd056506e50efa95705`，ahead/behind 0/0；已知17个tracked修改，无新增文件。

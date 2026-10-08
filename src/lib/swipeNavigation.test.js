@@ -74,13 +74,10 @@ describe('touch swipe navigation', () => {
     handlers.onPointerUp(event(180, 0, 300))
     expect(onSwipe).not.toHaveBeenCalled()
   })
-  it('excludes the left edge for opening only', () => {
-    const { handlers, onSwipe } = setup({ minStartX: 24 })
-    handlers.onPointerDown(event(23))
-    handlers.onPointerUp(event(100, 0, 300))
-    expect(onSwipe).not.toHaveBeenCalled()
-    handlers.onPointerDown(event(24))
-    handlers.onPointerUp(event(84, 0, 300))
+  it('does not impose a left-edge start exclusion', () => {
+    const { handlers, onSwipe } = setup()
+    handlers.onPointerDown(event(0))
+    handlers.onPointerUp(event(60, 0, 300))
     expect(onSwipe).toHaveBeenCalledOnce()
   })
   it.each(['enabled', 'scope'])('invalidates an in-flight gesture on %s change', (field) => {
@@ -123,6 +120,13 @@ describe('touch swipe navigation', () => {
     const image = { closest: () => approvedCard }
     expect(isGestureTargetExcluded({ closest: (selector) => selector.includes('input') ? null : image })).toBe(false)
     expect(isGestureTargetExcluded({ closest: () => approvedCard })).toBe(true)
+  })
+  it('allows non-editor label text but still excludes its input and protected picker', () => {
+    const labelText = { closest: (selector) => selector.split(',').includes('label') ? {} : null }
+    expect(isGestureTargetExcluded(labelText)).toBe(false)
+    for (const selector of ['input', 'textarea', 'select', '[data-no-swipe]', '[contenteditable]:not([contenteditable="false"])']) {
+      expect(isGestureTargetExcluded({ closest: (list) => list.split(',').includes(selector) ? {} : null })).toBe(true)
+    }
   })
 })
 

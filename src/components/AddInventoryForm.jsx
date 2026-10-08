@@ -22,6 +22,7 @@ export default function AddInventoryForm({
   product,
   unit,
   swipeClickGuard,
+  gestureSurfaceRef,
 }) {
   const size = formatProductSize(product)
   const [form, setForm] = useState(initialForm)
@@ -39,6 +40,7 @@ export default function AddInventoryForm({
     direction: 'right',
     onSwipe: exit.requestExit,
     clickGuard: swipeClickGuard,
+    surfaceRef: gestureSurfaceRef,
   })
 
   function update(field, value) {

@@ -124,7 +124,7 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前正式版本 v0.3.5 — Mobile Gesture Navigation 的原 implementation `a811b11` 已部署；iPhone PWA 普通位置 open / close / detail Back FAIL，指定非交互起点三项 PASS。发布前体验修复现已本地完成：显式允许卡片、分类/导航按钮、详情展示图片及安全返回按钮起滑，使用局部 capture 保护避免尾随 click，保留阈值和未保存退出保护。定向141 / 完整318 tests与build PASS；最终review无blocker，等待Production iPhone PWA复验（修复部署结果按独立fix commit查询），尚未completed / closed。不要求桌面本地手机式人工验收；Safari未单独验收。上一版本v0.3.4保持closed；验收记录与清单见docs/TESTING.md。
+当前版本v0.3.5尚未completed / closed。已部署`318cfe6`的卡片/分类tap与swipe、Product Edit/Add/Add Inventory未保存退出、危险确认保护及纵向滚动已由用户iPhone PWA确认PASS，但左边缘、Detail上下空白及Add区域可用性仍不足。本地Final Gesture Usability Fix移除应用边缘限制，main覆盖整页并转发到原任务controller，允许label非编辑文字，保留实际控件与退出/click保护；定向152 / 完整329 tests及build PASS。新修复最终review无blocker，等待Production iPhone PWA真机复验（部署结果按本次独立fix commit确认）；iOS系统边缘效果、实际命中区域和label默认行为未验证。历史记录与清单见docs/TESTING.md，v0.3.4保持closed。
 
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 

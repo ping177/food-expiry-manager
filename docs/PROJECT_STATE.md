@@ -12,18 +12,18 @@ v0.3.5 — Mobile Gesture Navigation
 
 ## Current status
 
-v0.3.5 Swipe Interaction Usability Fix 实现完成，automated verification PASS；最终聚焦 review 无 blocker，等待 Production iPhone PWA 重新验收。原 Production 普通使用位置 open / close / detail Back FAIL，指定非交互位置三项 PASS；用户确认主要问题为起滑区域受限。未 completed / closed；v0.3.4 保持 completed / closed。
+v0.3.5 Final Gesture Usability Fix 本地实现完成，automated verification PASS，最终聚焦review无blocker；等待Production iPhone PWA重新验收。用户此前确认318cfe6的卡片/分类tap与swipe、Product Edit/Add/Add Inventory退出保护、危险确认保护及纵向滚动PASS；其左边缘限制、Detail上下空白和Add起滑不足的三项UX findings保留。本次A/B/C修复未获新Production人工PASS，未completed / closed。
 
 ## Latest completed
 
-定向放宽 Active / Archive 商品卡片、Sidebar 分类/导航按钮、详情展示图片及安全 Back / Cancel 按钮的起滑范围；稳定 App main 的局部 click capture 仅阻断已识别 swipe 的尾随 click，下一次 pointerdown 清除记录。保留 Pointer Events、冻结阈值、单一 owner 和 Protected Exit。定向 13 files / 141 tests、完整 29 files / 318 tests、build PASS；真实 iOS click 合成与卸载后的事件目标待复验。
+完成A/B/C定向修复：删除应用24px边缘排除；main作为完整页面监听面，主列表复用原open controller，任务页仅转发给原Detail/Add组件controller并移除子section重复绑定；允许label非编辑文字起滑，实际编辑/扫码/picker/保存/删除继续排除。保持mode Back、Protected Exit、busy/confirmation、click suppression及全部其他阈值。定向13 files / 152 tests、完整29 files / 329 tests与build PASS。
 
 ## Deployment
 
 Status: public_deployed
 Public URL: https://food-expiry-manager-two.vercel.app/
 Provider: Vercel
-Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 v0.3.4 implementation 部署；docs-only closeout push 不代表新的人工验收。v0.3.5 原 implementation commit `a811b11e7671557962be2bd056506e50efa95705` 的 Vercel check 与 Production deployment status 已确认 success；普通起滑位置手势体验 FAIL，指定非交互起点三项 PASS。体验修复通过最终review，用户已授权独立fix commit与正常push；修复部署结果按该commit查询，本记录不预报部署成功。旧部署成功和指定位置PASS不代表修复后验收PASS。
+Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 v0.3.4 implementation 部署；docs-only closeout push 不代表新的人工验收。v0.3.5 原 implementation commit `a811b11e7671557962be2bd056506e50efa95705` 的 Vercel check 与 Production deployment status 已确认 success；普通起滑位置手势体验 FAIL，指定非交互起点三项 PASS。修复commit `318cfe6a991bdc798fed1fccd282933c08e176f7` 的Vercel check与Production deployment已确认success；用户已确认卡片/分类tap与swipe、三类表单退出保护、危险确认保护及纵向滚动PASS，A/B/C可用性仍需修复。本轮Final Gesture Usability Fix最终review无blocker，用户已授权独立fix commit及正常push；其部署结果按新commit确认，本记录不预报部署成功。旧部署及部分功能PASS不代表本轮新修复验收PASS。
 
 ## Version Index
 
@@ -49,15 +49,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.3.3｜Discarded Batch Archive Flow（已完成并关闭）
 - v0.3.4｜Category Navigation（completed / closed；local 与 Production iPhone PWA 验收 PASS，Production desktop 未单独验收）
 
-- v0.3.5｜Mobile Gesture Navigation（体验修复实现完成，automated verification PASS；awaiting Production iPhone PWA 复验，未 closed）
+- v0.3.5｜Mobile Gesture Navigation（A/B/C体验修复本地完成，automated verification PASS；awaiting Production iPhone PWA复验，未 closed）
 
 ## Last verified
 
-2026-10-08：本地体验修复定向 13 files / 141 tests、完整 29 files / 318 tests、npm run build PASS（保留 >500 kB chunk 警告）；diff / 语法 / 范围与治理检查通过。先新增回归用例观察失败再实现。原 implementation 的 108 / 295 tests PASS 为此前证据。用户 iOS 27.0.1 原 Production 普通位置 FAIL，指定非交互起点三项 PASS；最终release review仅调整治理文档，沿用上述测试与build证据；未记录修复后Production / Safari / iPhone PWA PASS。Node shallow tests 不证明真实 click 合成、DOM 冒泡与 iOS 仲裁。
+2026-10-08：A/B/C修复定向152、完整329 tests、build、diff/语法/范围及治理检查PASS；build保留>500 kB chunk警告。新增11项回归并先观察失败；接线测试改为从生产路径的main触发，不模拟已移除的section绑定。318cfe6已部署且上述六组功能由用户确认PASS；最终release review仅调整治理文档，业务代码/测试未变，沿用152/329/build证据；新修复Production/iPhone PWA/Safari人工验收未执行。Node不证明iOS系统边缘仲裁、真实DOM命中、label默认聚焦/软键盘/文本选择。
 
 ## Next Action
 
-在当前体验修复的 Production 部署可用后，按 docs/TESTING.md 完成 iPhone PWA 重新验收并等待用户 PASS / FAIL，重点验证卡片/分类 swipe-only、详情图片 Back、尾随 click 与下一次 tap、Protected Exit。真实验收通过前不关闭 v0.3.5。
+在本次A/B/C修复的Production部署可用后，按docs/TESTING.md由用户iPhone PWA复验左边缘起滑、Active/Archive Detail顶部与底部空白、Add标题/label/底部覆盖，同时回归内部mode、Protected Exit、重要控件、click suppression与既有PASS；等待真实PASS / FAIL，不关闭v0.3.5。
 
 ## Blockers
 
@@ -65,7 +65,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Important Context
 
-- v0.3.5 使用 touch-only Pointer Events，局部 pan-y / pinch-zoom，不接管系统 Back、不使用 browser history。首版卡片/分类起滑受限导致普通位置验收 FAIL；本地修复显式允许卡片、分类/导航按钮及详情展示图片，保留编辑/危险操作排除并增加局部尾随 click 保护；dirty 退出拒绝保留草稿与待上传图片，确认操作/提交期间禁用 swipe。
+- v0.3.5 使用 touch-only Pointer Events，局部 pan-y / pinch-zoom，不接管系统 Back、不使用 browser history。首版卡片/分类起滑受限导致普通位置验收 FAIL；318cfe6已允许卡片/分类/展示图片且相关真机PASS；本地A/B/C修复移除边缘限制、将监听面移至main并允许label文字，继续保护实际编辑/危险控件和局部尾随click；dirty 退出拒绝保留草稿与待上传图片，确认操作/提交期间禁用 swipe。
 
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
@@ -112,4 +112,4 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Handoff Prompt
 
-Continue v0.3.5 Mobile Gesture Navigation with the Swipe Interaction Usability Fix awaiting Production iPhone PWA reacceptance. Original Production commit a811b11e7671557962be2bd056506e50efa95705 had ordinary-position failures and three precise non-interactive starts passed on iOS 27.0.1; preserve that history. Final focused review found no blocker: cards, Drawer and Detail are descendants of stable App main, and its local click capture shares a ref-backed token armed before navigation. Local targeted 141 / full 318 tests and build passed; source code was unchanged during final release review. The user authorized an independent fix commit and normal origin/main push on 2026-10-08. Track the fix deployment by its commit; deployment success does not prove synthesized click or gesture acceptance. Collect real iPhone PWA PASS / FAIL next. Preserve thresholds, touch-only input, protected exits and Add Inventory semantics; do not close v0.3.5 before acceptance.
+Continue v0.3.5 Final Gesture Usability Fix awaiting Production iPhone PWA reacceptance. User previously confirmed six groups of PASS on 318cfe6, but left-edge and Detail/Add visible-region coverage findings remained; preserve that history. Local A/B/C fix removed the application edge exclusion, moved the event surface to main, forwards task events to the existing child controller and clears it on unmount without duplicate section binding, and allows non-editor label text. Final focused review found no blocker: Sidebar open disables main open; internal mode/protected exits and Bottom Navigation exclusions remain; click suppression is unchanged. Targeted152/full329/build evidence is retained because code/tests did not change during release review. User authorized an independent fix commit and normal origin/main push on 2026-10-08; query its Vercel deployment by the new commit. Real iOS edge arbitration, hit areas, label focus/keyboard/selection and prior PASS regression require reacceptance. Do not close v0.3.5 before user PASS.

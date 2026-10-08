@@ -51,7 +51,7 @@ vi.mock('./lib/supabase', () => ({ supabase: null, missingSupabaseVariables: [] 
 
 function renderer(Component, states = {}) {
   const runtime = { states, refs: [], effects: [], pending: [] }
-  return (props = {}) => {
+  const render = (props = {}) => {
     hooks.current = runtime
     runtime.stateIndex = runtime.refIndex = runtime.effectIndex = 0
     runtime.pending = []
@@ -59,6 +59,8 @@ function renderer(Component, states = {}) {
     runtime.pending.forEach((effect) => effect())
     return tree
   }
+  render.unmount = () => runtime.effects.forEach((effect) => effect?.cleanup?.())
+  return render
 }
 function all(tree, predicate) {
   if (!tree || typeof tree !== 'object') return []
@@ -86,6 +88,15 @@ const appRenderer = () => renderer(App, { 0: { user: { id: 'test-user' } }, 1: '
 afterEach(() => { hooks.current = null; vi.unstubAllGlobals() })
 
 describe('gesture ownership and navigation', () => {
+  it.each(['home', 'archive'])('%s allows x=0 without an App edge guard', (view) => {
+    const render = appRenderer()
+    if (view === 'archive') find(render(), SidebarDrawer).props.onNavigate('archive')
+    const props = gesture(render()).props
+    const event = { pointerType: 'touch', pointerId: 1, clientX: 0, clientY: 100, timeStamp: 0, target: { closest: () => null } }
+    props.onPointerDown(event)
+    props.onPointerUp({ ...event, clientX: 80, timeStamp: 300 })
+    expect(find(render(), SidebarDrawer).props.open).toBe(true)
+  })
   it.each(['home', 'archive'])('opens Sidebar from %s and keeps menu click', (view) => {
     const render = appRenderer()
     if (view === 'archive') find(render(), SidebarDrawer).props.onNavigate('archive')
@@ -125,7 +136,10 @@ describe('gesture ownership and navigation', () => {
     const card = all(render(), (node) => node.props?.onSelect && node.props?.batch?.id === batch.id)[0]
     card.props.onSelect(batch.id)
     const detail = find(render(), BatchDetail)
-    swipe(renderer(BatchDetail)(detail.props))
+    const detailRender = renderer(BatchDetail)
+    detailRender(detail.props)
+    swipe(render())
+    detailRender.unmount()
     expect(find(render(), SidebarDrawer).props.activeSection).toBe('inventory')
   })
   it('Archive Back preserves its request invalidation and guard cleanup', () => {
@@ -133,7 +147,10 @@ describe('gesture ownership and navigation', () => {
       3: [{ ...batch, id: 'archived-1', status: 'consumed' }], 4: 'archive-detail', 7: 'archived-1', 13: false,
       20: { productId: batch.product.id, status: 'clear' } })
     const detail = find(render(), BatchDetail)
-    swipe(renderer(BatchDetail)(detail.props))
+    const detailRender = renderer(BatchDetail)
+    detailRender(detail.props)
+    swipe(render())
+    detailRender.unmount()
     expect(find(render(), SidebarDrawer).props.activeSection).toBe('archive')
     expect(all(render(), (node) => node.type === BatchDetail)).toHaveLength(0)
   })
@@ -142,6 +159,125 @@ describe('gesture ownership and navigation', () => {
     swipe(render())
     expect(button(render(), '退出登录')).toBeDefined()
     expect(all(render(), (node) => node.type === SidebarDrawer)).toHaveLength(0)
+  })
+})
+
+describe('task page outer gesture surface', () => {
+  const taskApp = (view, extra = {}) => renderer(App, {
+    0: { user: { id: 'test-user' } }, 1: 'test-user', 2: [batch],
+    3: [{ ...batch, id: 'archived-1', status: 'consumed' }], 4: view,
+    6: batch.id, 7: 'archived-1', 13: false, ...extra,
+  })
+  it.each(['detail', 'archive-detail'])('%s top/bottom main blanks reach its original Back exactly once', (view) => {
+    const app = taskApp(view)
+    const child = renderer(BatchDetail)
+    const content = child(find(app(), BatchDetail).props)
+    const main = find(app(), 'main')
+    expect(main.props.className).toContain('min-h-screen')
+    expect(main.props.style.touchAction).toBe('pan-y pinch-zoom')
+    expect(gesture(content)).toBeUndefined()
+    // The same main owns both padding above the header and its bottom safe-area padding.
+    swipe(main)
+    expect(find(app(), SidebarDrawer).props.activeSection).toBe(view === 'detail' ? 'inventory' : 'archive')
+    expect(find(app(), SidebarDrawer).props.open).toBe(false)
+    child.unmount()
+  })
+  it('main forwarding cannot bypass Product Edit dirty guard or jump its internal mode', () => {
+    const app = taskApp('detail')
+    const child = renderer(BatchDetail)
+    const props = find(app(), BatchDetail).props
+    button(child(props), '编辑商品').props.onClick()
+    all(child(props), (node) => node.type === 'input')[0].props.onChange({ target: { value: 'dirty' } })
+    child(props)
+    swipe(app())
+    find(child(props), DiscardChangesConfirmation).props.onCancel()
+    expect(all(child(props), (node) => node.type === 'input')[0].props.value).toBe('dirty')
+    child(props)
+    swipe(app())
+    find(child(props), DiscardChangesConfirmation).props.onDiscard()
+    expect(button(child(props), '编辑商品')).toBeDefined()
+    expect(find(app(), BatchDetail)).toBeDefined()
+    child.unmount()
+  })
+  it.each(['add', 'add-inventory'])('%s top/form/bottom non-editor surface retains dirty and busy guards', (view) => {
+    const Component = view === 'add' ? AddBatchForm : AddInventoryForm
+    const app = taskApp(view)
+    const child = renderer(Component)
+    const props = find(app(), Component).props
+    const content = child(props)
+    expect(gesture(content)).toBeUndefined()
+    const labelText = { closest: (selector) => selector.split(',').includes('label') ? {} : null }
+    all(content, (node) => node.type === 'input')[0].props.onChange({ target: { value: 'dirty' } })
+    child(props)
+    swipe(app(), 'right', labelText)
+    find(child(props), DiscardChangesConfirmation).props.onCancel()
+    child({ ...props, busy: true })
+    swipe(app())
+    expect(all(child({ ...props, busy: true }), (node) => node.type === DiscardChangesConfirmation)).toHaveLength(0)
+    expect(find(app(), Component)).toBeDefined()
+    child.unmount()
+  })
+  it('unmount clears the forwarded controller; later gestures cannot call a stale exit', () => {
+    const app = taskApp('add')
+    const child = renderer(AddBatchForm)
+    const props = find(app(), AddBatchForm).props
+    const onCancel = vi.fn()
+    child({ ...props, onCancel })
+    expect(props.gestureSurfaceRef.current).not.toBeNull()
+    child.unmount()
+    expect(props.gestureSurfaceRef.current).toBeNull()
+    swipe(app())
+    expect(onCancel).not.toHaveBeenCalled()
+  })
+  it('Inventory Operation main swipe exits its mode, while confirmation blocks the same surface', () => {
+    const app = taskApp('detail')
+    const child = renderer(BatchDetail)
+    const props = find(app(), BatchDetail).props
+    const childProps = { ...props, defaultMode: 'inventory-operation' }
+    const panel = renderer(InventoryOperationPanel)
+    const panelProps = find(child(childProps), InventoryOperationPanel).props
+    button(panel(panelProps), '消耗库存').props.onClick()
+    panel(panelProps)
+    child(childProps)
+    swipe(app())
+    expect(find(child(childProps), InventoryOperationPanel)).toBeDefined()
+    button(panel(panelProps), '取消').props.onClick()
+    panel(panelProps)
+    child(childProps)
+    swipe(app())
+    expect(button(child(childProps), '库存操作')).toBeDefined()
+    expect(find(app(), BatchDetail)).toBeDefined()
+    panel.unmount()
+    child.unmount()
+  })
+  it('Add editor/scanner/picker/save starts remain excluded, label swipe suppresses its forwarded click', () => {
+    const app = taskApp('add')
+    const child = renderer(AddBatchForm)
+    const props = find(app(), AddBatchForm).props
+    const content = child(props)
+    const protectedNodes = [
+      all(content, (node) => node.type === 'input')[0],
+      all(content, (node) => node.type === 'textarea')[0],
+      all(content, (node) => node.type === 'select')[0],
+      button(content, '扫码添加'),
+      all(content, (node) => node.type === 'button' && node.props.type === 'submit')[0],
+    ]
+    for (const node of protectedNodes) {
+      swipe(app(), 'right', targetFor(node))
+      expect(find(app(), AddBatchForm)).toBeDefined()
+    }
+    swipe(app(), 'right', { closest: (selector) => selector.includes('[data-no-swipe]') ? {} : null })
+    expect(find(app(), AddBatchForm)).toBeDefined()
+    const label = { closest: (selector) => selector.split(',').includes('label') ? {} : null }
+    const normalTap = capturedClick(app(), { props: {} }, { timeStamp: 250 })
+    expect(normalTap.preventDefault).not.toHaveBeenCalled()
+    all(content, (node) => node.type === 'input')[0].props.onChange({ target: { value: 'dirty' } })
+    child(props)
+    swipe(app(), 'right', label)
+    const generatedLabelClick = capturedClick(app(), { props: {} })
+    expect(generatedLabelClick.preventDefault).toHaveBeenCalledOnce()
+    expect(find(child(props), DiscardChangesConfirmation)).toBeDefined()
+    child.unmount()
   })
 })
 
@@ -269,12 +405,18 @@ describe('protected form exits', () => {
     const render = appRenderer()
     const add = all(render(), (node) => node.props?.onAdd)[0]
     add.props.onAdd()
-    swipe(renderer(AddBatchForm)(find(render(), AddBatchForm).props))
+    const addRender = renderer(AddBatchForm)
+    addRender(find(render(), AddBatchForm).props)
+    swipe(render())
+    addRender.unmount()
     expect(find(render(), SidebarDrawer)).toBeDefined()
     const card = all(render(), (node) => node.props?.onSelect && node.props?.batch?.id === batch.id)[0]
     card.props.onSelect(batch.id)
     find(render(), BatchDetail).props.onAddInventory(batch)
-    swipe(renderer(AddInventoryForm)(find(render(), AddInventoryForm).props))
+    const inventoryRender = renderer(AddInventoryForm)
+    inventoryRender(find(render(), AddInventoryForm).props)
+    swipe(render())
+    inventoryRender.unmount()
     expect(find(render(), BatchDetail).props.batch.id).toBe(batch.id)
   })
   it('Product edit shares protected top Back and Cancel, returning detail rather than home', () => {

@@ -1,5 +1,5 @@
 const excludedTargets = [
-  'input', 'textarea', 'select', 'label', 'summary', 'video', 'audio',
+  'input', 'textarea', 'select', 'summary', 'video', 'audio',
   'canvas', 'iframe', 'object', 'embed',
   '[contenteditable]:not([contenteditable="false"])', '[data-no-swipe]',
   ...['textbox', 'combobox', 'listbox', 'option', 'checkbox', 'radio', 'switch',
@@ -77,8 +77,7 @@ export function createSwipeNavigation(getOptions) {
         return
       }
       const options = getOptions()
-      if (!options.enabled || event.isPrimary === false || isGestureTargetExcluded(event.target) ||
-        event.clientX < (options.minStartX ?? 0)) return
+      if (!options.enabled || event.isPrimary === false || isGestureTargetExcluded(event.target)) return
       start = {
         pointerId: event.pointerId, x: event.clientX, y: event.clientY,
         time: event.timeStamp, maxY: 0, scope: options.scope,

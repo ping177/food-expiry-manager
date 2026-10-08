@@ -59,6 +59,7 @@ export default function BatchDetail({
   defaultMode = 'view',
   archiveMode = false,
   swipeClickGuard,
+  gestureSurfaceRef,
 }) {
   const [mode, setMode] = useState(archiveMode ? 'view' : defaultMode)
   const [productForm, setProductForm] = useState(() =>
@@ -87,6 +88,7 @@ export default function BatchDetail({
     direction: 'right',
     onSwipe: exit.requestExit,
     clickGuard: swipeClickGuard,
+    surfaceRef: gestureSurfaceRef,
   })
 
   function updateProductField(field, value) {

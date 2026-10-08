@@ -465,10 +465,10 @@
 
 ## D-038：v0.3.5 使用原生 Pointer Events 与局部 Protected Exit
 
-- 状态：v0.3.5区域体验修复实现与自动验证完成，最终review无blocker，待Production iPhone PWA复验；未关闭版本
+- 状态：318cfe6部分功能用户真机PASS；A/B/C最终可用性修复本地完成与自动验证PASS，最终review无blocker，待新修复Production iPhone PWA复验，未关闭版本
 - 日期：2026-10-07
 - App 仅持有 home / archive 的 Sidebar open 手势；SidebarDrawer 持有 panel close；BatchDetail 持有内部 mode Back；新增表单持有自身退出保护，不新增导航历史。
-- 检测核心使用 ref-backed controller：仅 touch，horizontal >=60 CSS px，过程最大 vertical <=30px，abs(dx)>=2*vertical；vertical>=12px 且纵向占优后整次取消，duration<=800ms，多指/cancel不执行。open 起点排除最左24px；不强拦 iOS 系统手势。
+- 检测核心使用 ref-backed controller：仅 touch，horizontal >=60 CSS px，过程最大 vertical <=30px，abs(dx)>=2*vertical；vertical>=12px 且纵向占优后整次取消，duration<=800ms，多指/cancel不执行。首版open排除最左24px，本轮经用户授权取消该应用限制；不强拦iOS系统手势。
 - 首版input / select / button / link / label / contenteditable / interactive role / media / picker起滑排除，卡片和分类按钮不支持swipe。此首版取舍经真实普通位置FAIL及指定位置PASS后，由下述用户授权体验修复调整；编辑/重要操作保护仍保留。
 - Add / Add Inventory 比较真实初始 form 值；Product Edit 比较原 Product 的显示表单；pending image 算 dirty。恢复原值为 pristine。按钮和手势共用退出函数：pristine立即返回，dirty用现有 inline confirmation 风格，拒绝不重置状态，确认才调用原退出语义。
 - 本地提交锁覆盖字段保存与随后图片上传之间的间隙；busy的同一路径返回按钮禁用。操作子组件只报告确认/submitting状态以禁用swipe，不重构其操作逻辑；普通确认状态中的原按钮行为保留。
@@ -484,3 +484,12 @@
   - 当前阶段只本地实现与自动验证，不 commit/push/部署；真实 iOS click 合成、冒泡及卸载后的目标必须重新真机验收，不提前记录 Production PASS 或 closeout。
   - 本地验证：定向141、完整318 tests与build PASS。click关联有效期1秒（覆盖尾随合成延迟并限制stale token），旧MouseEvent结束坐标允许±2px取整误差；不改变60px/30px/2:1/12px/800ms手势判定。规范明确pointer事件preventDefault不能保证取消click，因此使用App容器capture阶段阻断匹配click：https://www.w3.org/TR/pointerevents/latest/#mapping-for-devices-that-do-not-support-hover 。
   - 后续Final Review & Release授权：用户允许最终review无blocker后独立fix commit与正常push。review确认main capture覆盖全部三条路径，沿用未变化代码的141/318/build证据；当前Next Action为Production iPhone PWA重新验收，不将部署成功当作手势PASS，不closeout。
+
+- 2026-10-08 Final Gesture Usability Fix（用户授权本地实施，不commit/push/部署）：`318cfe6`的卡片/分类tap与swipe、Product Edit/Add/Add Inventory退出保护、危险确认保护及纵向滚动已由用户Production iPhone PWA确认PASS；尚有A/B/C可用性问题，不关闭版本。
+  - A实际原因：App传入minStartX=24。移除应用人为边缘限制，保留所有方向/距离/滚动规则；不强拦iOS自身系统手势。
+  - B实际原因：BatchDetail内部section是监听面，App标题、外层padding及main底部留白不在其中。C同时存在Add section覆盖不足与blanket label排除，字段标题文字也被排除。
+  - 最小方案：主列表open的原handlers也移至main以覆盖左右padding及空白；任务页main仅转发Pointer Events到当前任务组件原controller，二者按view互斥。hook经ref注册/卸载，使用外层监听面时不再给子section绑定handlers。main保持min-h-screen及原padding布局，不另建Back逻辑；Detail mode、Protected Exit、busy、confirming仍由原组件掌控。
+  - label非编辑文字允许起滑；input/textarea/select/contenteditable、扫码/picker/data-no-swipe、未明确允许的保存/删除按钮继续硬保护。正常label tap依赖原默认行为，合格swipe仍走已验证的click suppression；真机须确认不误聚焦或打开编辑器。
+  - 先补回归测试观察失败，再实施；使用现有Vitest，验证x=0、main上下留白/标题接线、单owner及清理、内部mode/dirty/busy、label与实际控件排除、click保护。执行targeted/full tests、build、diff及治理检查；不得记录本次新修复Production PASS。
+  - 本地验证：定向152 / 完整329 tests与build PASS；main与旧section的视觉布局不变，外层触摸范围仍需真机确认，尤其iOS边缘接管、label聚焦/键盘/选择和已知PASS回归。
+  - 后续Final Gesture Fix Review & Release：用户授权聚焦review无blocker后独立commit及正常push。业务代码/测试未变，沿用152/329/build证据，重跑diff/治理/staged范围与Push Gate所需检查；本次部署成功仍不代表A/B/C真机PASS，验收前不关闭v0.3.5。

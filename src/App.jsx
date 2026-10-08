@@ -60,6 +60,7 @@ export default function App() {
   const swipeClickGuardRef = useRef(null)
   if (!swipeClickGuardRef.current) swipeClickGuardRef.current = createSwipeClickGuard()
   const swipeClickGuard = swipeClickGuardRef.current
+  const taskGestureSurfaceRef = useRef(null)
   const [batches, setBatches] = useState([])
   const [archivedBatches, setArchivedBatches] = useState([])
   const [view, setView] = useState('home')
@@ -995,10 +996,17 @@ export default function App() {
       (view === 'home' || view === 'archive') && !sidebarOpen,
     scope: `${view}:${sidebarOpen}`,
     direction: 'right',
-    minStartX: 24,
     clickGuard: swipeClickGuard,
     onSwipe: () => setSidebarOpen(true),
   })
+  const taskView = ['detail', 'archive-detail', 'add', 'add-inventory'].includes(view)
+  const pageGesture = taskView ? {
+    onPointerDown: (event) => taskGestureSurfaceRef.current?.onPointerDown(event),
+    onPointerMove: (event) => taskGestureSurfaceRef.current?.onPointerMove(event),
+    onPointerUp: (event) => taskGestureSurfaceRef.current?.onPointerUp(event),
+    onPointerCancel: (event) => taskGestureSurfaceRef.current?.onPointerCancel(event),
+    style: { touchAction: 'pan-y pinch-zoom' },
+  } : sidebarGesture
 
   if (missingSupabaseVariables.length > 0) {
     return <ConfigNotice missingVariables={missingSupabaseVariables} />
@@ -1028,11 +1036,12 @@ export default function App() {
 
   return (
     <main
+      {...pageGesture}
       className="min-h-screen bg-cream pb-[calc(5rem+env(safe-area-inset-bottom))]"
       onPointerDownCapture={swipeClickGuard.onPointerDownCapture}
       onClickCapture={swipeClickGuard.onClickCapture}
     >
-      <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6" {...sidebarGesture}>
+      <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6">
         <header className="mb-5">
           {view !== 'home' && view !== 'archive' && (
             <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>
@@ -1165,6 +1174,7 @@ export default function App() {
         ) : view === 'archive-detail' && selectedArchivedBatch ? (
           <BatchDetail
             archiveMode
+            gestureSurfaceRef={taskGestureSurfaceRef}
             swipeClickGuard={swipeClickGuard}
             batch={selectedArchivedBatch}
             busy={busyBatchId === selectedArchivedBatch.id}
@@ -1187,6 +1197,7 @@ export default function App() {
           </section>
         ) : view === 'add' ? (
           <AddBatchForm
+            gestureSurfaceRef={taskGestureSurfaceRef}
             swipeClickGuard={swipeClickGuard}
             busy={loading}
             onCancel={() => setView('home')}
@@ -1195,6 +1206,7 @@ export default function App() {
           />
         ) : view === 'add-inventory' && selectedBatch ? (
           <AddInventoryForm
+            gestureSurfaceRef={taskGestureSurfaceRef}
             swipeClickGuard={swipeClickGuard}
             busy={loading}
             onCancel={() => setView('detail')}
@@ -1204,6 +1216,7 @@ export default function App() {
           />
         ) : view === 'detail' && selectedBatch ? (
           <BatchDetail
+            gestureSurfaceRef={taskGestureSurfaceRef}
             swipeClickGuard={swipeClickGuard}
             batch={selectedBatch}
             busy={busyBatchId === selectedBatch.id}

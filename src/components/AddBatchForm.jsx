@@ -51,6 +51,7 @@ export default function AddBatchForm({
   onCancel,
   onLookupBarcode,
   swipeClickGuard,
+  gestureSurfaceRef,
 }) {
   const [form, setForm] = useState(initialForm)
   const [error, setError] = useState('')
@@ -72,6 +73,7 @@ export default function AddBatchForm({
     direction: 'right',
     onSwipe: exit.requestExit,
     clickGuard: swipeClickGuard,
+    surfaceRef: gestureSurfaceRef,
   })
 
   const calculatedExpiry = useMemo(() => {
