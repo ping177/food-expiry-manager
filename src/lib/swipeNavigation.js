@@ -1,14 +1,50 @@
 const excludedTargets = [
-  'input', 'textarea', 'select', 'button', 'a', 'label', 'summary', 'video', 'audio',
-  'img', 'canvas', 'iframe', 'object', 'embed',
+  'input', 'textarea', 'select', 'label', 'summary', 'video', 'audio',
+  'canvas', 'iframe', 'object', 'embed',
   '[contenteditable]:not([contenteditable="false"])', '[data-no-swipe]',
-  ...['button', 'link', 'textbox', 'combobox', 'listbox', 'option', 'checkbox',
-    'radio', 'switch', 'slider', 'spinbutton', 'tab', 'menuitem', 'menuitemcheckbox',
-    'menuitemradio', 'treeitem', 'searchbox', 'scrollbar'].map((role) => `[role="${role}"]`),
+  ...['textbox', 'combobox', 'listbox', 'option', 'checkbox', 'radio', 'switch',
+    'slider', 'spinbutton', 'menuitemcheckbox', 'menuitemradio', 'searchbox',
+    'scrollbar'].map((role) => `[role="${role}"]`),
+].join(',')
+const optInTargets = ['button', 'a', 'img',
+  ...['button', 'link', 'tab', 'menuitem', 'treeitem'].map((role) => `[role="${role}"]`),
 ].join(',')
 
 export function isGestureTargetExcluded(target) {
-  return Boolean(target?.closest?.(excludedTargets))
+  if (target?.closest?.(excludedTargets)) return true
+  const interactive = target?.closest?.(optInTargets)
+  return Boolean(interactive && !interactive.closest?.('[data-swipe-start]'))
+}
+
+// Kept by the stable App main, so navigation/unmount cannot lose the trailing click.
+export function createSwipeClickGuard() {
+  let pending = null
+  return {
+    markSwipe(event) {
+      pending = { pointerId: event.pointerId, x: event.clientX, y: event.clientY, time: event.timeStamp }
+    },
+    onPointerDownCapture() {
+      pending = null
+    },
+    onClickCapture(event) {
+      const native = event.nativeEvent ?? event
+      if (!pending || event.detail === 0 || native.isTrusted === false) return
+      const elapsed = event.timeStamp - pending.time
+      // A synthesized click normally follows immediately; never keep a stale token.
+      if (elapsed < 0 || elapsed > 1000) {
+        pending = null
+        return
+      }
+      if (native.pointerType && native.pointerType !== 'touch') return
+      const matches = native.pointerId > 0
+        ? native.pointerId === pending.pointerId
+        : Math.abs(event.clientX - pending.x) <= 2 && Math.abs(event.clientY - pending.y) <= 2
+      if (!matches) return
+      pending = null
+      event.preventDefault()
+      event.stopPropagation()
+    },
+  }
 }
 
 // No React or DOM dependency: the hook supplies current ownership and callbacks.
@@ -61,7 +97,10 @@ export function createSwipeNavigation(getOptions) {
       const duration = event.timeStamp - gesture.time
       const distance = options.direction === 'left' ? -dx : dx
       if (distance >= 60 && Math.abs(dx) >= 2 * gesture.maxY &&
-        duration >= 0 && duration <= 800) options.onSwipe()
+        duration >= 0 && duration <= 800) {
+        options.clickGuard?.markSwipe(event)
+        options.onSwipe()
+      }
     },
     onPointerCancel(event) {
       start = null

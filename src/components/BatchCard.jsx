@@ -22,6 +22,7 @@ export default function BatchCard({ batch, onSelect }) {
   return (
     <article className="rounded-2xl border border-white/70 bg-white shadow-card">
       <button
+        data-swipe-start
         className="block w-full p-3 text-left transition active:scale-[0.99]"
         type="button"
         onClick={() => onSelect(batch.id)}

@@ -2,6 +2,24 @@
 
 ## 2026-10-08
 
+### v0.3.5 体验修复最终 review 与发布授权
+
+- 实际baseline仍main，HEAD / origin/main / 只读远端main均`a811b11e7671557962be2bd056506e50efa95705`，ahead/behind 0/0；已知17个tracked修改，无新增文件。
+- 最终聚焦review无blocker：Sidebar是内容div的sibling、App main的descendant，无portal；卡片/Sidebar/Detail均经过稳定main的capture。导航前记录的token不随owner卸载/reset清除；下一次pointerdown、键盘/程序/其他pointer及过期点击不会被误拦。硬排除先于显式允许，保存/删除/编辑控件仍保护。
+- 本轮只调整治理文档，业务代码及测试未变化，沿用定向141 / 完整318 tests及build PASS；重跑diff、治理/staged范围、语法与commit/pre-push所需检查。用户已授权独立`fix: expand mobile swipe gesture areas` commit及正常origin/main push，使用`Project-State-Review: updated`；不amend、不force、不跳过hook。
+- Current status / Next Action改为等待Production iPhone PWA复验，Blockers保持`暂无明确阻塞。`；原Production普通位置FAIL与指定位置PASS保留。真实click合成/卸载目标仍是真机必测项，版本不closeout。
+- 本条记录提交前review与发布授权，不预报commit/push/deployment成功；结果由本轮Git及部署查询汇报。无外部项目文件、依赖或DB/Supabase变化，未主动读取或输出secrets。
+
+### v0.3.5 发布前 Swipe Interaction Usability Fix（本地完成，待review/复验）
+
+- baseline：main，HEAD / origin/main `a811b11e7671557962be2bd056506e50efa95705`，ahead/behind 0/0，初始working tree clean；本轮不commit/push/部署。
+- 用户反馈原Production iPhone PWA普通位置open / close / Active及Archive detail Back FAIL，Sidebar纵向滚动PASS；指定非交互起点open / close / detail Back三项PASS（iOS 27.0.1）。用户确认希望普通位置自然起滑，授权在v0.3.5内定向修复，不建立新版本。
+- 保留原Pointer Events核心与阈值；默认排除编辑控件/label/媒体/未允许按钮，显式允许Active/Archive卡片（含图片）、Sidebar分类/导航、详情展示图片及安全Back/Cancel。未改变数据、Category Navigation或Protected Exit语义。
+- 稳定App main挂局部onClickCapture及onPointerDownCapture，各手势owner共用ref-backed click guard；合格swipe导航前记录身份/结束坐标，阻断匹配尾随click，一次消费、最多1秒，下一次pointerdown清除；键盘/程序/其他pointer点击保留。owner卸载/reset不丢保护；无document/window监听器，不依赖pointerup preventDefault。
+- TDD先观察新增算法/click guard和接线用例失败，再实现；本轮定向13 files / 141 tests、完整29 files / 318 tests、npm run build PASS（原有>500 kB chunk警告），diff/语法/范围及治理检查通过。新增23 tests，覆盖允许区域、swipe-only动作、下一次tap、图片Back和dirty退出。
+- Node harness仅模拟capture-before-target与目标判断，不证明浏览器click合成/DOM冒泡/卸载后的目标；这些是iPhone PWA必测项。修复未发布，未记录新Production/Safari/PWA PASS，版本未completed/closed。治理保持旧Production失败与本地修复待复验边界。
+- 无新增依赖、DB/Supabase/Barcode/图片数据处理/Batch lifecycle变化，无外部项目文件变化，未主动读取或输出secrets。
+
 ### v0.3.5 提交前 review 与真机验收流程调整
 
 - 用户明确取消本地手机式人工验收前置要求：桌面环境无法有效验证真实 mobile touch / Pointer Events / iPhone PWA 手势；改为提交前 review → implementation commit → 正常 push → 确认部署 → Production iPhone PWA 人工验收。

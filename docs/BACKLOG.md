@@ -83,8 +83,8 @@ iPhone PWA 最小人工验收均已完成：
 ### v0.3.5 Mobile Gesture Navigation（待人工验收）
 
 - 范围按用户冻结要求形成正式 v0.3.5：touch-only Sidebar open / close、详情和新增/编辑 Back，以及最小 Protected Exit。
-- implementation complete；自动化与构建 PASS，awaiting Production iPhone PWA manual acceptance。Production部署需按implementation commit确认，未关闭版本；不再要求本地手机式人工验收。
-- 卡片 / 分类按钮起滑排除、Add Inventory 旧文案与真实返回模式保持原状；手势区域如需扩大，必须基于真实验收反馈再评估。
+- 原 implementation 已部署；普通位置手势体验 FAIL，指定非交互起点三项 PASS。发布前体验修复本地完成，自动化与构建 PASS；最终review无blocker，awaiting Production iPhone PWA复验，版本未关闭。
+- 用户已授权扩大卡片、分类/导航、详情展示图片及安全返回按钮起滑范围，并加入局部 swipe-versus-click 保护；编辑控件/重要操作继续排除。Add Inventory 旧文案与真实返回模式保持原状。
 - 先完成本版本人工验收；下列候选继续保留，不与本版本混做。
 
 ### 后续优先级评估（未冻结版本）

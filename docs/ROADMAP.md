@@ -176,8 +176,8 @@
 
 ## v0.3.5：Mobile Gesture Navigation
 
-- 状态：implementation complete，automated verification PASS；awaiting Production iPhone PWA manual acceptance，尚未 completed / closed
-- 主列表右滑打开 Sidebar，panel 非交互区域左滑关闭；详情 / 新增 / 编辑右滑复用现有 Back / Cancel
+- 状态：原 Production 普通位置体验 FAIL，指定非交互起点三项 PASS；发布前体验修复本地完成、自动验证 PASS，最终review无blocker，awaiting Production iPhone PWA复验，尚未 completed / closed
+- 主列表含商品卡片右滑打开 Sidebar，panel 含分类/导航按钮左滑关闭；详情含展示图片及安全返回按钮起滑，新增 / 编辑复用现有 Back / Cancel；局部 click capture 防止已识别 swipe 的尾随点击
 - Add / Add Inventory / Product Edit 的按钮与手势共用最小 dirty exit confirmation，拒绝退出保留草稿与待上传图片
 - touch-only Pointer Events，60px / 30px / 2:1 / 800ms；主列表 open 排除最左 24px；纵向起手、多指、cancel 与确认/提交状态禁用手势
 - 保留所有按钮、overlay、Escape、focus restore；无新依赖、browser history、动画、DB / Barcode / Product Image 链路变更

@@ -50,6 +50,7 @@ export default function AddBatchForm({
   onSave,
   onCancel,
   onLookupBarcode,
+  swipeClickGuard,
 }) {
   const [form, setForm] = useState(initialForm)
   const [error, setError] = useState('')
@@ -70,6 +71,7 @@ export default function AddBatchForm({
     scope: 'add',
     direction: 'right',
     onSwipe: exit.requestExit,
+    clickGuard: swipeClickGuard,
   })
 
   const calculatedExpiry = useMemo(() => {
@@ -209,7 +211,7 @@ export default function AddBatchForm({
           <p className="text-sm font-semibold text-leaf">新增库存</p>
           <h2 className="mt-1 text-2xl font-bold">商品与批次</h2>
         </div>
-        <button className="text-sm text-slate-500 disabled:opacity-50" disabled={exitBusy} type="button" onClick={exit.requestExit}>
+        <button data-swipe-start className="text-sm text-slate-500 disabled:opacity-50" disabled={exitBusy} type="button" onClick={exit.requestExit}>
           返回首页
         </button>
       </div>

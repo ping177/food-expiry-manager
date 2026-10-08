@@ -465,14 +465,22 @@
 
 ## D-038：v0.3.5 使用原生 Pointer Events 与局部 Protected Exit
 
-- 状态：用户冻结范围；本地 implementation complete，automated verification PASS；人工验收待执行，未关闭版本
+- 状态：v0.3.5区域体验修复实现与自动验证完成，最终review无blocker，待Production iPhone PWA复验；未关闭版本
 - 日期：2026-10-07
 - App 仅持有 home / archive 的 Sidebar open 手势；SidebarDrawer 持有 panel close；BatchDetail 持有内部 mode Back；新增表单持有自身退出保护，不新增导航历史。
 - 检测核心使用 ref-backed controller：仅 touch，horizontal >=60 CSS px，过程最大 vertical <=30px，abs(dx)>=2*vertical；vertical>=12px 且纵向占优后整次取消，duration<=800ms，多指/cancel不执行。open 起点排除最左24px；不强拦 iOS 系统手势。
-- input / select / button / link / label / contenteditable / interactive role / media / picker 起滑排除。卡片和分类按钮不支持 swipe 是首版明确取舍，不增加 click suppression。
+- 首版input / select / button / link / label / contenteditable / interactive role / media / picker起滑排除，卡片和分类按钮不支持swipe。此首版取舍经真实普通位置FAIL及指定位置PASS后，由下述用户授权体验修复调整；编辑/重要操作保护仍保留。
 - Add / Add Inventory 比较真实初始 form 值；Product Edit 比较原 Product 的显示表单；pending image 算 dirty。恢复原值为 pristine。按钮和手势共用退出函数：pristine立即返回，dirty用现有 inline confirmation 风格，拒绝不重置状态，确认才调用原退出语义。
 - 本地提交锁覆盖字段保存与随后图片上传之间的间隙；busy的同一路径返回按钮禁用。操作子组件只报告确认/submitting状态以禁用swipe，不重构其操作逻辑；普通确认状态中的原按钮行为保留。
 - 保持 Add Inventory 现有“返回库存操作”文案及实际 remount 到默认 detail 的行为；不在本版本修复历史问题。
 - 不新增依赖、modal/form framework、routing、动画、Supabase / Barcode / Product Image处理链路；Node测试不替代iPhone PWA/Safari人工验收。
 
 - 2026-10-08 验收流程调整：用户取消桌面本地手机式人工验收前置要求，授权review通过后commit/push，直接进入Production iPhone PWA真机验收。版本状态保持implementation complete / automated verification PASS / awaiting Production iPhone PWA manual acceptance；不宣称local mobile / Production / Safari PASS，不关闭版本。
+
+- 2026-10-08 发布前体验修复规格与计划（用户授权实施，不建立新版本）：原 Production 普通位置 open / close / detail Back FAIL；用户在指定非交互位置补测三项均 PASS，确认主体机制可工作，起滑区域限制是本轮修复目标。
+  1. 保留所有阈值、touch-only Pointer Events、单一手势 owner 和 Protected Exit；用显式 `data-swipe-start` 允许商品卡片、Sidebar 分类/导航按钮、详情展示图片及安全Back/Cancel起滑。编辑控件、扫码/图片选择、危险操作及确认区域继续排除。
+  2. 合格 swipe 在导航前记录尾随 click；稳定 App main 的局部 capture handler 按触摸身份（旧 MouseEvent 按结束坐标）与短有效期识别并阻断该 click。下一次 pointerdown 立即清除记录，键盘/程序点击与其他 pointer 不受影响；不注册 document/window listener，不仅依赖 pointerup preventDefault。
+  3. 先增加回归测试观察失败，再实现区域与保护；验证卡片/分类 tap、swipe-only 导航、下一次 tap、图片 Back、cancel/滚动及 dirty/busy。执行 targeted tests、完整 npm test、npm run build、git diff --check 与治理检查。
+  - 当前阶段只本地实现与自动验证，不 commit/push/部署；真实 iOS click 合成、冒泡及卸载后的目标必须重新真机验收，不提前记录 Production PASS 或 closeout。
+  - 本地验证：定向141、完整318 tests与build PASS。click关联有效期1秒（覆盖尾随合成延迟并限制stale token），旧MouseEvent结束坐标允许±2px取整误差；不改变60px/30px/2:1/12px/800ms手势判定。规范明确pointer事件preventDefault不能保证取消click，因此使用App容器capture阶段阻断匹配click：https://www.w3.org/TR/pointerevents/latest/#mapping-for-devices-that-do-not-support-hover 。
+  - 后续Final Review & Release授权：用户允许最终review无blocker后独立fix commit与正常push。review确认main capture覆盖全部三条路径，沿用未变化代码的141/318/build证据；当前Next Action为Production iPhone PWA重新验收，不将部署成功当作手势PASS，不closeout。

@@ -12,6 +12,7 @@ export default function ArchiveBatchCard({ batch, onSelect }) {
   return (
     <article className="rounded-2xl border border-white/70 bg-white shadow-card">
       <button
+        data-swipe-start
         aria-label={`查看已归档批次：${product?.name || '商品'}`}
         className="block w-full p-3 text-left transition active:scale-[0.99] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf"
         type="button"

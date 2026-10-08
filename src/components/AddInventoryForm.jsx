@@ -21,6 +21,7 @@ export default function AddInventoryForm({
   onCancel,
   product,
   unit,
+  swipeClickGuard,
 }) {
   const size = formatProductSize(product)
   const [form, setForm] = useState(initialForm)
@@ -37,6 +38,7 @@ export default function AddInventoryForm({
     scope: 'add-inventory',
     direction: 'right',
     onSwipe: exit.requestExit,
+    clickGuard: swipeClickGuard,
   })
 
   function update(field, value) {
@@ -77,6 +79,7 @@ export default function AddInventoryForm({
           <h2 className="mt-1 text-2xl font-bold text-ink">当前商品</h2>
         </div>
         <button
+          data-swipe-start
           className="text-sm text-slate-500"
           type="button"
           disabled={exitBusy}

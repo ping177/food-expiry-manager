@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { createSwipeNavigation, isGestureTargetExcluded } from './swipeNavigation'
+import { createSwipeClickGuard, createSwipeNavigation, isGestureTargetExcluded } from './swipeNavigation'
 
 const event = (x, y = 0, time = 0, pointerId = 1) => ({
   clientX: x, clientY: y, timeStamp: time, pointerId, pointerType: 'touch',
@@ -103,11 +103,99 @@ describe('touch swipe navigation', () => {
     handlers.onPointerUp(event(180, 0, 300))
     expect(onSwipe).not.toHaveBeenCalled()
   })
-  it('declares form controls, roles, contenteditable and media exclusions', () => {
+  it('declares hard exclusions that an allowed card cannot override', () => {
     const closest = vi.fn(() => ({}))
     expect(isGestureTargetExcluded({ closest })).toBe(true)
-    for (const selector of ['input', 'label', 'button', 'a', '[role="slider"]', '[contenteditable]', 'video', '[data-no-swipe]']) {
+    for (const selector of ['input', '[role="slider"]', '[contenteditable]', 'video', '[data-no-swipe]']) {
       expect(closest.mock.calls[0][0]).toContain(selector)
+    }
+  })
+  it.each(['button', 'img', 'a'])('allows explicitly approved %s content only', (tag) => {
+    const allowed = { closest: () => ({}) }
+    const target = { closest: vi.fn((selector) => selector.includes('input') ? null : allowed) }
+    expect(isGestureTargetExcluded(target)).toBe(false)
+    expect(target.closest.mock.calls[1][0].split(',')).toContain(tag)
+    allowed.closest = () => null
+    expect(isGestureTargetExcluded(target)).toBe(true)
+  })
+  it('allows an image descendant of an approved card but never its editor controls', () => {
+    const approvedCard = {}
+    const image = { closest: () => approvedCard }
+    expect(isGestureTargetExcluded({ closest: (selector) => selector.includes('input') ? null : image })).toBe(false)
+    expect(isGestureTargetExcluded({ closest: () => approvedCard })).toBe(true)
+  })
+})
+
+const click = (overrides = {}) => ({
+  detail: 1, timeStamp: 350, clientX: 160, clientY: 0,
+  nativeEvent: { pointerType: 'touch', pointerId: 1, isTrusted: true },
+  preventDefault: vi.fn(), stopPropagation: vi.fn(), ...overrides,
+})
+
+describe('local swipe click guard', () => {
+  function recognizedSwipe() {
+    const clickGuard = createSwipeClickGuard()
+    const { handlers, onSwipe } = setup({ clickGuard })
+    swipe(handlers)
+    return { clickGuard, handlers, onSwipe }
+  }
+  it('blocks the matching click once even after the gesture owner reset', () => {
+    const { clickGuard, handlers, onSwipe } = recognizedSwipe()
+    handlers.reset()
+    const first = click()
+    clickGuard.onClickCapture(first)
+    expect(first.preventDefault).toHaveBeenCalledOnce()
+    expect(first.stopPropagation).toHaveBeenCalledOnce()
+    clickGuard.onClickCapture(first)
+    expect(first.stopPropagation).toHaveBeenCalledOnce()
+    expect(onSwipe).toHaveBeenCalledOnce()
+  })
+  it('marks the swipe before its navigation callback', () => {
+    const clickGuard = createSwipeClickGuard()
+    const trailing = click()
+    const { handlers } = setup({ clickGuard, onSwipe: () => clickGuard.onClickCapture(trailing) })
+    swipe(handlers)
+    expect(trailing.stopPropagation).toHaveBeenCalledOnce()
+  })
+  it('never blocks the next tap when no trailing click was generated', () => {
+    const { clickGuard } = recognizedSwipe()
+    clickGuard.onPointerDownCapture(event(160))
+    const next = click()
+    clickGuard.onClickCapture(next)
+    expect(next.stopPropagation).not.toHaveBeenCalled()
+  })
+  it.each([
+    { detail: 0 },
+    { nativeEvent: { isTrusted: false } },
+    { nativeEvent: { pointerType: 'mouse', pointerId: 1 } },
+    { nativeEvent: { pointerType: 'touch', pointerId: 2 } },
+    { timeStamp: 1301 },
+  ])('preserves keyboard, programmatic, other pointer or expired clicks %j', (overrides) => {
+    const { clickGuard } = recognizedSwipe()
+    const other = click(overrides)
+    clickGuard.onClickCapture(other)
+    expect(other.stopPropagation).not.toHaveBeenCalled()
+  })
+  it('matches older MouseEvent clicks by end coordinates, not unrelated targets', () => {
+    const { clickGuard } = recognizedSwipe()
+    const unrelated = click({ nativeEvent: { isTrusted: true }, clientX: 230 })
+    clickGuard.onClickCapture(unrelated)
+    expect(unrelated.stopPropagation).not.toHaveBeenCalled()
+    const trailing = click({ nativeEvent: { isTrusted: true }, clientX: 161 })
+    clickGuard.onClickCapture(trailing)
+    expect(trailing.stopPropagation).toHaveBeenCalledOnce()
+  })
+  it('does not arm on a short move, vertical start or pointercancel', () => {
+    for (const reason of ['short', 'vertical', 'cancel']) {
+      const clickGuard = createSwipeClickGuard()
+      const { handlers } = setup({ clickGuard })
+      handlers.onPointerDown(event(100))
+      if (reason === 'vertical') handlers.onPointerMove(event(101, 20, 50))
+      if (reason === 'cancel') handlers.onPointerCancel(event(160, 0, 100))
+      handlers.onPointerUp(event(reason === 'short' ? 120 : 160, 0, 300))
+      const trailing = click()
+      clickGuard.onClickCapture(trailing)
+      expect(trailing.stopPropagation).not.toHaveBeenCalled()
     }
   })
 })

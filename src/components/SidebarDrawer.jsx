@@ -14,6 +14,7 @@ export default function SidebarDrawer({
   onClose,
   onNavigate,
   open,
+  swipeClickGuard,
 }) {
   const closeButtonRef = useRef(null)
   const previousFocusRef = useRef(null)
@@ -22,6 +23,7 @@ export default function SidebarDrawer({
     scope: 'sidebar',
     direction: 'left',
     onSwipe: onClose,
+    clickGuard: swipeClickGuard,
   })
 
   useEffect(() => {
@@ -86,6 +88,7 @@ export default function SidebarDrawer({
             return (
               <div key={item.value}>
                 <button
+                  data-swipe-start
                   aria-current={isActive ? 'page' : undefined}
                   className={`flex w-full items-center rounded-2xl px-4 py-3 text-left text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf ${
                     isActive
@@ -104,6 +107,7 @@ export default function SidebarDrawer({
                         activeSection === 'inventory' && categoryFilter === category
                       return (
                         <button
+                          data-swipe-start
                           key={category}
                           aria-pressed={isSelected}
                           className={`block min-h-11 w-full rounded-xl px-4 py-2.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-leaf ${

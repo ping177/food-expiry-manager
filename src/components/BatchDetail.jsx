@@ -58,6 +58,7 @@ export default function BatchDetail({
   productDeleteBusy = false,
   defaultMode = 'view',
   archiveMode = false,
+  swipeClickGuard,
 }) {
   const [mode, setMode] = useState(archiveMode ? 'view' : defaultMode)
   const [productForm, setProductForm] = useState(() =>
@@ -85,6 +86,7 @@ export default function BatchDetail({
     scope: `${batch.id}:${archiveMode}:${mode}`,
     direction: 'right',
     onSwipe: exit.requestExit,
+    clickGuard: swipeClickGuard,
   })
 
   function updateProductField(field, value) {
@@ -158,6 +160,7 @@ export default function BatchDetail({
     <section className="space-y-4" {...backGesture}>
       <div className="flex items-center justify-between gap-3">
         <button
+          data-swipe-start
           className="rounded-xl px-1 py-2 text-sm font-semibold text-slate-500"
           type="button"
           disabled={exitBusy}
@@ -179,6 +182,7 @@ export default function BatchDetail({
         <div className="flex gap-4">
           {imageUrl ? (
             <img
+              data-swipe-start
               alt=""
               className="h-24 w-24 shrink-0 rounded-2xl border border-slate-100 object-cover"
               src={imageUrl}
@@ -332,6 +336,7 @@ export default function BatchDetail({
               保存修改
             </button>
             <button
+              data-swipe-start
               className="rounded-xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
               disabled={exitBusy}
               type="button"

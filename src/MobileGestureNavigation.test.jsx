@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
 import SidebarDrawer from './components/SidebarDrawer'
+import BatchCard from './components/BatchCard'
+import ArchiveBatchCard from './components/ArchiveBatchCard'
+import ArchivePage from './components/ArchivePage'
 import BatchDetail from './components/BatchDetail'
 import AddBatchForm from './components/AddBatchForm'
 import AddInventoryForm from './components/AddInventoryForm'
@@ -69,10 +72,10 @@ function find(tree, type) {
 }
 const button = (tree, text) => all(tree, (node) => node.type === 'button' && node.props.children === text)[0]
 const gesture = (tree) => all(tree, (node) => node.props?.onPointerDown)[0]
-function swipe(tree, direction = 'right') {
+function swipe(tree, direction = 'right', target = { closest: () => null }) {
   const props = gesture(tree)?.props
   expect(props).toBeDefined()
-  const event = { pointerType: 'touch', pointerId: 1, clientX: 100, clientY: 0, timeStamp: 0, target: { closest: () => null } }
+  const event = { pointerType: 'touch', pointerId: 1, clientX: 100, clientY: 0, timeStamp: 0, target }
   props.onPointerDown(event)
   props.onPointerUp({ ...event, clientX: direction === 'right' ? 170 : 30, timeStamp: 300 })
 }
@@ -139,6 +142,104 @@ describe('gesture ownership and navigation', () => {
     swipe(render())
     expect(button(render(), '退出登录')).toBeDefined()
     expect(all(render(), (node) => node.type === SidebarDrawer)).toHaveLength(0)
+  })
+})
+
+// Models the capture-before-target contract only; not browser click synthesis/DOM.
+function targetFor(node) {
+  const target = {
+    closest: (selector) => selector === '[data-swipe-start]'
+      ? node.props['data-swipe-start'] ? target : null
+      : selector.split(',').includes(node.type) ? target : null,
+  }
+  return target
+}
+function capturedClick(appTree, node, overrides = {}) {
+  const event = {
+    detail: 1, timeStamp: 350, clientX: 170, clientY: 0,
+    nativeEvent: { pointerId: 1, pointerType: 'touch', isTrusted: true },
+    preventDefault: vi.fn(), stopPropagation: vi.fn(), ...overrides,
+  }
+  find(appTree, 'main').props.onClickCapture(event)
+  if (!event.stopPropagation.mock.calls.length) node.props.onClick?.(event)
+  return event
+}
+
+describe('approved swipe regions and trailing click wiring', () => {
+  it.each([['home', BatchCard], ['archive', ArchiveBatchCard]])('%s card tap opens detail; swipe opens only Sidebar; next tap works', (view, Card) => {
+    const render = appRenderer()
+    if (view === 'archive') find(render(), SidebarDrawer).props.onNavigate('archive')
+    const list = view === 'archive' ? renderer(ArchivePage)(find(render(), ArchivePage).props) : render()
+    const cardNode = all(list, (node) => node.type === Card)[0]
+    const cardButton = find(renderer(Card)(cardNode.props), 'button')
+    const root = find(render(), 'main')
+    root.props.onPointerDownCapture({ pointerType: 'touch' })
+    swipe(render(), 'right', targetFor(cardButton))
+    expect(find(render(), SidebarDrawer).props.open).toBe(true)
+    const click = capturedClick(render(), cardButton)
+    expect(click.stopPropagation).toHaveBeenCalledOnce()
+    expect(all(render(), (node) => node.type === BatchDetail)).toHaveLength(0)
+    find(render(), SidebarDrawer).props.onClose()
+    find(render(), 'main').props.onPointerDownCapture({ pointerType: 'touch' })
+    const tap = capturedClick(render(), cardButton, { timeStamp: 600 })
+    expect(tap.stopPropagation).not.toHaveBeenCalled()
+    expect(find(render(), BatchDetail).props.archiveMode ?? false).toBe(view === 'archive')
+  })
+  it('category swipe closes without navigation after Drawer unmount; next category tap works', () => {
+    const render = appRenderer()
+    swipe(render())
+    const drawerRender = renderer(SidebarDrawer)
+    const drawerProps = find(render(), SidebarDrawer).props
+    const onCategoryNavigate = vi.fn(drawerProps.onCategoryNavigate)
+    const drawer = drawerRender({ ...drawerProps, onCategoryNavigate })
+    const category = button(drawer, '猫罐头')
+    find(render(), 'main').props.onPointerDownCapture({ pointerType: 'touch' })
+    swipe(drawer, 'left', targetFor(category))
+    expect(find(render(), SidebarDrawer).props.open).toBe(false)
+    capturedClick(render(), category, { clientX: 30 })
+    expect(onCategoryNavigate).not.toHaveBeenCalled()
+    swipe(render())
+    const reopened = drawerRender({ ...find(render(), SidebarDrawer).props, onCategoryNavigate })
+    find(render(), 'main').props.onPointerDownCapture({ pointerType: 'touch' })
+    capturedClick(render(), button(reopened, '猫罐头'), { timeStamp: 600 })
+    expect(onCategoryNavigate).toHaveBeenCalledWith('猫罐头')
+    expect(find(render(), SidebarDrawer).props.categoryFilter).toBe('猫罐头')
+  })
+  it('allows Sidebar top-level navigation content too', () => {
+    const onClose = vi.fn()
+    const tree = renderer(SidebarDrawer)({ open: true, onClose })
+    swipe(tree, 'left', targetFor(button(tree, '已归档')))
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+  it.each([false, true])('detail display image Back reaches original target (archive=%s)', (archiveMode) => {
+    const render = appRenderer()
+    const onBack = vi.fn()
+    const props = { batch: { ...batch, product: { ...batch.product, image_url: 'https://example.invalid/display.jpg' } },
+      onBack, archiveMode, swipeClickGuard: find(render(), SidebarDrawer).props.swipeClickGuard }
+    const tree = renderer(BatchDetail)(props)
+    const image = all(tree, (node) => node.type === 'img')[0]
+    swipe(tree, 'right', targetFor(image))
+    expect(onBack).toHaveBeenCalledOnce()
+    const underneath = { props: { onClick: vi.fn() } }
+    capturedClick(render(), underneath)
+    expect(underneath.props.onClick).not.toHaveBeenCalled()
+  })
+  it.each([['Add', AddBatchForm, '返回首页'], ['Add Inventory', AddInventoryForm, '返回库存操作'],
+    ['Product Edit', BatchDetail, '取消']])('%s safe exit button swipe retains dirty confirmation', (_name, Component, text) => {
+    const app = appRenderer()
+    const render = renderer(Component)
+    const onExit = vi.fn()
+    const props = { batch, product: batch.product, defaultMode: 'product-edit', onBack: onExit, onCancel: onExit,
+      swipeClickGuard: find(app(), SidebarDrawer).props.swipeClickGuard }
+    all(render(props), (node) => node.type === 'input')[0].props.onChange({ target: { value: 'dirty' } })
+    const control = button(render(props), text)
+    swipe(render(props), 'right', targetFor(control))
+    expect(find(render(props), DiscardChangesConfirmation)).toBeDefined()
+    const click = capturedClick(app(), control)
+    expect(click.stopPropagation).toHaveBeenCalledOnce()
+    find(render(props), DiscardChangesConfirmation).props.onCancel()
+    expect(all(render(props), (node) => node.type === 'input')[0].props.value).toBe('dirty')
+    expect(onExit).not.toHaveBeenCalled()
   })
 })
 

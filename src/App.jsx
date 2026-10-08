@@ -9,6 +9,7 @@ import BottomTabNav from './components/BottomTabNav'
 import ConfigNotice from './components/ConfigNotice'
 import SidebarDrawer from './components/SidebarDrawer'
 import useSwipeNavigation from './hooks/useSwipeNavigation'
+import { createSwipeClickGuard } from './lib/swipeNavigation'
 import {
   getAccountStatus,
   getSessionTransition,
@@ -56,6 +57,9 @@ export default function App() {
   const [sessionUserId, setSessionUserId] = useState(null)
   const sessionRef = useRef(null)
   const cooldownCleanupRef = useRef(null)
+  const swipeClickGuardRef = useRef(null)
+  if (!swipeClickGuardRef.current) swipeClickGuardRef.current = createSwipeClickGuard()
+  const swipeClickGuard = swipeClickGuardRef.current
   const [batches, setBatches] = useState([])
   const [archivedBatches, setArchivedBatches] = useState([])
   const [view, setView] = useState('home')
@@ -992,6 +996,7 @@ export default function App() {
     scope: `${view}:${sidebarOpen}`,
     direction: 'right',
     minStartX: 24,
+    clickGuard: swipeClickGuard,
     onSwipe: () => setSidebarOpen(true),
   })
 
@@ -1022,7 +1027,11 @@ export default function App() {
   }
 
   return (
-    <main className="min-h-screen bg-cream pb-[calc(5rem+env(safe-area-inset-bottom))]">
+    <main
+      className="min-h-screen bg-cream pb-[calc(5rem+env(safe-area-inset-bottom))]"
+      onPointerDownCapture={swipeClickGuard.onPointerDownCapture}
+      onClickCapture={swipeClickGuard.onClickCapture}
+    >
       <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6" {...sidebarGesture}>
         <header className="mb-5">
           {view !== 'home' && view !== 'archive' && (
@@ -1156,6 +1165,7 @@ export default function App() {
         ) : view === 'archive-detail' && selectedArchivedBatch ? (
           <BatchDetail
             archiveMode
+            swipeClickGuard={swipeClickGuard}
             batch={selectedArchivedBatch}
             busy={busyBatchId === selectedArchivedBatch.id}
             onDeleteProduct={handleDeleteProduct}
@@ -1177,6 +1187,7 @@ export default function App() {
           </section>
         ) : view === 'add' ? (
           <AddBatchForm
+            swipeClickGuard={swipeClickGuard}
             busy={loading}
             onCancel={() => setView('home')}
             onLookupBarcode={lookupBarcodeProduct}
@@ -1184,6 +1195,7 @@ export default function App() {
           />
         ) : view === 'add-inventory' && selectedBatch ? (
           <AddInventoryForm
+            swipeClickGuard={swipeClickGuard}
             busy={loading}
             onCancel={() => setView('detail')}
             onSave={handleAddInventory}
@@ -1192,6 +1204,7 @@ export default function App() {
           />
         ) : view === 'detail' && selectedBatch ? (
           <BatchDetail
+            swipeClickGuard={swipeClickGuard}
             batch={selectedBatch}
             busy={busyBatchId === selectedBatch.id}
             onBack={() => {
@@ -1309,6 +1322,7 @@ export default function App() {
 
       {(view === 'home' || view === 'archive') && (
         <SidebarDrawer
+          swipeClickGuard={swipeClickGuard}
           activeSection={view === 'archive' ? 'archive' : 'inventory'}
           categoryFilter={categoryFilter}
           onCategoryNavigate={handleCategoryNavigate}
