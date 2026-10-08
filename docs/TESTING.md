@@ -34,6 +34,26 @@ batch 删除确认边界。
 
 ## v0.3.5 Mobile Gesture Navigation 验证
 
+### 最终Production iPhone PWA验收与closeout（2026-10-08）
+
+v0.3.5 completed / closed。最新implementation / fix commit：`2662d72890d29398eb6fa6f3c353bfbb5af274aa`；此前已确认Vercel check与对应Production deployment success，用户最终确认体验可以接受并批准正式closeout。
+
+用户确认PASS：Active / Archive右滑open；商品卡片swipe / tap；Sidebar分类swipe / tap；Active / Archive Detail右滑Back与顶部/底部空白；Add顶部/中部/底部滑动；Product Edit / Add / Add Inventory Protected Exit；dirty拒绝退出后草稿保留；危险操作确认期间手势保护；纵向滚动与正常点击。
+
+| 最终Sidebar验收项 | 用户结果 |
+| --- | --- |
+| 自然左滑 | 8/10成功 |
+| 意外切换分类 | 0次 |
+| 纵向滚动 | PASS |
+| 分类点击及下一次tap | PASS |
+| 主观评价 | 自然顺手 |
+
+Sidebar左滑仍偶发识别失败；8/10不代表9/10或100%。用户已接受这一非阻塞UX limitation，不再要求本版本修复。Safari与Production desktop未单独验收，不记录PASS；也不把既有Node覆盖或本清单中的每个细分场景自动升级为真机PASS。
+
+本轮docs-only closeout保留此前171定向/348完整tests与build PASS（原>500 kB chunk警告）；仅执行diff、治理、staged范围及正常Push Gate检查，不重复测试/build，不修改实现。
+
+### 第三轮与发布前历史（以下为当时状态，保留失败及修复过程）
+
 状态：已部署`340ee6e26aacc2d3c7d988faf359d6555c535b3f`，用户第三轮Production iPhone PWA确认：库存/归档左边缘open、Detail上下空白Back、Add顶部/中部/底部Back、Product Edit及新增表单Protected Exit、危险操作确认保护、纵向滚动及原卡片/分类点击PASS。剩余Sidebar close：分类按钮区1/3、标题区3/3、滚动后分类区3/3；自然倾斜左滑较难，失败可能误选分类。本轮Sidebar局部体验修复本地完成，automated verification PASS，最终review无blocker，awaiting新修复Production复验，未completed/closed；部署结果以本次独立fix commit的查询为准。用户观测不是本地复现的真实Pointer轨迹。
 
 历史：a811b11普通位置open/close/Active及Archive detail Back FAIL，指定非交互起点三项PASS（iOS27.0.1）；此前记录保留。318cfe6的141/318/build PASS、成功部署及用户卡片/分类tap/swipe、dirty退出、危险确认、纵向滚动PASS属于上一阶段；其A/B/C UX findings在340ee6e由用户确认修复PASS。Safari未单独验收；不要求桌面本地手机式验收。
@@ -50,7 +70,7 @@ npm run build
 git diff --check
 ```
 
-### v0.3.5 Sidebar Swipe Close Final UX Fix 复验清单（本次独立fix commit的Production部署确认可用后执行）
+### 历史：v0.3.5 Sidebar Swipe Close Final UX Fix 复验清单（发布时制定；最终验收以以上用户结果为准）
 
 1. 分类按钮区、顶部标题区、滚动后分类区各自然倾斜左滑至少3次，记录实际成功次数；允许合理倾斜，仍需水平至少60px、过程纵移不超过50px、横纵比至少1.5:1、800ms内结束。不预报成功率。
 2. 合格分类左滑只关闭，不切分类/页面；Drawer卸载后的尾随click不能落到下层控件。普通分类tap及滑动后的下一次普通tap仍正常导航。

@@ -2,6 +2,14 @@
 
 ## 2026-10-08
 
+### v0.3.5 Final Docs-Only Closeout
+
+- baseline：main，HEAD / origin/main / 只读远端main均`2662d72890d29398eb6fa6f3c353bfbb5af274aa`，ahead/behind0/0，working tree clean。该fix commit已正常push，Vercel check及Production deployment此前确认success。
+- 用户确认最终Production iPhone PWA验收通过并批准closeout：open、卡片/分类swipe与tap、两路Detail Back与上下空白、Add各区域、三类表单Protected Exit、dirty拒绝后草稿保留、危险确认保护、纵向滚动与正常点击PASS。
+- 最终Sidebar自然左滑8/10成功、误切分类0次；纵向滚动、分类点击及下一次tap PASS，用户评价自然顺手。偶发识别失败保留为已接受的非阻塞UX limitation，不再要求本版本修复，不改写为9/10或100%。Safari与Production desktop未单独验收。
+- 仅更新七份入口/治理文档，保留历史失败、修复、验收与171定向/348完整tests、build PASS证据；不重跑测试/build。执行diff、治理/staged范围及正常Push Gate所需检查；用户授权独立docs closeout commit及正常push，trailer为Project-State-Review: updated，不预报本次push成功。
+- Current version保持v0.3.5，Current status为completed / closed，Blockers为`暂无明确阻塞。`；Next Action为基于真实反馈评估下一项Backlog，不自动启动新版本。无业务代码、依赖、DB/Supabase或外部项目文件变化，未读取/输出secrets。
+
 ### v0.3.5 Sidebar Swipe UX Fix Release review与授权
 
 - baseline：main，HEAD / origin/main / 只读远端main均`340ee6e26aacc2d3c7d988faf359d6555c535b3f`；ahead/behind0/0，11个已知tracked修改，无新增文件。

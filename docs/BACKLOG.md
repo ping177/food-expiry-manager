@@ -80,16 +80,16 @@ iPhone PWA 最小人工验收均已完成：
 - 不增加计数、accordion、未分类导航、动态分类隐藏、数据模型或分类 migration。
 - 最终验收记录见 docs/TESTING.md；desktop Escape / focus 仅本地 PASS，不扩写为所有 Production 平台 PASS。
 
-### v0.3.5 Mobile Gesture Navigation（待人工验收）
+### v0.3.5 Mobile Gesture Navigation（completed / closed）
 
 - 范围按用户冻结要求形成正式 v0.3.5：touch-only Sidebar open / close、详情和新增/编辑 Back，以及最小 Protected Exit。
-- 340ee6e的A/B/C及Protected Exit/危险确认/纵向滚动/原点击用户真机PASS；剩余Sidebar关闭稳定性1/3、3/3、3/3。本地局部修复171/348/build PASS，最终review无blocker，awaiting新修复Production真机复验，版本未关闭。
-- 本轮仅Sidebar1.5:1/50px局部容忍度和30px横滑意图的失败click保护；其他手势默认规则、Owner与实际编辑/重要操作保护保持。历史与细节见TESTING/DECISIONS，不混入后续Backlog。
-- 先完成本版本人工验收；下列候选继续保留，不与本版本混做。
+- 最终Production iPhone PWA用户验收通过并批准closeout，最新fix commit为2662d72；此前171/348/build PASS，完整验收与历史见TESTING。Sidebar自然左滑8/10、意外切换分类0次；偶发识别失败是已接受的非阻塞UX limitation，不再要求本版本修复。Safari及Production desktop未单独验收。
+- 已发布Sidebar修复仅调整1.5:1/50px局部容忍度和30px横滑意图的失败click保护；其他手势默认规则、Owner与实际编辑/重要操作保护保持。历史与细节见TESTING/DECISIONS，不混入后续Backlog。
+- 本版本已关闭；根据后续真实使用反馈评估下列候选，不自动启动下一版本。
 
 ### 后续优先级评估（未冻结版本）
 
-完成 v0.3.5 验收后，基于真实使用反馈评估下一项 Backlog 优先级。以下候选均未自动升级为后续版本；图片和条码候选详情保留在下方：
+v0.3.5已完成并关闭，基于后续真实使用反馈评估下一项 Backlog 优先级。以下候选均未自动升级为后续版本；图片和条码候选详情保留在下方：
 
 - Product Image Sourcing & Polish
 - Barcode API Coverage Expansion

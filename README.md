@@ -124,7 +124,7 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前v0.3.5未completed / closed。已部署340ee6e的左边缘open、Detail上下空白Back、Add各区域Back、Protected Exit、危险确认、纵向滚动及原点击已由用户iPhone PWA确认PASS。Sidebar close仍有分类区1/3、标题3/3、滚动后分类区3/3的稳定性问题及失败误点风险；本地仅放宽Sidebar至1.5:1/50px，增加30px实际横滑意图的尾随click保护，其他页面默认规则保持。定向171/完整348 tests与build PASS，最终review无blocker，等待新修复Production iPhone PWA复验；部署按本次独立fix commit确认。历史与清单见docs/TESTING.md，v0.3.4保持closed。
+当前v0.3.5 — Mobile Gesture Navigation completed / closed。最新implementation / fix commit `2662d72890d29398eb6fa6f3c353bfbb5af274aa` 已部署，Production iPhone PWA用户最终验收通过并批准closeout；Sidebar自然左滑8/10成功、意外切换分类0次，纵向滚动、分类点击及下一次tap PASS，用户评价自然顺手。偶发识别失败为已接受的非阻塞UX limitation，不再要求本版本修复；Safari与Production desktop未单独验收。此前171/348 tests及build PASS，历史和验收细节见docs/TESTING.md。根据真实使用反馈评估下一项Backlog，不自动启动新版本。
 
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 

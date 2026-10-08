@@ -12,18 +12,18 @@ v0.3.5 — Mobile Gesture Navigation
 
 ## Current status
 
-v0.3.5 Sidebar Swipe Close Final UX Fix 本地实现完成，automated verification PASS，最终聚焦review无blocker；等待Production iPhone PWA重新验收，未completed / closed。用户确认340ee6e的左边缘open、Detail上下空白Back、Add顶部/中部/底部Back、Protected Exit、危险确认保护、纵向滚动及原点击PASS；剩余Sidebar分类区close 1/3、标题3/3、滚动后分类区3/3，自然倾斜较难且失败可能误选分类。本轮局部修复待真机复验。
+completed / closed。Production iPhone PWA 用户最终验收通过，体验自然顺手，用户批准正式closeout。Sidebar自然左滑8/10成功、意外切换分类0次；偶发识别失败为用户已接受的非阻塞UX limitation，不再要求本版本修复。Safari与Production desktop未单独验收。
 
 ## Latest completed
 
-仅Sidebar配置horizontalRatio=1.5、maxVerticalDistance=50px、clickIntentDistance=30px；其他页面保持2:1/30px与原60px/800ms规则。实际横移意图记录后，即使未完成关闭也在up保护尾随click；纵向起手/多指/cancel/scope/reset失效清除意图，正常tap及下一次pointerdown保持。定向13 files / 171 tests、完整29 files / 348 tests、build PASS。
+完成v0.3.5最终Production iPhone PWA验收与docs-only closeout记录。最新implementation / fix commit为`2662d72890d29398eb6fa6f3c353bfbb5af274aa`；此前171定向/348完整tests与build PASS，本轮只改治理文档，未重跑业务测试/build。详细PASS、历史失败/修复及8/10非阻塞限制见docs/TESTING.md。
 
 ## Deployment
 
 Status: public_deployed
 Public URL: https://food-expiry-manager-two.vercel.app/
 Provider: Vercel
-Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 v0.3.4 implementation 部署；docs-only closeout push 不代表新的人工验收。v0.3.5 原 implementation commit `a811b11e7671557962be2bd056506e50efa95705` 的 Vercel check 与 Production deployment status 已确认 success；普通起滑位置手势体验 FAIL，指定非交互起点三项 PASS。修复commit `318cfe6a991bdc798fed1fccd282933c08e176f7` 的Vercel check与Production deployment已确认success；用户已确认卡片/分类tap与swipe、三类表单退出保护、危险确认保护及纵向滚动PASS，该阶段A/B/C可用性不足。随后340ee6e26aacc2d3c7d988faf359d6555c535b3f的Vercel check与Production deployment确认success，用户本轮确认A/B/C及其他上述功能PASS；Sidebar关闭稳定性仍存在1/3、3/3、3/3 findings。本轮Sidebar局部修复最终review通过，用户已授权独立fix commit与正常push；新commit的Vercel Production部署结果需按SHA查询，本记录不预报部署成功，既有PASS不代表新修复真机PASS。
+Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 v0.3.4 implementation 部署；docs-only closeout push 不代表新的人工验收。v0.3.5 原 implementation commit `a811b11e7671557962be2bd056506e50efa95705` 的 Vercel check 与 Production deployment status 已确认 success；普通起滑位置手势体验 FAIL，指定非交互起点三项 PASS。修复commit `318cfe6a991bdc798fed1fccd282933c08e176f7` 的Vercel check与Production deployment已确认success；用户已确认卡片/分类tap与swipe、三类表单退出保护、危险确认保护及纵向滚动PASS，该阶段A/B/C可用性不足。随后340ee6e26aacc2d3c7d988faf359d6555c535b3f的Vercel check与Production deployment确认success，用户当时确认A/B/C及其他上述功能PASS；当时Sidebar关闭稳定性存在1/3、3/3、3/3 findings。最新fix commit `2662d72890d29398eb6fa6f3c353bfbb5af274aa` 的正常push、Vercel check及对应Production deployment均已确认success。用户最终Production iPhone PWA验收通过，Sidebar自然左滑8/10、意外切换分类0次，用户接受偶发失败并批准closeout。docs-only closeout push不代表新的人工验收，亦不扩写为Safari或Production desktop PASS。
 
 ## Version Index
 
@@ -49,15 +49,15 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.3.3｜Discarded Batch Archive Flow（已完成并关闭）
 - v0.3.4｜Category Navigation（completed / closed；local 与 Production iPhone PWA 验收 PASS，Production desktop 未单独验收）
 
-- v0.3.5｜Mobile Gesture Navigation（Sidebar局部体验修复本地完成，automated verification PASS；awaiting Production iPhone PWA复验，未 closed）
+- v0.3.5｜Mobile Gesture Navigation（completed / closed；Production iPhone PWA用户验收PASS，Sidebar左滑8/10为已接受的非阻塞UX limitation）
 
 ## Last verified
 
-2026-10-08：本轮171定向/348完整tests与build、diff/语法/范围及治理检查PASS（保留>500 kB chunk警告）。新增19 tests，先观察倾斜与失败横滑保护用例失败；测试模拟Drawer事件向disabled main冒泡及main click capture。340ee6e的已知Production PASS保留；Sidebar 1/3、3/3、3/3为用户观测，本轮未复现真实iOS轨迹，不宣称新实现真机PASS。本次release review业务代码/测试未变，沿用171/348/build证据；重新执行diff/语法/治理/staged范围及正常Push Gate所需检查。
+2026-10-08：用户确认最终Production iPhone PWA验收PASS并批准closeout；Sidebar自然左滑8/10、误切分类0次，纵向滚动、分类点击及下一次tap PASS，主观评价自然顺手。保留此前171/348/build PASS与原>500 kB chunk警告。本轮docs-only，执行diff/治理/staged范围及正常Push Gate检查，不重跑测试/build；Safari与Production desktop未单独验收。
 
 ## Next Action
 
-当前Sidebar局部修复的Production部署确认可用后，由用户按docs/TESTING.md复验分类区/标题区/滚动后自然倾斜左滑、未完成横滑不误选、纵向滚动、普通及下一次tap，并回归其他已通过手势；等待真实PASS / FAIL，验收通过前不关闭v0.3.5。
+根据后续真实使用反馈评估下一项Backlog，不自动启动新版本。Sidebar偶发左滑识别失败为已接受的非阻塞UX limitation，不作为本版本待修复或阻塞项。
 
 ## Blockers
 
@@ -65,7 +65,7 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Important Context
 
-- v0.3.5 使用 touch-only Pointer Events，局部 pan-y / pinch-zoom，不接管系统 Back、不使用 browser history。首版卡片/分类起滑受限导致普通位置验收 FAIL；318cfe6已允许卡片/分类/展示图片且相关真机PASS；340ee6e的A/B/C修复用户真机PASS；本地Sidebar局部容忍度/横滑意图保护修复待复验，继续保护实际编辑/危险控件和局部尾随click；dirty 退出拒绝保留草稿与待上传图片，确认操作/提交期间禁用 swipe。
+- v0.3.5 使用 touch-only Pointer Events，局部 pan-y / pinch-zoom，不接管系统 Back、不使用 browser history。首版卡片/分类起滑受限导致普通位置验收 FAIL；318cfe6已允许卡片/分类/展示图片且相关真机PASS；340ee6e的A/B/C修复用户真机PASS；2662d72的Sidebar局部修复最终用户验收PASS，8/10成功及偶发失败为已接受的非阻塞限制，版本已closed，继续保护实际编辑/危险控件和局部尾随click；dirty 退出拒绝保留草稿与待上传图片，确认操作/提交期间禁用 swipe。
 
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
@@ -112,4 +112,4 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Handoff Prompt
 
-Continue v0.3.5 Sidebar Swipe Close Final UX Fix awaiting Production iPhone PWA reacceptance. Final focused review found no blocker; user authorized an independent fix commit and normal origin/main push. Query the new commit SHA for Vercel Production deployment status; do not equate push with deployment or acceptance. Baseline340ee6e is deployed; user confirmed left-edge open, Detail blank-area Back, Add coverage, protected exits, dangerous confirmations, vertical scroll and original clicks PASS. Sidebar close remained category1/3,title3/3,after-scroll category3/3. Local fix only configures Sidebar ratio1.5/maxVertical50/clickIntentDistance30; other owners retain2/30 and60px/800ms. Valid observed horizontal intent protects a trailing click at up even without navigation; vertical/multi/cancel/scope/reset invalidates it. Keep existing main capture/token lifetime/next-pointerdown reset, owner wiring and protected exits. Targeted171/full348/build passed. Actual iOS arbitration/click synthesis and natural gesture reliability require reacceptance after the new Production deployment is confirmed available. Preserve prior PASS/history; do not close v0.3.5.
+v0.3.5 — Mobile Gesture Navigation is completed / closed with user-approved Production iPhone PWA acceptance on implementation/fix commit 2662d72890d29398eb6fa6f3c353bfbb5af274aa. Sidebar natural left swipe succeeded 8/10, accidental category selection was 0, vertical scroll and category/next tap passed; user described the interaction as natural. Preserve occasional recognition failure as an accepted non-blocking UX limitation, not a required v0.3.5 fix. Preserve prior FAIL/fix/PASS history and 171 targeted / 348 full / build PASS evidence. Safari and Production desktop were not separately accepted. Evaluate the next Backlog item from actual usage feedback; do not automatically start another version.

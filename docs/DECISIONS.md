@@ -465,7 +465,7 @@
 
 ## D-038：v0.3.5 使用原生 Pointer Events 与局部 Protected Exit
 
-- 状态：340ee6e的A/B/C与既有保护用户真机PASS；Sidebar关闭局部体验修复本地完成，最终review无blocker，待新修复Production真机复验，未关闭版本
+- 状态：completed / closed；2662d72最终Production iPhone PWA用户验收PASS，Sidebar8/10为已接受的非阻塞UX limitation
 - 日期：2026-10-07
 - App 仅持有 home / archive 的 Sidebar open 手势；SidebarDrawer 持有 panel close；BatchDetail 持有内部 mode Back；新增表单持有自身退出保护，不新增导航历史。
 - 检测核心使用 ref-backed controller：仅 touch，horizontal >=60 CSS px，过程最大 vertical <=30px，abs(dx)>=2*vertical；vertical>=12px 且纵向占优后整次取消，duration<=800ms，多指/cancel不执行。首版open排除最左24px，本轮经用户授权取消该应用限制；不强拦iOS系统手势。
@@ -502,3 +502,5 @@
   - 本地验证：171定向/348完整tests、build及diff/治理PASS；1.5允许约34°倾斜（同时受50px过程最大纵移约束），不是任意斜滑。未修改其他owner、click guard实现或导航架构；无法从Node测试推定真机成功率提升。
 
   - Sidebar Swipe UX Fix Release：用户授权最终review通过后独立`fix: improve sidebar swipe close reliability` commit与正常origin/main push。业务代码/测试未变，沿用171/348/build证据，重跑diff/语法/治理/staged范围及正常Push Gate；按新SHA确认Production部署，再开展真机复验，不预报验收PASS，不关闭版本。
+
+- 2026-10-08 最终验收与docs-only closeout：用户确认自然左滑8/10成功、误切分类0次、纵向滚动与分类/下一次tap PASS，评价自然顺手并批准关闭v0.3.5。偶发左滑识别失败为已接受的非阻塞UX limitation，不再要求本版本修复，不把8/10扩写为9/10或100%。其余已确认功能见TESTING；Safari与Production desktop未单独验收。保留历史FAIL/fix/PASS及171/348/build证据，仅治理文档closeout，不调整阈值/实现，不自动启动下一版本。

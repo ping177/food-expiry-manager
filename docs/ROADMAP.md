@@ -176,12 +176,12 @@
 
 ## v0.3.5：Mobile Gesture Navigation
 
-- 状态：340ee6e的A/B/C、退出保护、危险确认、纵向滚动与原点击真机PASS；Sidebar关闭稳定性局部修复本地完成、自动验证PASS，最终review无blocker，awaiting新修复Production真机复验，尚未completed / closed
+- 状态：completed / closed；2662d72对应Production iPhone PWA用户最终验收PASS，Sidebar自然左滑8/10、误切分类0次，偶发识别失败为已接受的非阻塞UX limitation。Safari与Production desktop未单独验收
 - 主列表含商品卡片右滑打开 Sidebar，panel 含分类/导航按钮左滑关闭；详情含展示图片及安全返回按钮起滑，新增 / 编辑复用现有 Back / Cancel；局部 click capture 防止已识别 swipe 的尾随点击
 - Add / Add Inventory / Product Edit 的按钮与手势共用最小 dirty exit confirmation，拒绝退出保留草稿与待上传图片
 - touch-only Pointer Events，其他页面默认60px / 30px / 2:1 / 800ms；Sidebar局部1.5:1/50px、30px横滑意图防尾随误点；移除应用左边缘排除；main覆盖页面，任务页转发原controller，label非编辑文字可起滑；纵向起手、多指、cancel 与确认/提交状态禁用手势
 - 保留所有按钮、overlay、Escape、focus restore；无新依赖、browser history、动画、DB / Barcode / Product Image 链路变更
-- 真机风险和验收清单见 docs/TESTING.md，2026-10-08改为提交前review后commit/push，确认Production部署后直接开展iPhone PWA真机验收；不要求本地手机式验收
+- 历史修复、失败与最终验收见 docs/TESTING.md；保留171/348/build PASS，本轮docs-only closeout不重跑测试/build。下一项Backlog由真实使用反馈决定，不自动启动新版本
 
 ## 后续候选：商品图片上传体验
 
