@@ -242,14 +242,14 @@ describe('Drawer lifecycle behavior', () => {
     const closes = findAll(tree, (node) => node.type === 'button' && node.props['aria-label'] === '关闭菜单')
     const closeFocus = { focus: vi.fn() }
     closes[1].props.ref.current = closeFocus
-    const cleanup = effects[0]()
+    const cleanups = effects.map((effect) => effect())
     expect(closeFocus.focus).toHaveBeenCalledOnce()
     listeners.get('keydown')({ key: 'Enter' })
     expect(onClose).not.toHaveBeenCalled()
     if (action === 'Escape') listeners.get('keydown')({ key: 'Escape' })
     else closes[action === 'overlay' ? 0 : 1].props.onClick()
     expect(onClose).toHaveBeenCalledOnce()
-    cleanup()
+    cleanups.forEach((cleanup) => cleanup?.())
     expect(previousFocus.focus).toHaveBeenCalledOnce()
     expect(listeners.size).toBe(0)
     expect(render({ open: false, onClose }).tree).toBeNull()

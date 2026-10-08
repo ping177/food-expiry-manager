@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { PRODUCT_CATEGORIES } from '../lib/categories'
+import useSwipeNavigation from '../hooks/useSwipeNavigation'
 
 const navigationItems = [
   { value: 'inventory', label: '库存' },
@@ -16,6 +17,12 @@ export default function SidebarDrawer({
 }) {
   const closeButtonRef = useRef(null)
   const previousFocusRef = useRef(null)
+  const closeGesture = useSwipeNavigation({
+    enabled: open,
+    scope: 'sidebar',
+    direction: 'left',
+    onSwipe: onClose,
+  })
 
   useEffect(() => {
     if (!open || typeof document === 'undefined') return undefined
@@ -51,6 +58,7 @@ export default function SidebarDrawer({
         onClick={onClose}
       />
       <aside
+        {...closeGesture}
         aria-labelledby="sidebar-title"
         className="relative z-10 flex h-[100dvh] w-[min(82vw,20rem)] max-w-[calc(100vw-2rem)] flex-col overflow-x-hidden overflow-y-auto overscroll-y-contain bg-cream px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-[calc(1rem+env(safe-area-inset-top))] shadow-card"
       >

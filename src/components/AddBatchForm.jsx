@@ -7,6 +7,9 @@ import { normalizeBarcode } from '../lib/productLookup'
 import ProductImagePicker from './ProductImagePicker'
 import { getProductImageUrl } from '../lib/productImage'
 import { PRODUCT_SIZE_UNITS } from '../lib/productSize'
+import useSwipeNavigation from '../hooks/useSwipeNavigation'
+import useProtectedExit, { hasFormChanges } from '../hooks/useProtectedExit'
+import DiscardChangesConfirmation from './DiscardChangesConfirmation'
 
 const initialForm = {
   barcode: '',
@@ -55,6 +58,19 @@ export default function AddBatchForm({
   const [lookupMessage, setLookupMessage] = useState('')
   const [pendingImageFile, setPendingImageFile] = useState(null)
   const [imagePickerKey, setImagePickerKey] = useState(0)
+  const [submitting, setSubmitting] = useState(false)
+  const exitBusy = busy || submitting || lookupStatus === 'loading'
+  const exit = useProtectedExit({
+    dirty: hasFormChanges(form, initialForm) || Boolean(pendingImageFile),
+    busy: exitBusy,
+    onExit: onCancel,
+  })
+  const backGesture = useSwipeNavigation({
+    enabled: !exitBusy && !scannerOpen && !exit.confirming,
+    scope: 'add',
+    direction: 'right',
+    onSwipe: exit.requestExit,
+  })
 
   const calculatedExpiry = useMemo(() => {
     if (
@@ -156,6 +172,7 @@ export default function AddBatchForm({
 
   async function handleSubmit(event) {
     event.preventDefault()
+    if (exitBusy || exit.confirming) return
     setError('')
 
     let expiryDate
@@ -172,25 +189,34 @@ export default function AddBatchForm({
       return
     }
 
-    const saved = await onSave({ ...form, expiryDate, pendingImageFile })
-    if (saved) {
-      setForm(initialForm)
-      setPendingImageFile(null)
-      setImagePickerKey((current) => current + 1)
+    setSubmitting(true)
+    try {
+      const saved = await onSave({ ...form, expiryDate, pendingImageFile })
+      if (saved) {
+        setForm(initialForm)
+        setPendingImageFile(null)
+        setImagePickerKey((current) => current + 1)
+      }
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-card">
+    <section className="rounded-3xl bg-white p-5 shadow-card" {...backGesture}>
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-leaf">新增库存</p>
           <h2 className="mt-1 text-2xl font-bold">商品与批次</h2>
         </div>
-        <button className="text-sm text-slate-500" type="button" onClick={onCancel}>
+        <button className="text-sm text-slate-500 disabled:opacity-50" disabled={exitBusy} type="button" onClick={exit.requestExit}>
           返回首页
         </button>
       </div>
+
+      {exit.confirming && (
+        <DiscardChangesConfirmation busy={exitBusy} onCancel={exit.cancel} onDiscard={exit.discard} />
+      )}
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
         <fieldset className="space-y-4">
@@ -328,10 +354,10 @@ export default function AddBatchForm({
               src={getProductImageUrl({ image_url: form.imageUrl })}
             />
           )}
-          <div className="space-y-2">
+          <div className="space-y-2" data-no-swipe>
             <p className="text-sm font-semibold text-slate-700">用户上传主图（可选）</p>
             <p className="text-xs leading-5 text-slate-500">保存前仅本地预览；保存库存后才上传。</p>
-            <ProductImagePicker key={imagePickerKey} disabled={busy} onChange={setPendingImageFile} />
+            <ProductImagePicker key={imagePickerKey} disabled={exitBusy || exit.confirming} onChange={setPendingImageFile} />
           </div>
         </fieldset>
 
@@ -469,7 +495,7 @@ export default function AddBatchForm({
 
         <button
           className="w-full rounded-xl bg-leaf px-4 py-3.5 font-bold text-white disabled:opacity-50"
-          disabled={busy}
+          disabled={exitBusy || exit.confirming}
           type="submit"
         >
           {busy ? '保存中…' : '保存商品和库存批次'}

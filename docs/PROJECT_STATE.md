@@ -8,22 +8,22 @@
 
 ## Current version
 
-v0.3.4 — Category Navigation
+v0.3.5 — Mobile Gesture Navigation
 
 ## Current status
 
-v0.3.4 completed / closed：implementation complete，本地自动化测试与生产构建通过，local manual acceptance A–E PASS，Production iPhone PWA manual acceptance PASS。Production desktop browser not separately tested；Production desktop Escape / focus 未记录为 PASS，仅此前本地验收通过。
+v0.3.5 implementation complete，automated verification PASS；awaiting Production iPhone PWA manual acceptance。未 completed / closed；桌面本地无法有效验收真实手机手势，不再要求本地手机式人工验收。Production 部署 Needs verification；Safari / iPhone PWA 手势体验未验收。v0.3.4 保持 completed / closed。
 
 ## Latest completed
 
-完成并关闭 v0.3.4 Category Navigation：Active 分类入口迁入现有 Sidebar，搜索 / 临期组合、清除筛选及 Archive 独立状态保持正确。用户已确认 Production iPhone PWA 分类导航、选中状态、组合筛选、Archive 独立、Drawer 关闭（含遮罩）、长列表滚动、安全区、无横向溢出及 PWA 重开全部 PASS。
+完成 v0.3.5 本地实现：主列表右滑打开 Sidebar、panel 左滑关闭、详情及新增/编辑流程右滑复用原返回语义；Add / Add Inventory / Product Edit 的按钮与手势共用最小未保存退出确认。定向 11 files / 108 tests、完整 29 files / 295 tests、build PASS；真实滚动 / 系统手势体验待验收。
 
 ## Deployment
 
 Status: public_deployed
 Public URL: https://food-expiry-manager-two.vercel.app/
 Provider: Vercel
-Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 implementation 部署；docs-only closeout push 不代表新的人工验收。
+Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, output directory `dist`. 已确认 implementation commit `989ee41f343e47c36e1ea987f3d8b65517345766` 的 GitHub Vercel check 与 Production deployment status 均 success；用户 Production iPhone PWA 人工验收 PASS。Production 桌面浏览器未单独验收。此记录对应 v0.3.4 implementation 部署；docs-only closeout push 不代表新的人工验收。v0.3.5 当前发布的 Production deployment status：Needs verification，须按该 implementation commit 查询；push 成功不代表部署或手势验收 PASS。
 
 ## Version Index
 
@@ -49,19 +49,23 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 - v0.3.3｜Discarded Batch Archive Flow（已完成并关闭）
 - v0.3.4｜Category Navigation（completed / closed；local 与 Production iPhone PWA 验收 PASS，Production desktop 未单独验收）
 
+- v0.3.5｜Mobile Gesture Navigation（implementation complete；automated verification PASS；awaiting Production iPhone PWA manual acceptance）
+
 ## Last verified
 
-2026-10-07：implementation 定向 6 files / 63 tests、完整 27 files / 247 tests、build 与 git diff --check 均通过（build 有 >500 kB chunk 警告）。用户本地 A–E 全 PASS；指定 implementation commit 的 Production 部署 success，用户 Production iPhone PWA 全 PASS（含遮罩关闭）。Production desktop browser not separately tested，desktop Escape / focus 仅本地验收 PASS。本次 closeout 仅文档变化，不重复运行完整测试或 build。
+2026-10-07：v0.3.5 定向 11 files / 108 tests、完整 29 files / 295 tests、npm run build 与 git diff --check PASS；build 保留 >500 kB chunk 警告。Node shallow hook / callback tests 不覆盖真实 DOM 冒泡、iOS scroll arbitration、软键盘或 pinch zoom。2026-10-08 提交前 review / 治理及范围检查通过，本轮未重跑未变化的业务测试与 build。取消本地手机式人工验收要求；Production iPhone PWA / Safari manual acceptance 尚未执行。v0.3.4 的历史验收记录见 docs/TESTING.md。
 
 ## Next Action
 
-基于真实使用反馈评估并确定下一项 Backlog 优先级。候选与范围见 docs/BACKLOG.md；本次不冻结下一功能或数字版本。
+确认当前 implementation 的 Production 部署，然后按 docs/TESTING.md 完成 Production iPhone PWA manual acceptance，等待用户 PASS / FAIL。Safari 如单独验证须独立记录结果；真实验收前不关闭版本。
 
 ## Blockers
 
 暂无明确阻塞。
 
 ## Important Context
+
+- v0.3.5 使用 touch-only Pointer Events，局部 pan-y / pinch-zoom，不接管系统 Back、不使用 browser history。卡片/分类按钮起滑有意排除；dirty 退出拒绝保留草稿与待上传图片，确认操作/提交期间禁用 swipe。
 
 - Core model separates `products` from `inventory_batches`; same product can have multiple independent batches.
 - Every inventory entry must result in an `expiry_date`.
@@ -108,4 +112,4 @@ Notes: Vercel uses Vite, root directory `.`, build command `npm run build`, outp
 
 ## Handoff Prompt
 
-v0.3.4 Category Navigation is completed / closed. Implementation, automated verification, local manual acceptance and Production iPhone PWA manual acceptance are PASS. Production desktop browser was not separately tested; desktop Escape / focus passed locally only. Evaluate and determine the next Backlog priority from real usage feedback; no next feature or numeric version is frozen. See docs/BACKLOG.md for the retained candidates.
+Continue v0.3.5 Mobile Gesture Navigation from its local implementation-complete state. Automated checks passed; Production iPhone PWA manual acceptance is pending; local mobile-style manual acceptance is no longer required because the desktop environment cannot validate real touch gestures. Follow docs/TESTING.md, preserve the frozen thresholds and interactive-target exclusions, and reuse existing navigation callbacks. Do not change Add Inventory wording/remount behavior. The user authorized the implementation commit and normal push on 2026-10-08. Confirm its Production deployment and collect iPhone PWA PASS / FAIL next; do not close v0.3.5 before acceptance. v0.3.4 remains completed / closed; its acceptance does not validate v0.3.5 gestures.

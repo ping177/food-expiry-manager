@@ -11,7 +11,7 @@
 
 ## 自动化测试
 
-使用 Vitest。当前完整自动化验收结果为 27 个测试文件、247 个测试通过；其中
+使用 Vitest。当前完整自动化验收结果为 29 个测试文件、295 个测试通过；其中
 包含 v0.3.1 Archive / drawer、consumed 详情只读、历史 batch 删除边界、状态更新
 0-row 防误报，以及既有 B1 三态详情、库存新增合并/新批次、库存消耗确认和当前
 batch 删除确认边界。
@@ -31,6 +31,39 @@ batch 删除确认边界。
 - `tests/supabase-keepalive.test.js`
 - `src/lib/productImage.test.js`：用户图优先级、文件校验、user_id 路径、替换回滚、共享
   Storage remove primitive 和删除清理。
+
+## v0.3.5 Mobile Gesture Navigation 验证
+
+状态：implementation complete，automated verification PASS；awaiting Production iPhone PWA manual acceptance。尚未 completed / closed；Production 部署按 implementation commit 确认，未宣称 Production / Safari / iPhone PWA PASS。2026-10-08 用户调整流程：不再要求桌面本地手机式人工验收，提交前 review → commit → 正常 push → Production iPhone PWA 真机验收。
+
+- `src/lib/swipeNavigation.test.js`：18 tests，覆盖距离/最大纵向偏移/方向比/纵向起手锁/时长/左右方向/一次执行/多指/非primary/cancel/交互目标/24px边界/stale scope。
+- `src/MobileGestureNavigation.test.jsx`：30 tests，在现有 Node shallow hook harness 中调用真实 App、Drawer、详情、表单和操作组件回调。覆盖页面所有权、现有返回目标、pristine/dirty确认、拒绝退出保留字段与pending image、恢复初始值、busy与连续保存/上传、scanner/lookup、操作确认禁用。
+- 原 Category Navigation 测试改为执行全部 Drawer effects 和 cleanup，不依赖 effect 数组位置；overlay / close / Escape / focus restore 与 Active / Archive 筛选隔离继续覆盖。
+- 定向 11 files / 108 tests PASS；完整 29 files / 295 tests PASS；build PASS（保留 >500 kB chunk 警告）。
+
+```bash
+npm test -- src/lib/swipeNavigation.test.js src/MobileGestureNavigation.test.jsx src/App.categoryNavigation.test.jsx src/components/BatchDetail.test.jsx src/components/AddBatchForm.test.jsx src/components/AddInventoryForm.test.jsx src/components/SidebarDrawer.test.jsx src/components/InventoryOperationPanel.test.jsx src/components/ArchiveBatchActions.test.jsx src/App.test.jsx src/components/BottomTabNav.test.jsx
+npm test
+npm run build
+git diff --check
+```
+
+### v0.3.5 Production iPhone PWA 人工验收清单（全部待执行）
+
+1. home / archive 的标题、空白和卡片间隙从24px以外右滑打开Sidebar；左滑无动作。原菜单、分类和底部导航点击正常，Active/Archive筛选独立保留。
+2. Sidebar标题/空白左滑关闭；右滑无动作。分类按钮上起滑不关闭，轻点仍选分类。长列表上下滚动到底部；overlay/close/Escape和focus restore正常。
+3. Active detail右滑回home；Archive detail回Archive；Product Edit及普通Inventory Operation右滑回detail，不直接home。Add回home；Add Inventory维持现有真实返回目标。
+4. Add / Add Inventory / Product Edit 无修改时按钮与手势立即返回；修改再恢复原值不确认。dirty时二者显示同一确认，继续编辑保留字段、日期和pending image；放弃后按原目标退出。
+5. 长表单底部起滑后的确认可见且焦点到“继续编辑”；软键盘打开/收起后确认可操作，拒绝退出不清草稿。
+6. 保存、上传、消耗/删除mutation期间不swipe退出；consume/mark-consumed/delete确认开启时不swipe。商品删除busy不退出；扫码开启/条码查询期间不swipe。
+7. 短移、纵向起手、斜滑、超800ms、多指与取消不误触；纵向滚动后不能在同次触摸转换为导航。
+8. input/select/label/button/卡片/分类/media/picker起滑排除；文本编辑和图片选择正常。保留双指缩放；无横向溢出，safe-area正常。
+9. 极左屏幕边缘由系统处理，不要求App接管；测试Safari已有上一网页时及standalone PWA，不出现系统/应用双动作。Safari若未单独验收必须明确记录未验证。
+10. PWA重开后无导航异常。桌面mouse drag不触发、keyboard/click入口及Escape由既有自动化覆盖保留；桌面人工检查可选，不作为本版本手机手势验收前置要求。
+
+本轮沿用2026-10-07的108定向/295完整/build PASS证据，业务代码未变，不机械重跑。2026-10-08重新执行diff/staged scope、Project State治理及commit/pre-push所需检查。
+
+Node测试不覆盖真实DOM事件冒泡/implicit capture、iOS scroll arbitration/system gesture、pinch zoom、软键盘、自动聚焦滚动与PWA宿主行为。上述必须真机验证，不新增DOM/E2E依赖。卡片/分类按钮不支持起滑是有意安全取舍，体验区域不足时根据真实反馈另行评估。
 
 ## v0.3.4 Category Navigation 验证
 

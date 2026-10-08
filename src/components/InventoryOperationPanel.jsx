@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { prepareInventoryOperationUpdate } from '../lib/inventory'
 
 export default function InventoryOperationPanel({
   batch,
   busy,
+  onExitBlockedChange,
   onAddInventory = () => {},
   onConsume = async () => true,
   onMarkConsumed = async () => true,
@@ -13,6 +14,10 @@ export default function InventoryOperationPanel({
   const [consumptionAmount, setConsumptionAmount] = useState('1')
   const [operationSubmitting, setOperationSubmitting] = useState(false)
   const [operationError, setOperationError] = useState('')
+  useEffect(() => {
+    onExitBlockedChange?.(pendingOperation !== null || operationSubmitting)
+    return () => onExitBlockedChange?.(false)
+  }, [onExitBlockedChange, pendingOperation, operationSubmitting])
 
   function cancelPendingOperation() {
     setOperationError('')

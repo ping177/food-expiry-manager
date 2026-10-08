@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { prepareInventoryOperationUpdate } from '../lib/inventory'
 
 export default function ArchiveBatchActions({
   batch,
   busy,
+  onExitBlockedChange,
   productDeleteGuard = { status: 'loading' },
   productDeleteBusy = false,
   onDeleteBatch = async () => true,
@@ -15,6 +16,10 @@ export default function ArchiveBatchActions({
   const [pendingDeleteProduct, setPendingDeleteProduct] = useState(false)
   const [productOperationSubmitting, setProductOperationSubmitting] = useState(false)
   const [productOperationError, setProductOperationError] = useState('')
+  useEffect(() => {
+    onExitBlockedChange?.(pendingDelete || pendingDeleteProduct || operationSubmitting || productOperationSubmitting)
+    return () => onExitBlockedChange?.(false)
+  }, [onExitBlockedChange, pendingDelete, pendingDeleteProduct, operationSubmitting, productOperationSubmitting])
   const product = batch?.product
   const productGuard =
     productDeleteGuard?.productId === product?.id

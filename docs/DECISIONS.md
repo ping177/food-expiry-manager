@@ -461,3 +461,18 @@
 - Active 移除 category select；组合筛选仍复用 filterInventoryBatches，清除筛选仍清除三个条件。Archive 搜索、category select、filter state 与查询完全独立。
 - 空分类与未知历史分类继续在 all 下显示；canonical 分类精确匹配，卡片与 BatchDetail 历史兼容逻辑不变。不新增未分类导航或 category cleanup / migration。
 - 仅修改现有导航体验；不涉及 schema、RPC、RLS、Production 数据、Barcode API、Product Image、batch lifecycle、Product deletion 或 Storage cleanup。
+
+
+## D-038：v0.3.5 使用原生 Pointer Events 与局部 Protected Exit
+
+- 状态：用户冻结范围；本地 implementation complete，automated verification PASS；人工验收待执行，未关闭版本
+- 日期：2026-10-07
+- App 仅持有 home / archive 的 Sidebar open 手势；SidebarDrawer 持有 panel close；BatchDetail 持有内部 mode Back；新增表单持有自身退出保护，不新增导航历史。
+- 检测核心使用 ref-backed controller：仅 touch，horizontal >=60 CSS px，过程最大 vertical <=30px，abs(dx)>=2*vertical；vertical>=12px 且纵向占优后整次取消，duration<=800ms，多指/cancel不执行。open 起点排除最左24px；不强拦 iOS 系统手势。
+- input / select / button / link / label / contenteditable / interactive role / media / picker 起滑排除。卡片和分类按钮不支持 swipe 是首版明确取舍，不增加 click suppression。
+- Add / Add Inventory 比较真实初始 form 值；Product Edit 比较原 Product 的显示表单；pending image 算 dirty。恢复原值为 pristine。按钮和手势共用退出函数：pristine立即返回，dirty用现有 inline confirmation 风格，拒绝不重置状态，确认才调用原退出语义。
+- 本地提交锁覆盖字段保存与随后图片上传之间的间隙；busy的同一路径返回按钮禁用。操作子组件只报告确认/submitting状态以禁用swipe，不重构其操作逻辑；普通确认状态中的原按钮行为保留。
+- 保持 Add Inventory 现有“返回库存操作”文案及实际 remount 到默认 detail 的行为；不在本版本修复历史问题。
+- 不新增依赖、modal/form framework、routing、动画、Supabase / Barcode / Product Image处理链路；Node测试不替代iPhone PWA/Safari人工验收。
+
+- 2026-10-08 验收流程调整：用户取消桌面本地手机式人工验收前置要求，授权review通过后commit/push，直接进入Production iPhone PWA真机验收。版本状态保持implementation complete / automated verification PASS / awaiting Production iPhone PWA manual acceptance；不宣称local mobile / Production / Safari PASS，不关闭版本。

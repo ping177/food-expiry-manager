@@ -174,6 +174,15 @@
 - Archive 保留自己的搜索、category select 与独立状态；不变更查询、数据模型或分类历史兼容行为
 - 不做分类计数、accordion、动态隐藏、未分类 Sidebar 项或导航架构重构
 
+## v0.3.5：Mobile Gesture Navigation
+
+- 状态：implementation complete，automated verification PASS；awaiting Production iPhone PWA manual acceptance，尚未 completed / closed
+- 主列表右滑打开 Sidebar，panel 非交互区域左滑关闭；详情 / 新增 / 编辑右滑复用现有 Back / Cancel
+- Add / Add Inventory / Product Edit 的按钮与手势共用最小 dirty exit confirmation，拒绝退出保留草稿与待上传图片
+- touch-only Pointer Events，60px / 30px / 2:1 / 800ms；主列表 open 排除最左 24px；纵向起手、多指、cancel 与确认/提交状态禁用手势
+- 保留所有按钮、overlay、Escape、focus restore；无新依赖、browser history、动画、DB / Barcode / Product Image 链路变更
+- 真机风险和验收清单见 docs/TESTING.md，2026-10-08改为提交前review后commit/push，确认Production部署后直接开展iPhone PWA真机验收；不要求本地手机式验收
+
 ## 后续候选：商品图片上传体验
 
 - 支持手机直接拍照或从相册选择商品图片

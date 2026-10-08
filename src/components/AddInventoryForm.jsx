@@ -3,6 +3,9 @@ import DateInput from './DateInput'
 import { normalizeDateInput } from '../lib/expiry'
 import { normalizeQuantity } from '../lib/inventory'
 import { formatProductSize } from '../lib/productSize'
+import useSwipeNavigation from '../hooks/useSwipeNavigation'
+import useProtectedExit, { hasFormChanges } from '../hooks/useProtectedExit'
+import DiscardChangesConfirmation from './DiscardChangesConfirmation'
 
 const initialForm = {
   quantity: '1',
@@ -22,6 +25,19 @@ export default function AddInventoryForm({
   const size = formatProductSize(product)
   const [form, setForm] = useState(initialForm)
   const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const exitBusy = busy || submitting
+  const exit = useProtectedExit({
+    dirty: hasFormChanges(form, initialForm),
+    busy: exitBusy,
+    onExit: onCancel,
+  })
+  const backGesture = useSwipeNavigation({
+    enabled: !exitBusy && !exit.confirming,
+    scope: 'add-inventory',
+    direction: 'right',
+    onSwipe: exit.requestExit,
+  })
 
   function update(field, value) {
     setForm((current) => ({ ...current, [field]: value }))
@@ -29,6 +45,7 @@ export default function AddInventoryForm({
 
   async function handleSubmit(event) {
     event.preventDefault()
+    if (exitBusy || exit.confirming) return
     setError('')
 
     try {
@@ -38,6 +55,7 @@ export default function AddInventoryForm({
       }
 
       const expiryDate = normalizeDateInput(form.expiryDate)
+      setSubmitting(true)
       const saved = await onSave({
         quantity,
         expiryDate,
@@ -46,11 +64,13 @@ export default function AddInventoryForm({
       if (saved) setForm(initialForm)
     } catch (submitError) {
       setError(submitError.message)
+    } finally {
+      setSubmitting(false)
     }
   }
 
   return (
-    <section className="rounded-3xl bg-white p-5 shadow-card">
+    <section className="rounded-3xl bg-white p-5 shadow-card" {...backGesture}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-leaf">新增库存</p>
@@ -59,11 +79,16 @@ export default function AddInventoryForm({
         <button
           className="text-sm text-slate-500"
           type="button"
-          onClick={onCancel}
+          disabled={exitBusy}
+          onClick={exit.requestExit}
         >
           返回库存操作
         </button>
       </div>
+
+      {exit.confirming && (
+        <DiscardChangesConfirmation busy={exitBusy} onCancel={exit.cancel} onDiscard={exit.discard} />
+      )}
 
       <div className="mt-5 rounded-2xl bg-cream px-4 py-3">
         <p className="text-xs font-semibold text-slate-500">商品</p>
@@ -116,7 +141,7 @@ export default function AddInventoryForm({
 
         <button
           className="w-full rounded-xl bg-leaf px-4 py-3.5 font-bold text-white disabled:opacity-50"
-          disabled={busy}
+          disabled={exitBusy || exit.confirming}
           type="submit"
         >
           {busy ? '保存中…' : '保存新增库存'}

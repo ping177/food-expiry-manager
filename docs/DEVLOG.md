@@ -1,6 +1,25 @@
 # 开发日志
 
+## 2026-10-08
+
+### v0.3.5 提交前 review 与真机验收流程调整
+
+- 用户明确取消本地手机式人工验收前置要求：桌面环境无法有效验证真实 mobile touch / Pointer Events / iPhone PWA 手势；改为提交前 review → implementation commit → 正常 push → 确认部署 → Production iPhone PWA 人工验收。
+- 最终 review 无 blocker；21 个文件全部属于冻结范围，业务实现未新增变化，无依赖、DB / Supabase / Barcode / Product Image 链路或外部项目文件变化，未读取/输出 secrets。
+- 保留此前定向 108 tests、完整 295 tests 与 build PASS 证据，本轮不重复业务测试/构建；重新检查 diff / staged scope、Project State、治理及 commit / pre-push gate 所需事项。
+- Current status / Next Action / Version Index / Handoff 等同步为 awaiting Production iPhone PWA manual acceptance；Production deployment 需按 implementation commit 确认，不把 push 等同部署或验收 PASS。版本未 completed / closed；本条记录流程授权与提交前检查，不预报提交、推送或部署成功。
+
 ## 2026-10-07
+
+### v0.3.5 — Mobile Gesture Navigation（implementation complete，awaiting manual acceptance）
+
+- 实际基线main，HEAD / 本地origin/main / 只读远端main均c0aa4eb863f69621e585f23bfc1558b85f540588，ahead/behind 0/0，初始working tree clean。
+- 按用户获批冻结要求加入touch-only Pointer Events helper/hook；App主列表open、Sidebar panel close、详情mode与新增表单Back各自单一owner，复用现有callback，不建立browser history。
+- 冻结60px/30px/2:1/12px纵向起手/800ms规则；open排除左24px，interactive/media/picker起滑排除，local pan-y pinch-zoom，无全局hack或动画。
+- Add / Add Inventory / Product Edit 用真实初始值及pending image判断dirty；按钮与手势共用inline退出确认，继续编辑完整保留草稿。加入局部submitting锁覆盖连续保存/图片上传阶段，修复同一路径busy返回按钮缺口；操作子组件最小报告确认/submission状态禁用swipe。
+- TDD先加入检测/导航测试并观察失败，再实现；原Drawer lifecycle测试执行全部effects/cleanup，保留Escape/overlay/close/focus验证。最终定向11 files / 108 tests、完整29 files / 295 tests、npm run build PASS（保留>500 kB chunk警告）。git diff --check及治理范围/版本/headings检查PASS。
+- 同步README / PROJECT_STATE / BACKLOG / ROADMAP / DECISIONS / TESTING。v0.3.5仅implementation complete，awaiting Production iPhone PWA manual acceptance，未completed/closed，未宣称Safari/PWA PASS；上一版本v0.3.4仍closed，Production记录仍对应既有部署。
+- 无新依赖、DB/Supabase/Barcode/Product Image处理链路变更，无外部项目文件或secrets读取/输出。Add Inventory旧文案/remount语义有意保留；本轮不commit、不push。
 
 ### v0.3.4 docs-only closeout（completed / closed）
 

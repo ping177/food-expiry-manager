@@ -80,9 +80,16 @@ iPhone PWA 最小人工验收均已完成：
 - 不增加计数、accordion、未分类导航、动态分类隐藏、数据模型或分类 migration。
 - 最终验收记录见 docs/TESTING.md；desktop Escape / focus 仅本地 PASS，不扩写为所有 Production 平台 PASS。
 
-### 下一步优先级评估（未冻结版本）
+### v0.3.5 Mobile Gesture Navigation（待人工验收）
 
-基于真实使用反馈评估并确定下一项 Backlog 优先级。以下候选均未自动升级为下一版本；图片和条码候选详情保留在下方：
+- 范围按用户冻结要求形成正式 v0.3.5：touch-only Sidebar open / close、详情和新增/编辑 Back，以及最小 Protected Exit。
+- implementation complete；自动化与构建 PASS，awaiting Production iPhone PWA manual acceptance。Production部署需按implementation commit确认，未关闭版本；不再要求本地手机式人工验收。
+- 卡片 / 分类按钮起滑排除、Add Inventory 旧文案与真实返回模式保持原状；手势区域如需扩大，必须基于真实验收反馈再评估。
+- 先完成本版本人工验收；下列候选继续保留，不与本版本混做。
+
+### 后续优先级评估（未冻结版本）
+
+完成 v0.3.5 验收后，基于真实使用反馈评估下一项 Backlog 优先级。以下候选均未自动升级为后续版本；图片和条码候选详情保留在下方：
 
 - Product Image Sourcing & Polish
 - Barcode API Coverage Expansion

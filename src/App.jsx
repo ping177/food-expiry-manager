@@ -8,6 +8,7 @@ import BatchDetail from './components/BatchDetail'
 import BottomTabNav from './components/BottomTabNav'
 import ConfigNotice from './components/ConfigNotice'
 import SidebarDrawer from './components/SidebarDrawer'
+import useSwipeNavigation from './hooks/useSwipeNavigation'
 import {
   getAccountStatus,
   getSessionTransition,
@@ -985,6 +986,15 @@ export default function App() {
       ? maskEmail(session.user.email)
       : accountStatus.label
 
+  const sidebarGesture = useSwipeNavigation({
+    enabled: Boolean(session) && !authLoading && missingSupabaseVariables.length === 0 &&
+      (view === 'home' || view === 'archive') && !sidebarOpen,
+    scope: `${view}:${sidebarOpen}`,
+    direction: 'right',
+    minStartX: 24,
+    onSwipe: () => setSidebarOpen(true),
+  })
+
   if (missingSupabaseVariables.length > 0) {
     return <ConfigNotice missingVariables={missingSupabaseVariables} />
   }
@@ -1013,7 +1023,7 @@ export default function App() {
 
   return (
     <main className="min-h-screen bg-cream pb-[calc(5rem+env(safe-area-inset-bottom))]">
-      <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6">
+      <div className="mx-auto max-w-xl px-4 pb-8 pt-6 sm:px-6" {...sidebarGesture}>
         <header className="mb-5">
           {view !== 'home' && view !== 'archive' && (
             <p className="text-xs font-semibold text-leaf">{APP_DISPLAY_NAME}</p>

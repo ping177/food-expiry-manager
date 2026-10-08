@@ -11,6 +11,9 @@ import { getArchiveStatusLabel } from '../lib/inventory'
 import { formatProductSize, PRODUCT_SIZE_UNITS } from '../lib/productSize'
 import ArchiveBatchActions from './ArchiveBatchActions'
 import InventoryOperationPanel from './InventoryOperationPanel'
+import useSwipeNavigation from '../hooks/useSwipeNavigation'
+import useProtectedExit, { hasFormChanges } from '../hooks/useProtectedExit'
+import DiscardChangesConfirmation from './DiscardChangesConfirmation'
 
 const expiryWindowStyles = {
   expired: 'bg-red-100 text-danger',
@@ -68,6 +71,21 @@ export default function BatchDetail({
   const archiveStatusLabel = getArchiveStatusLabel(batch.status)
   const [pendingImageFile, setPendingImageFile] = useState(null)
   const [imagePickerKey, setImagePickerKey] = useState(0)
+  const [productSubmitting, setProductSubmitting] = useState(false)
+  const [operationExitBlocked, setOperationExitBlocked] = useState(false)
+  const exitBusy = busy || productDeleteBusy || productSubmitting
+  const exit = useProtectedExit({
+    dirty: mode === 'product-edit' &&
+      (hasFormChanges(productForm, createProductEditForm(product)) || Boolean(pendingImageFile)),
+    busy: exitBusy,
+    onExit: mode === 'view' ? onBack : closeCurrentMode,
+  })
+  const backGesture = useSwipeNavigation({
+    enabled: !exitBusy && !operationExitBlocked && !exit.confirming,
+    scope: `${batch.id}:${archiveMode}:${mode}`,
+    direction: 'right',
+    onSwipe: exit.requestExit,
+  })
 
   function updateProductField(field, value) {
     setProductForm((current) => ({ ...current, [field]: value }))
@@ -96,6 +114,7 @@ export default function BatchDetail({
 
   async function handleProductEditSubmit(event) {
     event.preventDefault()
+    if (exitBusy || exit.confirming) return
     setDetailError('')
 
     let productValues
@@ -106,37 +125,43 @@ export default function BatchDetail({
       return
     }
 
-    const productSaved = await onUpdateProduct(batch.id, product.id, productValues)
-    if (!productSaved) {
-      setProductForm(createProductEditForm(product))
-      setDetailError('商品信息保存失败，请稍后重试。')
-      return
-    }
+    setProductSubmitting(true)
+    try {
+      const productSaved = await onUpdateProduct(batch.id, product.id, productValues)
+      if (!productSaved) {
+        setProductForm(createProductEditForm(product))
+        setDetailError('商品信息保存失败，请稍后重试。')
+        return
+      }
 
-    if (pendingImageFile) {
-      const imageResult = await onUpdateProductImage(batch.id, product, pendingImageFile)
-      if (!imageResult.ok) return
-      setPendingImageFile(null)
-      setImagePickerKey((current) => current + 1)
+      if (pendingImageFile) {
+        const imageResult = await onUpdateProductImage(batch.id, product, pendingImageFile)
+        if (!imageResult.ok) return
+        setPendingImageFile(null)
+        setImagePickerKey((current) => current + 1)
+      }
+      setProductForm({
+        name: productValues.name,
+        brand: productValues.brand || '',
+        sizeValue: productValues.size_value ?? '',
+        sizeUnit: productValues.size_unit || 'g',
+        category: productValues.category || '',
+        imageUrl: productValues.image_url || '',
+      })
+      setMode('view')
+    } finally {
+      setProductSubmitting(false)
     }
-    setProductForm({
-      name: productValues.name,
-      brand: productValues.brand || '',
-      sizeValue: productValues.size_value ?? '',
-      sizeUnit: productValues.size_unit || 'g',
-      category: productValues.category || '',
-      imageUrl: productValues.image_url || '',
-    })
-    setMode('view')
   }
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-4" {...backGesture}>
       <div className="flex items-center justify-between gap-3">
         <button
           className="rounded-xl px-1 py-2 text-sm font-semibold text-slate-500"
           type="button"
-          onClick={mode === 'view' ? onBack : closeCurrentMode}
+          disabled={exitBusy}
+          onClick={exit.requestExit}
         >
           {mode === 'view'
             ? archiveMode
@@ -145,6 +170,10 @@ export default function BatchDetail({
             : '返回详情'}
         </button>
       </div>
+
+      {exit.confirming && (
+        <DiscardChangesConfirmation busy={exitBusy} onCancel={exit.cancel} onDiscard={exit.discard} />
+      )}
 
       <article className="rounded-3xl bg-white p-5 shadow-card">
         <div className="flex gap-4">
@@ -285,11 +314,11 @@ export default function BatchDetail({
               />
             </label>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-2" data-no-swipe>
             <p className="text-sm font-semibold text-slate-700">用户上传主图</p>
-            <ProductImagePicker key={imagePickerKey} disabled={busy} onChange={setPendingImageFile} />
+            <ProductImagePicker key={imagePickerKey} disabled={exitBusy || exit.confirming} onChange={setPendingImageFile} />
             {product?.user_image_url && (
-              <button className="rounded-xl px-2 py-2 text-sm font-semibold text-danger disabled:opacity-50" disabled={busy} type="button" onClick={() => onDeleteProductImage(batch.id, product)}>
+              <button className="rounded-xl px-2 py-2 text-sm font-semibold text-danger disabled:opacity-50" disabled={exitBusy || exit.confirming} type="button" onClick={() => onDeleteProductImage(batch.id, product)}>
                 删除用户图片
               </button>
             )}
@@ -297,16 +326,16 @@ export default function BatchDetail({
           <div className="grid grid-cols-2 gap-2">
             <button
               className="rounded-xl bg-leaf px-4 py-3 font-semibold text-white disabled:opacity-50"
-              disabled={busy}
+              disabled={exitBusy || exit.confirming}
               type="submit"
             >
               保存修改
             </button>
             <button
               className="rounded-xl border border-slate-200 px-4 py-3 font-semibold text-slate-700"
-              disabled={busy}
+              disabled={exitBusy}
               type="button"
-              onClick={closeCurrentMode}
+              onClick={exit.requestExit}
             >
               取消
             </button>
@@ -372,6 +401,7 @@ export default function BatchDetail({
 
       {mode === 'inventory-operation' && !archiveMode && (
         <InventoryOperationPanel
+          onExitBlockedChange={setOperationExitBlocked}
           batch={batch}
           busy={busy}
           onAddInventory={onAddInventory}
@@ -383,6 +413,7 @@ export default function BatchDetail({
 
       {archiveMode && mode === 'view' && (
         <ArchiveBatchActions
+          onExitBlockedChange={setOperationExitBlocked}
           batch={batch}
           busy={busy}
           onDeleteBatch={onDeleteBatch}
