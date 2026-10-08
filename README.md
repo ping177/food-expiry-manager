@@ -124,7 +124,7 @@ anonymous users 清理；后续主要使用可恢复的邮箱账号。
 
 ## 当前版本范围
 
-当前版本v0.3.5尚未completed / closed。已部署`318cfe6`的卡片/分类tap与swipe、Product Edit/Add/Add Inventory未保存退出、危险确认保护及纵向滚动已由用户iPhone PWA确认PASS，但左边缘、Detail上下空白及Add区域可用性仍不足。本地Final Gesture Usability Fix移除应用边缘限制，main覆盖整页并转发到原任务controller，允许label非编辑文字，保留实际控件与退出/click保护；定向152 / 完整329 tests及build PASS。新修复最终review无blocker，等待Production iPhone PWA真机复验（部署结果按本次独立fix commit确认）；iOS系统边缘效果、实际命中区域和label默认行为未验证。历史记录与清单见docs/TESTING.md，v0.3.4保持closed。
+当前v0.3.5未completed / closed。已部署340ee6e的左边缘open、Detail上下空白Back、Add各区域Back、Protected Exit、危险确认、纵向滚动及原点击已由用户iPhone PWA确认PASS。Sidebar close仍有分类区1/3、标题3/3、滚动后分类区3/3的稳定性问题及失败误点风险；本地仅放宽Sidebar至1.5:1/50px，增加30px实际横滑意图的尾随click保护，其他页面默认规则保持。定向171/完整348 tests与build PASS，最终review无blocker，等待新修复Production iPhone PWA复验；部署按本次独立fix commit确认。历史与清单见docs/TESTING.md，v0.3.4保持closed。
 
 当前已完成 v0.2.8 Vercel 公网部署和手机 HTTPS 验收。Production URL：
 

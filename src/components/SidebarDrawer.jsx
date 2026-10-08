@@ -24,6 +24,9 @@ export default function SidebarDrawer({
     direction: 'left',
     onSwipe: onClose,
     clickGuard: swipeClickGuard,
+    horizontalRatio: 1.5,
+    maxVerticalDistance: 50,
+    clickIntentDistance: 30,
   })
 
   useEffect(() => {

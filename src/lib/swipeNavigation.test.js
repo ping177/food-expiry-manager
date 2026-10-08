@@ -203,3 +203,70 @@ describe('local swipe click guard', () => {
     }
   })
 })
+
+describe('Sidebar-only direction tolerance and horizontal click intent', () => {
+  const sidebarOptions = { direction: 'left', horizontalRatio: 1.5, maxVerticalDistance: 50, clickIntentDistance: 30 }
+  it.each([[40, 40], [20, 50]])('accepts a natural tilted Sidebar left swipe ending (%s,%s)', (x, y) => {
+    const { handlers, onSwipe } = setup(sidebarOptions)
+    swipe(handlers, x, y)
+    expect(onSwipe).toHaveBeenCalledOnce()
+  })
+  it.each([[40, 41], [10, 51]])('still rejects too diagonal or excessive drift (%s,%s)', (x, y) => {
+    const { handlers, onSwipe } = setup(sidebarOptions)
+    swipe(handlers, x, y)
+    expect(onSwipe).not.toHaveBeenCalled()
+  })
+  it('keeps a vertical start cancelled despite a later tilted horizontal finish', () => {
+    const clickGuard = createSwipeClickGuard()
+    const { handlers, onSwipe } = setup({ ...sidebarOptions, clickGuard })
+    handlers.onPointerDown(event(100))
+    handlers.onPointerMove(event(97, 20, 50))
+    handlers.onPointerUp(event(20, 30, 300))
+    const trailing = click({ clientX: 20, clientY: 30 })
+    clickGuard.onClickCapture(trailing)
+    expect(onSwipe).not.toHaveBeenCalled()
+    expect(trailing.stopPropagation).not.toHaveBeenCalled()
+  })
+  it.each(['short', 'wrong-direction', 'returned', 'timeout', 'late-motion'])('suppresses observed horizontal intent without navigating: %s', (reason) => {
+    const clickGuard = createSwipeClickGuard()
+    const { handlers, onSwipe } = setup({ ...sidebarOptions, clickGuard })
+    handlers.onPointerDown(event(100))
+    handlers.onPointerMove(event(reason === 'wrong-direction' ? 140 : 60, 15, reason === 'late-motion' ? 900 : 200))
+    const x = reason === 'returned' ? 95 : reason === 'wrong-direction' ? 140 : reason === 'timeout' ? 20 : 60
+    const y = reason === 'returned' ? 0 : 15
+    const endTime = reason === 'late-motion' ? 950 : reason === 'timeout' ? 900 : 300
+    handlers.onPointerUp(event(x, y, endTime))
+    const trailing = click({ clientX: x, clientY: y, timeStamp: endTime + 20 })
+    clickGuard.onClickCapture(trailing)
+    expect(onSwipe).not.toHaveBeenCalled()
+    expect(trailing.stopPropagation).toHaveBeenCalledOnce()
+    clickGuard.onPointerDownCapture(event(x, 15, endTime + 40))
+    const next = click({ timeStamp: endTime + 60 })
+    clickGuard.onClickCapture(next)
+    expect(next.stopPropagation).not.toHaveBeenCalled()
+  })
+  it.each(['tap', 'cancel', 'multi', 'reset'])('does not arm after %s', (reason) => {
+    const clickGuard = createSwipeClickGuard()
+    const { handlers, onSwipe } = setup({ ...sidebarOptions, clickGuard })
+    handlers.onPointerDown(event(100))
+    handlers.onPointerMove(event(reason === 'tap' ? 95 : 60, 0, 100))
+    if (reason === 'cancel') handlers.onPointerCancel(event(60, 0, 150))
+    if (reason === 'multi') handlers.onPointerDown(event(60, 0, 150, 2))
+    if (reason === 'reset') handlers.reset()
+    handlers.onPointerUp(event(reason === 'tap' ? 95 : 60, 0, 300))
+    const trailing = click()
+    clickGuard.onClickCapture(trailing)
+    expect(onSwipe).not.toHaveBeenCalled()
+    expect(trailing.stopPropagation).not.toHaveBeenCalled()
+  })
+  it('leaves other pages at 2:1/30px and does not suppress an incomplete horizontal swipe', () => {
+    const clickGuard = createSwipeClickGuard()
+    const { handlers, onSwipe } = setup({ clickGuard })
+    swipe(handlers, 180, 40)
+    swipe(handlers, 140, 15)
+    const trailing = click()
+    clickGuard.onClickCapture(trailing)
+    expect(onSwipe).not.toHaveBeenCalled()
+    expect(trailing.stopPropagation).not.toHaveBeenCalled()
+  })
+})

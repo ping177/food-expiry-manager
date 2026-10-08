@@ -2,6 +2,23 @@
 
 ## 2026-10-08
 
+### v0.3.5 Sidebar Swipe UX Fix Release review与授权
+
+- baseline：main，HEAD / origin/main / 只读远端main均`340ee6e26aacc2d3c7d988faf359d6555c535b3f`；ahead/behind0/0，11个已知tracked修改，无新增文件。
+- 最终review无blocker：仅Sidebar启用1.5:1/50px与30px实际横滑意图；其他页面默认2:1/30px，60px/800ms、纵向起手、多指/cancel、Protected Exit及原owner接线保持。有效up记录匹配click token，capture一次消费/最多一秒/下一次pointerdown清除；未增加全局pointer拦截。
+- 业务代码/测试未变，沿用171定向/348完整tests及build PASS；重跑diff/语法/治理/staged范围及commit/pre-push所需检查。用户授权独立`fix: improve sidebar swipe close reliability` commit、`Project-State-Review: updated`和正常origin/main push，不跳过hook、不force、不amend。
+- PROJECT_STATE转为等待新修复Production iPhone PWA重新验收，Blockers保持`暂无明确阻塞。`；保留此前PASS与Sidebar 1/3、3/3、3/3 findings。新commit部署按SHA查询；本条是提交前review与授权记录，不预报push/deployment/验收成功，不closeout。
+- 本轮仅治理文档同步，无新依赖、DB/Supabase/Barcode/图片业务/Batch lifecycle或外部项目文件变化，未主动读取/输出secrets。真实iOS滚动仲裁与click合成仍须复验。
+
+### v0.3.5 Sidebar Swipe Close Final UX Fix（仅本地完成，待review）
+
+- baseline：main，HEAD / 本地origin/main `340ee6e26aacc2d3c7d988faf359d6555c535b3f`，ahead/behind0/0，初始working tree clean；本轮不commit/push/部署。
+- 用户第三轮Production iPhone PWA确认左边缘open、Detail上下空白Back、Add各区域Back、编辑/新增Protected Exit、危险确认、纵向滚动及原点击PASS。剩余Sidebar close分类区1/3、标题3/3、滚动后分类区3/3，倾斜左滑较难且失败可能误点；没有真实Pointer轨迹，不把计数直接当作已复现浏览器根因。
+- 代码证据：Sidebar沿用2:1/30px；click suppression仅导航成功mark，明显但失败的横滑未被保护。仅Sidebar新增horizontalRatio1.5/maxVerticalDistance50/clickIntentDistance30；其他页面默认2/30，60px/800ms与纵向起手、多指/cancel保护保持。
+- 实际观察到至少30px、横向>=1.5*过程最大纵移时保留意图；有效up即使短于60、反向、退回或超时也只保护尾随click。纵向/多指/cancel/scope/reset失效仍清除；800ms仍限制导航，超时不close；不改变main capture、一秒token/一次消费/下一次pointerdown清理，不阻止pointer滚动事件。
+- 新增19 tests，先观察失败再实现；定向13 files / 171 tests、完整29 files / 348 tests、build PASS（保留原>500 kB chunk警告），diff/语法/范围及治理检查PASS。覆盖倾斜边界、纵向优先、失败横滑/慢速/退回、multi/cancel/reset、默认其他页面、category tap/swipe/下一次tap及disabled main冒泡。
+- Node手动模拟事件/capture，不证明iOS仲裁、click合成或实际3次成功率；本地新修复未Production验收，不closeout。无新依赖、DB/Supabase/Barcode/图片业务/其他Backlog或外部项目文件变化，未主动读取/输出secrets。
+
 ### v0.3.5 Final Gesture Fix Review & Release 授权
 
 - baseline：main，HEAD / origin/main / 只读远端main均`318cfe6a991bdc798fed1fccd282933c08e176f7`，ahead/behind0/0；15个已知tracked修改，无新增文件。

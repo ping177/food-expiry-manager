@@ -465,7 +465,7 @@
 
 ## D-038：v0.3.5 使用原生 Pointer Events 与局部 Protected Exit
 
-- 状态：318cfe6部分功能用户真机PASS；A/B/C最终可用性修复本地完成与自动验证PASS，最终review无blocker，待新修复Production iPhone PWA复验，未关闭版本
+- 状态：340ee6e的A/B/C与既有保护用户真机PASS；Sidebar关闭局部体验修复本地完成，最终review无blocker，待新修复Production真机复验，未关闭版本
 - 日期：2026-10-07
 - App 仅持有 home / archive 的 Sidebar open 手势；SidebarDrawer 持有 panel close；BatchDetail 持有内部 mode Back；新增表单持有自身退出保护，不新增导航历史。
 - 检测核心使用 ref-backed controller：仅 touch，horizontal >=60 CSS px，过程最大 vertical <=30px，abs(dx)>=2*vertical；vertical>=12px 且纵向占优后整次取消，duration<=800ms，多指/cancel不执行。首版open排除最左24px，本轮经用户授权取消该应用限制；不强拦iOS系统手势。
@@ -493,3 +493,12 @@
   - 先补回归测试观察失败，再实施；使用现有Vitest，验证x=0、main上下留白/标题接线、单owner及清理、内部mode/dirty/busy、label与实际控件排除、click保护。执行targeted/full tests、build、diff及治理检查；不得记录本次新修复Production PASS。
   - 本地验证：定向152 / 完整329 tests与build PASS；main与旧section的视觉布局不变，外层触摸范围仍需真机确认，尤其iOS边缘接管、label聚焦/键盘/选择和已知PASS回归。
   - 后续Final Gesture Fix Review & Release：用户授权聚焦review无blocker后独立commit及正常push。业务代码/测试未变，沿用152/329/build证据，重跑diff/治理/staged范围与Push Gate所需检查；本次部署成功仍不代表A/B/C真机PASS，验收前不关闭v0.3.5。
+
+- 2026-10-08 Sidebar Swipe Close Final UX Fix（仅本地实施，不commit/push）：用户确认340ee6e的左边缘open、Detail上下空白Back、Add各区域Back、Protected Exit、危险确认、纵向滚动及原点击PASS。剩余Sidebar分类区close 1/3、标题3/3、滚动后分类区3/3，倾斜左滑较难且失败可能误选分类；不能把这些计数推断成已复现的浏览器事件根因。
+  - 已确认代码限制：Sidebar也用全局2:1/30px；click guard仅在导航成功后mark，失败的明显横滑没有尾随click保护。
+  - Sidebar局部选择horizontalRatio=1.5、maxVerticalDistance=50px；其他页面默认仍2/30。60px、800ms、12px纵向起手且纵向占优取消、多指/primary/cancel规则不变。
+  - 仅Sidebar启用clickIntentDistance=30px；实际观察到abs(dx)>=30且横向>=1.5*最大纵移时记录意图。up时若未因纵向/多指/cancel/scope/reset失效，即使短于60px、方向错误、退回或超时也只保护尾随click，不导航。800ms仍是导航上限，click意图不以该deadline冒充普通tap。token仍在up记录，沿用main capture、一次消费/1秒有效期/下一次pointerdown清除；不阻止任何pointer滚动事件。
+  - 先补失败测试，再实现；回归自然倾斜/明显纵向、普通tap、合格/未完成横滑、下一次tap及其他页面默认阈值。当前仅本地自动验证，真实iOS滚动仲裁/click合成须重新验收，不关闭版本。
+  - 本地验证：171定向/348完整tests、build及diff/治理PASS；1.5允许约34°倾斜（同时受50px过程最大纵移约束），不是任意斜滑。未修改其他owner、click guard实现或导航架构；无法从Node测试推定真机成功率提升。
+
+  - Sidebar Swipe UX Fix Release：用户授权最终review通过后独立`fix: improve sidebar swipe close reliability` commit与正常origin/main push。业务代码/测试未变，沿用171/348/build证据，重跑diff/语法/治理/staged范围及正常Push Gate；按新SHA确认Production部署，再开展真机复验，不预报验收PASS，不关闭版本。

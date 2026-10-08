@@ -302,6 +302,52 @@ function capturedClick(appTree, node, overrides = {}) {
 }
 
 describe('approved swipe regions and trailing click wiring', () => {
+  it.each([[-80, 40, true], [-40, 15, false], [40, 15, false]])(
+    'Sidebar category motion (%s,%s) closes=%s without selecting; next tap works', (dx, dy, closes) => {
+      const render = appRenderer()
+      swipe(render())
+      const drawerRender = renderer(SidebarDrawer)
+      const drawerProps = find(render(), SidebarDrawer).props
+      const onCategoryNavigate = vi.fn(drawerProps.onCategoryNavigate)
+      const drawer = drawerRender({ ...drawerProps, onCategoryNavigate })
+      const category = button(drawer, '猫罐头')
+      const main = find(render(), 'main').props
+      const handlers = gesture(drawer).props
+      const start = { pointerType: 'touch', pointerId: 1, clientX: 150, clientY: 0, timeStamp: 0, target: targetFor(category) }
+      const end = { ...start, clientX: 150 + dx, clientY: dy, timeStamp: 300 }
+      main.onPointerDownCapture(start)
+      handlers.onPointerDown(start)
+      main.onPointerDown(start) // Model the actual bubble to disabled main open.
+      handlers.onPointerMove({ ...end, timeStamp: 150 })
+      main.onPointerMove({ ...end, timeStamp: 150 })
+      handlers.onPointerUp(end)
+      main.onPointerUp(end)
+      expect(find(render(), SidebarDrawer).props.open).toBe(!closes)
+      const trailing = capturedClick(render(), category, { clientX: end.clientX, clientY: dy })
+      expect(trailing.stopPropagation).toHaveBeenCalledOnce()
+      expect(onCategoryNavigate).not.toHaveBeenCalled()
+      if (closes) swipe(render())
+      const reopened = drawerRender({ ...find(render(), SidebarDrawer).props, onCategoryNavigate })
+      find(render(), 'main').props.onPointerDownCapture({ ...start, timeStamp: 500 })
+      capturedClick(render(), button(reopened, '猫罐头'), { timeStamp: 600 })
+      expect(onCategoryNavigate).toHaveBeenCalledWith('猫罐头')
+    },
+  )
+  it('a category tiny-motion tap is still ordinary click navigation', () => {
+    const render = appRenderer()
+    swipe(render())
+    const onCategoryNavigate = vi.fn(find(render(), SidebarDrawer).props.onCategoryNavigate)
+    const drawer = renderer(SidebarDrawer)({ ...find(render(), SidebarDrawer).props, onCategoryNavigate })
+    const category = button(drawer, '猫罐头')
+    const handlers = gesture(drawer).props
+    const start = { pointerType: 'touch', pointerId: 1, clientX: 150, clientY: 0, timeStamp: 0, target: targetFor(category) }
+    find(render(), 'main').props.onPointerDownCapture(start)
+    handlers.onPointerDown(start)
+    handlers.onPointerUp({ ...start, clientX: 153, clientY: 1, timeStamp: 150 })
+    const tap = capturedClick(render(), category)
+    expect(tap.stopPropagation).not.toHaveBeenCalled()
+    expect(onCategoryNavigate).toHaveBeenCalledWith('猫罐头')
+  })
   it.each([['home', BatchCard], ['archive', ArchiveBatchCard]])('%s card tap opens detail; swipe opens only Sidebar; next tap works', (view, Card) => {
     const render = appRenderer()
     if (view === 'archive') find(render(), SidebarDrawer).props.onNavigate('archive')

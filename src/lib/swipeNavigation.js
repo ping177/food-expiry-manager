@@ -64,7 +64,15 @@ export function createSwipeNavigation(getOptions) {
     const dy = Math.abs(event.clientY - start.y)
     start.maxY = Math.max(start.maxY, dy)
     if (!options.enabled || options.scope !== start.scope ||
-      start.maxY > 30 || (dy >= 12 && dy > Math.abs(dx))) start = null
+      start.maxY > (options.maxVerticalDistance ?? 30) || (dy >= 12 && dy > Math.abs(dx))) {
+      start = null
+      return
+    }
+    const elapsed = event.timeStamp - start.time
+    if (options.clickIntentDistance && Math.abs(dx) >= options.clickIntentDistance &&
+      Math.abs(dx) >= (options.horizontalRatio ?? 2) * start.maxY && elapsed >= 0) {
+      start.clickIntent = true
+    }
   }
 
   return {
@@ -95,11 +103,11 @@ export function createSwipeNavigation(getOptions) {
       const dx = event.clientX - gesture.x
       const duration = event.timeStamp - gesture.time
       const distance = options.direction === 'left' ? -dx : dx
-      if (distance >= 60 && Math.abs(dx) >= 2 * gesture.maxY &&
-        duration >= 0 && duration <= 800) {
-        options.clickGuard?.markSwipe(event)
-        options.onSwipe()
-      }
+      const navigates = distance >= 60 && Math.abs(dx) >= (options.horizontalRatio ?? 2) * gesture.maxY &&
+        duration >= 0 && duration <= 800
+      // Sidebar-only intent survives a short/reversed/timed-out finish, not invalidation.
+      if (navigates || gesture.clickIntent) options.clickGuard?.markSwipe(event)
+      if (navigates) options.onSwipe()
     },
     onPointerCancel(event) {
       start = null

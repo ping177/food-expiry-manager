@@ -11,7 +11,7 @@
 
 ## 自动化测试
 
-使用 Vitest。当前完整自动化验收结果为 29 个测试文件、329 个测试通过；其中
+使用 Vitest。当前完整自动化验收结果为 29 个测试文件、348 个测试通过；其中
 包含 v0.3.1 Archive / drawer、consumed 详情只读、历史 batch 删除边界、状态更新
 0-row 防误报，以及既有 B1 三态详情、库存新增合并/新批次、库存消耗确认和当前
 batch 删除确认边界。
@@ -34,14 +34,14 @@ batch 删除确认边界。
 
 ## v0.3.5 Mobile Gesture Navigation 验证
 
-状态：已部署`318cfe6`，用户iPhone PWA确认以下功能PASS：卡片tap/右滑、Sidebar分类tap/左滑、Product Edit未保存退出、Add/Add Inventory未保存退出、危险操作确认滑动保护、纵向滚动不误触。详情文字/图片区域可返回，但A左边缘、B详情上下空白、C Add多数区域起滑仍不合格。本轮Final Gesture Usability Fix本地完成，最终review无blocker，awaiting新修复Production复验；用户已授权独立fix commit及正常push，部署按新commit确认、版本未completed/closed，不能把已部署实现的部分PASS当作本轮新修复PASS。
+状态：已部署`340ee6e26aacc2d3c7d988faf359d6555c535b3f`，用户第三轮Production iPhone PWA确认：库存/归档左边缘open、Detail上下空白Back、Add顶部/中部/底部Back、Product Edit及新增表单Protected Exit、危险操作确认保护、纵向滚动及原卡片/分类点击PASS。剩余Sidebar close：分类按钮区1/3、标题区3/3、滚动后分类区3/3；自然倾斜左滑较难，失败可能误选分类。本轮Sidebar局部体验修复本地完成，automated verification PASS，最终review无blocker，awaiting新修复Production复验，未completed/closed；部署结果以本次独立fix commit的查询为准。用户观测不是本地复现的真实Pointer轨迹。
 
-历史：a811b11普通位置open/close/Active及Archive detail Back FAIL，指定非交互起点三项PASS（iOS27.0.1）；此前记录保留。318cfe6的141/318/build PASS及成功部署属于上一阶段。Safari未单独验收；不要求桌面本地手机式验收。
+历史：a811b11普通位置open/close/Active及Archive detail Back FAIL，指定非交互起点三项PASS（iOS27.0.1）；此前记录保留。318cfe6的141/318/build PASS、成功部署及用户卡片/分类tap/swipe、dirty退出、危险确认、纵向滚动PASS属于上一阶段；其A/B/C UX findings在340ee6e由用户确认修复PASS。Safari未单独验收；不要求桌面本地手机式验收。
 
-- `src/lib/swipeNavigation.test.js`：33 tests，保留阈值/cancel/多指/scope与click保护覆盖；x=0允许起滑，非编辑label文字允许，实际input/textarea/select/contenteditable/picker仍排除。
-- `src/MobileGestureNavigation.test.jsx`：49 tests，保留tap/swipe/click与protected exit覆盖；生产路径由main触发，补充主列表0px起点、main min-h-screen及上/下padding的监听面、子section无重复handler、Product Edit与Inventory Operation内部mode、dirty/busy/危险确认、Add label与实际控件、ref卸载清理。Node只检查JSX接线并模拟capture-before-target，不能证明真实命中或click合成。
-- 原 Category Navigation 测试改为执行全部 Drawer effects 和 cleanup，不依赖 effect 数组位置；overlay / close / Escape / focus restore 与 Active / Archive 筛选隔离继续覆盖。
-- 原implementation此前108/295、318cfe6阶段141/318 tests与build PASS；本轮A/B/C修复定向13 files / 152 tests、完整29 files / 329 tests及build PASS（保留 >500 kB chunk 警告）。
+- `src/lib/swipeNavigation.test.js`：48 tests，保留阈值/cancel/多指/scope与click保护覆盖；新增Sidebar局部倾斜边界、纵向起手、未完成/反向/退回/超时横滑意图、取消/多指/reset不留token及其他页面默认规则。x=0允许起滑、非编辑label文字允许，实际input/textarea/select/contenteditable/picker仍排除。
+- `src/MobileGestureNavigation.test.jsx`：53 tests，保留main覆盖/单owner、mode返回、dirty/busy/危险确认、label及ref清理；新增分类按钮倾斜左滑、短横滑/反向不导航但保护click、下一次tap和微移tap。模拟Drawer事件向disabled main冒泡与main capture-before-target，不能证明浏览器真实click合成。
+- Category Navigation继续覆盖Drawer effects / cleanup、overlay / close / Escape / focus restore与Active / Archive筛选隔离。
+- 此前implementation108/295、318cfe6阶段141/318及340ee6e A/B/C阶段152/329 tests与build PASS；本轮新增19 tests，定向13 files / 171 tests、完整29 files / 348 tests及build PASS（保留 >500 kB chunk 警告）。
 
 ```bash
 npm test -- src/lib/swipeNavigation.test.js src/MobileGestureNavigation.test.jsx src/App.categoryNavigation.test.jsx src/components/BatchDetail.test.jsx src/components/AddBatchForm.test.jsx src/components/AddInventoryForm.test.jsx src/components/SidebarDrawer.test.jsx src/components/InventoryOperationPanel.test.jsx src/components/ArchiveBatchActions.test.jsx src/App.test.jsx src/components/BottomTabNav.test.jsx src/components/BatchCard.test.jsx src/components/ArchiveBatchCard.test.jsx
@@ -50,22 +50,21 @@ npm run build
 git diff --check
 ```
 
-### v0.3.5 Final Gesture Usability Fix 复验清单（本次修复部署可用后执行，以下均待新修复真机验证）
+### v0.3.5 Sidebar Swipe Close Final UX Fix 复验清单（本次独立fix commit的Production部署确认可用后执行）
 
-1. home/archive从最左0px及普通区域右滑只开Sidebar，应用不要求内侧起点；若iOS接管须记录实际效果，不强拦系统。卡片tap/右滑已有PASS需回归；滑后无尾随点，下一次tap正常，筛选保持独立。
-2. Sidebar分类按钮、导航列表、标题/空白左滑只关闭，不切分类/页面；普通tap仍正常导航。Drawer卸载后的click不落到下层控件，下一次tap不被吞；长列表纵向滚动、overlay/close/Escape和focus restore正常。
-3. Active/Archive detail的App顶部标题、上方padding、正文、下方可见空白均可右滑，返回Active/Archive正确目标；Product Edit / Inventory Operation仍先回detail，不能越级。dirty/busy/危险确认在所有外层空白也受保护。
-4. Add / Add Inventory / Product Edit 无修改时按钮与手势立即返回；修改再恢复原值不确认。dirty时二者显示同一确认，继续编辑保留字段、日期和pending image；放弃后按原目标退出。
-5. 长表单底部起滑后的确认可见且焦点到“继续编辑”；软键盘打开/收起后确认可操作，拒绝退出不清草稿。
-6. 保存、上传、消耗/删除mutation期间不swipe退出；consume/mark-consumed/delete确认开启时不swipe。商品删除busy不退出；扫码开启/条码查询期间不swipe。
-7. 短移、纵向起手、斜滑、超800ms、多指与取消不误触；纵向滚动后不能在同次触摸转换为导航。
-8. Add/App顶部标题、表单非编辑区、label标题文字、底部main留白尽可能可右滑；label轻点仍聚焦对应控件，滑后不误聚焦/弹键盘或合成input click。input/textarea/select/contenteditable、扫码/picker/media/保存/删除继续排除，键盘、正常输入、文本选择不回归；保留双指缩放与safe-area。
-9. 取消应用边缘限制不保证iOS系统边缘手势能转给App；分别记录standalone实际行为、Safari若有上一页时是否双动作。Safari未单独验收仍明确记录未验证。
-10. PWA重开后无导航异常。桌面mouse drag不触发、keyboard/click入口及Escape由既有自动化覆盖保留；桌面人工检查可选，不作为本版本手机手势验收前置要求。
+1. 分类按钮区、顶部标题区、滚动后分类区各自然倾斜左滑至少3次，记录实际成功次数；允许合理倾斜，仍需水平至少60px、过程纵移不超过50px、横纵比至少1.5:1、800ms内结束。不预报成功率。
+2. 合格分类左滑只关闭，不切分类/页面；Drawer卸载后的尾随click不能落到下层控件。普通分类tap及滑动后的下一次普通tap仍正常导航。
+3. 明显但未完成的横滑（30–59px）、向右滑、横移后退回、超过800ms的横滑不关闭，也不能误选分类；极短微移仍保留tap。仅实际观察到至少30px且横向占优才启用尾随click保护。
+4. 明显上下滚动、纵向起手再转横向、多指、pointercancel不关闭；长列表上下滚动不能误选分类，不能因本轮click保护而阻止滚动或吞掉下一次tap。iOS若在自然斜滑过程中先发pointercancel，须记录，不通过强拦系统滚动解决。
+5. 回归此前已PASS的库存/归档最左边缘及卡片右滑open、详情上下空白Back及正确Active/Archive目标、Add顶部/中部/底部Back；其他页面保持2:1/30px原规则。Product Edit / Inventory Operation内部mode不越级。
+6. 回归Product Edit / Add / Add Inventory pristine、dirty及拒绝退出保留草稿/pending image；busy/上传/扫码及危险确认期间不退出。input/textarea/select/contenteditable、文件选择、保存/删除等仍排除；软键盘、label普通tap/焦点、文本选择、pinch zoom不回归。
+7. 原Menu / Back / Cancel / Bottom Navigation / overlay / close继续正常；桌面Escape、focus restore、keyboard click与mouse不触发手势由既有自动化覆盖保留。PWA重开、safe-area、无横向溢出与长列表正常；Safari未单独验收继续记录未验证。
 
-2026-10-08 A/B/C修复改变事件绑定与guard，本轮已重新执行152定向/329完整tests、build、diff/语法/范围和治理检查；本地实施阶段不commit/push/部署；随后用户授权最终review通过后独立commit及正常push。本次release review代码未变，沿用152/329/build证据，重新执行diff/治理/staged范围及Push Gate所需检查。
+2026-10-08 本轮重新执行171定向/348完整tests、build、diff/语法/范围及治理检查；上述属于本地实施验证。随后用户授权Sidebar Swipe UX Fix Release；本次review业务代码/测试未变，沿用171/348/build证据，重新执行diff/语法/治理/staged范围及Push Gate所需检查。历史Production PASS和剩余Sidebar UX findings同时保留，新修复等待真机复验，不提前closeout。
 
-Node测试不覆盖真实DOM命中/高度、冒泡、浏览器click合成、implicit capture、卸载后click目标、iOS系统边缘/滚动仲裁、label默认激活、文本选择、pinch zoom与软键盘。上述必须真机复验，不新增DOM/E2E依赖。click保护代码保持不变：现代PointerEvent按touch pointerId匹配，旧MouseEvent按结束坐标±2px，最多1秒；下一次pointerdown立即清除，键盘/程序点击保留。保持60px/30px/2:1/12px/800ms判定，仅移除人为边缘限制。
+Node测试不覆盖真实DOM命中/高度、浏览器冒泡/click合成、implicit capture、卸载后click目标、iOS系统边缘/滚动仲裁、label默认激活、文本选择、pinch zoom与软键盘。上述必须真机复验，不新增DOM/E2E依赖。click guard实现保持不变：现代PointerEvent按touch pointerId匹配，旧MouseEvent按结束坐标±2px，最多1秒、一次消费；下一次pointerdown立即清除，键盘/程序点击保留。
+
+其他页面仍保持60px/30px/2:1/12px纵向起手/800ms规则；仅Sidebar局部改为横纵比1.5:1与过程最大纵移50px（约34°同时受50px约束），并启用30px横滑意图。在有效up记录token，短/反向/退回/超时未导航也保护尾随click；纵向占优或超纵移、多指/cancel/scope/reset失效清除意图。不新增全局拦截，不preventDefault pointer滚动事件。
 
 ## v0.3.4 Category Navigation 验证
 
